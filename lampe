@@ -1,6 +1,6 @@
 #!/bin/bash
 
-bridgeip="192.168.2.172"
+bridgeip="192.168.0.0" # todo: configure your bridge IP
 lampeid=0
 farbe="\"sat\":0" 
 case $1 in
