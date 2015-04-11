@@ -1,0 +1,30 @@
+#!/bin/bash
+
+bridgeip="192.168.2.172"
+lampeid=0
+farbe="\"sat\":0" 
+case $1 in
+	"w")
+		# wohnzimmer/stube
+		lampeid=1
+		farbe="\"hue\":49000,\"bri\":254,\"sat\":175" # violett
+	;;
+	"s")
+		# schlafszimmer
+		lampeid=2
+		farbe="\"hue\":65000,\"bri\":128,\"sat\":175" # rot
+	;;
+	"k")
+		# kristall
+		lampeid=3
+		farbe="\"hue\":22000,\"bri\":1,\"sat\":254" # grünlich
+	;;
+esac
+lampeon="true"
+if [ $2 == "off" ] ; then
+	lampeon="false"
+fi
+
+curl -d "{\"on\":$lampeon,$farbe}" -X PUT http://$bridgeip/api/newdeveloper/lights/$lampeid/state
+
+echo "\n"
