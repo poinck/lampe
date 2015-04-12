@@ -1,16 +1,16 @@
 #!/bin/bash
 
-bridgeip="192.168.0.0" # todo: configure your bridge IP
+bridgeip="192.168.2.172"
 lampeid=0
 farbe="\"sat\":0" 
 case $1 in
 	"w")
 		# wohnzimmer/stube
 		lampeid=1
-		farbe="\"hue\":49000,\"bri\":254,\"sat\":175" # violett
+		farbe="\"hue\":51000,\"bri\":254,\"sat\":175" # violett
 	;;
 	"s")
-		# schlafszimmer
+		# schlafzimmer
 		lampeid=2
 		farbe="\"hue\":65000,\"bri\":128,\"sat\":175" # rot
 	;;
@@ -28,3 +28,4 @@ fi
 curl -d "{\"on\":$lampeon,$farbe}" -X PUT http://$bridgeip/api/newdeveloper/lights/$lampeid/state
 
 echo "\n"
+
