@@ -1,31 +1,222 @@
 #!/bin/bash
 
 bridgeip="192.168.2.172"
-lampeid=0
-farbe="\"sat\":0" 
-case $1 in
-	"w")
-		# wohnzimmer/stube
-		lampeid=1
-		farbe="\"hue\":51000,\"bri\":254,\"sat\":175" # violett
-	;;
-	"s")
-		# schlafzimmer
-		lampeid=2
-		farbe="\"hue\":65000,\"bri\":128,\"sat\":175" # rot
-	;;
-	"k")
-		# kristall
-		lampeid=3
-		farbe="\"hue\":22000,\"bri\":1,\"sat\":254" # grünlich
-	;;
-esac
-lampeon="true"
-if [ $2 == "off" ] ; then
-	lampeon="false"
-fi
 
-curl -d "{\"on\":$lampeon,$farbe}" -X PUT http://$bridgeip/api/newdeveloper/lights/$lampeid/state
+readKey() {
+    # Wait for first char
+    if read -s -n 1 _KEY; then
+      	# Read rest of chars
+      	while read -s -N 1 -t 0.001 ; do # FIXME is there a timeout-problem? 
+      		_KEY+="${REPLY}"
+      	done
+		# echo -n ""
+    fi
 
-echo "\n"
+	# read -s -n 1 _KEY
+}
+
+declare _SELECTED_LAMP=1 # defaults to first lamp
+declare _LAST_LAMP=51
+
+readAKey() {
+	# declare isCursor=0
+	# readKey
+	read -s -n 1 _KEY
+
+	# XXX   catch cursor keys without modifiers (removed)
+	# catch WASD for basic stuff
+	case $_KEY in
+		# $'\e[A' |
+		"w")
+			# echo -n "UP "
+			# isCursor=1
+			_UP=1
+		;;
+		# $'\e[B' |
+		"s")
+			# echo -n "DOWN "
+			# isCursor=1
+			_DOWN=1
+		;;
+		# $'\e[C' |
+		"d")
+			# echo -n "RIGHT "
+			# isCursor=1
+			_RIGHT=1
+		;;
+		# $'\e[D' |
+		"a")
+			# echo -n "LEFT "
+			# isCursor=1
+			_LEFT=1
+		;;
+		[1-9])
+			# select the current lamp
+			_SELECTED_LAMP=$_KEY
+			_NEW_LAMP=$_KEY
+		;;
+	esac
+
+	# if [ $isCursor != 1 ] ; then
+	# 	echo -n "OTHER $_KEY "
+	# fi
+}
+
+
+declare -a _BRIGHTNESS
+
+# init saturation
+declare -a _SAT
+for (( s=1 ; s<10 ; s=s+1 )) ; do 
+	_SAT[$s]=128
+done
+
+declare -a _SWITCH # on or off
+for (( s=1 ; s<10 ; s=s+1 )) ; do 
+	_SWITCH[$s]="false"
+done
+
+setBrightness() {
+	brightness=${_BRIGHTNESS[$_SELECTED_LAMP]}
+	
+	brightness=$((brightness+$1))
+	if [ $brightness -lt 1 ] ; then
+		# switch off lamp
+		setSwitch 0
+		brightness=0
+	elif [ $brightness -gt 0 ] ; then
+		# switch on lamp
+		setSwitch 1
+		if [ $brightness -gt 254 ] ; then
+			brightness=254
+		fi
+	fi
+
+	_BRIGHTNESS[$_SELECTED_LAMP]=$brightness
+
+	# debug
+	# echo -n "param = $1 "
+	# echo "brightness = ${_BRIGHTNESS[$_SELECTED_LAMP]} "
+} 
+
+setSat() {
+	sat=${_SAT[$_SELECTED_LAMP]}
+	
+	sat=$((sat+$1))
+	if [ $sat -lt 1 ] ; then
+		sat=1
+	elif [ $sat -gt 254 ] ; then
+		sat=254
+	fi
+
+	_SAT[$_SELECTED_LAMP]=$sat
+} 
+
+setSwitch() {
+	# debug
+	# echo -n $1
+
+	if [ $1 == 1 ] ; then 
+		_SWITCH[$_SELECTED_LAMP]="true"
+	else
+		_SWITCH[$_SELECTED_LAMP]="false"
+	fi
+}
+
+printMainScreen() {
+	currentBrightness=$((_BRIGHTNESS[$_SELECTED_LAMP]/5))
+	currentSat=$((_SAT[$_SELECTED_LAMP]*currentBrightness/254))
+
+	echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
+	echo -en "Lamp $_SELECTED_LAMP "
+	if [ $currentBrightness -gt 0 ] ; then
+		for (( ii=0 ; ii<$currentBrightness ; ii=ii+1 )) ; do 
+			# i=$((i+1))
+			if [ $ii -lt $currentSat ] ; then
+				echo -n "#"
+			else
+				echo -n "-"
+			fi
+		done
+		echo -n ">  "
+	else
+		echo -n "off"
+	fi
+	for (( ii=0 ; ii<50-$currentBrightness ; ii=ii+1 )) ; do
+		echo -n " "
+	done
+
+}
+
+toggleSwitch() {
+	if [ ${_SWITCH[$_SELECTED_LAMP]} = "true" ] ; then
+		setSwitch 0
+	else 
+		setSwitch 1
+	fi
+}
+
+# clear
+lastTime=$(date +%s)
+while true; do
+	# main loop
+
+	# initialize global keys
+	_UP=0
+	_DOWN=0
+	_RIGHT=0
+	_LEFT=0
+	_NEW_LAMP=51;	
+
+	readAKey
+
+	# handle brightness ans saturation
+	if [ $_UP == 1 ] ; then
+		# echo -n "heller "
+		setBrightness 5
+	fi
+	if [ $_DOWN == 1 ] ; then
+		# echo -n "dunkler "
+		setBrightness -5
+	fi
+	if [ $_RIGHT == 1 ] ; then
+		# echo -n "> "
+		setSat 10
+	fi
+	if [ $_LEFT == 1 ] ; then
+		# echo -n "< "
+		setSat -10
+	fi
+
+	# toggle switch
+	if [ $_NEW_LAMP -lt 51 ] ; then
+		# echo "NL$_NEW_LAMP LL$_LAST_LAMP "
+		if [ $_LAST_LAMP == $_NEW_LAMP ] ; then
+			toggleSwitch
+			toggle=1
+		else
+			toggle=0
+		fi
+		_LAST_LAMP=$_NEW_LAMP
+	else
+		_LAST_LAMP=51
+		toggle=0
+	fi
+
+	# TODO  hue
+	if [ ${_SAT[$_SELECTED_LAMP]} -lt 1 ] ; then
+		_SAT[$_SELECTED_LAMP]=1
+	fi
+	color="\"hue\":12000,\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}" # orange
+
+	printMainScreen
+	
+	# send to hue bridge
+	thisTime=$(date +%s)
+	if [ $thisTime-$lastTime > 250000 ] || [ $toggle == 1 ] ; then
+		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT http://$bridgeip/api/newdeveloper/lights/$_SELECTED_LAMP/state > /dev/null
+		lastTime=$(date +%s)
+	fi
+	
+done
 
