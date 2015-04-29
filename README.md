@@ -1,8 +1,8 @@
 # Readme: lampe
-personal bash-script to control 3 hue-lamps.
+interactive bash-script to control up to 9 hue-lamps.
 
 ## Configure
-This script does not register a user on the huw-bridge; see [Getting Started at meethue.com](http://www.developers.meethue.com/documentation/getting-started). After that you should set the IP of your bridge like this: 
+This script does not register a user on the huw-bridge; see [Getting Started at meethue.com](http://www.developers.meethue.com/documentation/getting-started). After that you could set the IP of your bridge like this: 
 ```.sh
 cd # to location of the lampe-script
 vim lampe
@@ -13,11 +13,18 @@ i
 :wq
 ```
 ## Usage
-Than you can use the script like following to set the predefined color for your livingroom (w = "Wohnzimmer"):
-```.sh
-lampe w
+Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
 ```
-or switch off the lamp in your sleeping (s = "Schlafzimmer") room like this:
-```.sh
-lampe s off
+W - increase brightness
+A - lower saturation
+S - lower brightness
+D - increase saturation
 ```
+
+### example output 
+```
+Lamp 3 [==========--                                      ] off  
+```
+
+## TODOs
+- [ ] add support for hue to set color with 
