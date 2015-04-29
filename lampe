@@ -127,25 +127,29 @@ printMainScreen() {
 	currentBrightness=$((_BRIGHTNESS[$_SELECTED_LAMP]/5))
 	currentSat=$((_SAT[$_SELECTED_LAMP]*currentBrightness/254))
 
-	echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
-	echo -en "Lamp $_SELECTED_LAMP "
-	if [ $currentBrightness -gt 0 ] ; then
+	echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
+	echo -en "Lamp $_SELECTED_LAMP ["
+	# if [ $currentBrightness -gt 0 ] ; then
 		for (( ii=0 ; ii<$currentBrightness ; ii=ii+1 )) ; do 
 			# i=$((i+1))
 			if [ $ii -lt $currentSat ] ; then
-				echo -n "#"
+				echo -n "="
 			else
 				echo -n "-"
 			fi
 		done
-		echo -n ">  "
+		# echo -n ""
+		for (( ii=0 ; ii<50-$currentBrightness ; ii=ii+1 )) ; do
+			echo -n " "
+		done
+		echo -n "] "
+	# fi
+	# else
+	if [ ${_SWITCH[$_SELECTED_LAMP]} != "true" ] ; then
+		echo -n "off "
 	else
-		echo -n "off"
+		echo -n "    "
 	fi
-	for (( ii=0 ; ii<50-$currentBrightness ; ii=ii+1 )) ; do
-		echo -n " "
-	done
-
 }
 
 toggleSwitch() {
