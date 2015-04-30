@@ -28,27 +28,27 @@ readAKey() {
 	case $_KEY in
 		# $'\e[A' |
 		"w")
-			# echo -n "UP "
-			# isCursor=1
 			_UP=1
 		;;
 		# $'\e[B' |
 		"s")
-			# echo -n "DOWN "
-			# isCursor=1
 			_DOWN=1
 		;;
 		# $'\e[C' |
 		"d")
-			# echo -n "RIGHT "
-			# isCursor=1
 			_RIGHT=1
 		;;
 		# $'\e[D' |
 		"a")
-			# echo -n "LEFT "
-			# isCursor=1
 			_LEFT=1
+		;;
+		"q")
+			# hue
+			_Q=1
+		;;
+		"e")
+			# hue
+			_E=1
 		;;
 		[1-9])
 			# select the current lamp
@@ -71,9 +71,16 @@ for (( s=1 ; s<10 ; s=s+1 )) ; do
 	_SAT[$s]=128
 done
 
+# init switch
 declare -a _SWITCH # on or off
 for (( s=1 ; s<10 ; s=s+1 )) ; do 
 	_SWITCH[$s]="false"
+done
+
+# init color
+declare -a _COLOR 
+for (( s=1 ; s<10 ; s=s+1 )) ; do 
+	_COLOR[$s]=12000 # orange
 done
 
 setBrightness() {
@@ -110,6 +117,19 @@ setSat() {
 	fi
 
 	_SAT[$_SELECTED_LAMP]=$sat
+}
+
+setColor() {
+	hue=${_COLOR[$_SELECTED_LAMP]}
+	
+	hue=$((hue+$1))
+	if [ $hue -lt 1 ] ; then
+		hue=1
+	elif [ $hue -gt 65280 ] ; then
+		hue=65279
+	fi
+
+	_COLOR[$_SELECTED_LAMP]=$hue
 } 
 
 setSwitch() {
@@ -129,22 +149,18 @@ printMainScreen() {
 
 	echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
 	echo -en "Lamp $_SELECTED_LAMP ["
-	# if [ $currentBrightness -gt 0 ] ; then
-		for (( ii=0 ; ii<$currentBrightness ; ii=ii+1 )) ; do 
-			# i=$((i+1))
-			if [ $ii -lt $currentSat ] ; then
-				echo -n "="
-			else
-				echo -n "-"
-			fi
-		done
-		# echo -n ""
-		for (( ii=0 ; ii<50-$currentBrightness ; ii=ii+1 )) ; do
-			echo -n " "
-		done
-		echo -n "] "
-	# fi
-	# else
+	for (( ii=0 ; ii<$currentBrightness ; ii=ii+1 )) ; do 
+		# i=$((i+1))
+		if [ $ii -lt $currentSat ] ; then
+			echo -n "="
+		else
+			echo -n "-"
+		fi
+	done
+	for (( ii=0 ; ii<50-$currentBrightness ; ii=ii+1 )) ; do
+		echo -n " "
+	done
+	echo -n "] "
 	if [ ${_SWITCH[$_SELECTED_LAMP]} != "true" ] ; then
 		echo -n "off "
 	else
@@ -170,7 +186,9 @@ while true; do
 	_DOWN=0
 	_RIGHT=0
 	_LEFT=0
-	_NEW_LAMP=51;	
+	_NEW_LAMP=51;
+	_Q=0
+	_E=0
 
 	readAKey
 
@@ -190,6 +208,14 @@ while true; do
 	if [ $_LEFT == 1 ] ; then
 		# echo -n "< "
 		setSat -10
+	fi
+	if [ $_Q == 1 ] ; then
+		# hue
+		setColor -1000
+	fi
+	if [ $_E == 1 ] ; then
+		# hue
+		setColor 1000
 	fi
 
 	# toggle switch
@@ -211,7 +237,7 @@ while true; do
 	if [ ${_SAT[$_SELECTED_LAMP]} -lt 1 ] ; then
 		_SAT[$_SELECTED_LAMP]=1
 	fi
-	color="\"hue\":12000,\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}" # orange
+	color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
 
 	printMainScreen
 	
