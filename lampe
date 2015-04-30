@@ -199,7 +199,7 @@ printMainScreen() {
 	if [ ${_SWITCH[$_SELECTED_LAMP]} != "true" ] ; then
 		echo -n "off "
 	else
-		echo -n "    " # ^
+		echo -n "    "
 	fi
 }
 
