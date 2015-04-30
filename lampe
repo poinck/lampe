@@ -9,17 +9,13 @@ readKey() {
       	while read -s -N 1 -t 0.001 ; do # FIXME is there a timeout-problem? 
       		_KEY+="${REPLY}"
       	done
-		# echo -n ""
     fi
-
-	# read -s -n 1 _KEY
 }
 
 declare _SELECTED_LAMP=1 # defaults to first lamp
 declare _LAST_LAMP=51
 
 readAKey() {
-	# declare isCursor=0
 	# readKey
 	read -s -n 1 _KEY
 
@@ -56,12 +52,7 @@ readAKey() {
 			_NEW_LAMP=$_KEY
 		;;
 	esac
-
-	# if [ $isCursor != 1 ] ; then
-	# 	echo -n "OTHER $_KEY "
-	# fi
 }
-
 
 declare -a _BRIGHTNESS
 
@@ -185,7 +176,6 @@ printMainScreen() {
 	echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
 	echo -en "Lamp $(getColor)$_SELECTED_LAMP $(color off)["
 	for (( ii=0 ; ii<$currentBrightness ; ii=ii+1 )) ; do 
-		# i=$((i+1))
 		if [ $ii -lt $currentSat ] ; then
 			echo -n "="
 		else
@@ -211,7 +201,6 @@ toggleSwitch() {
 	fi
 }
 
-# clear
 lastTime=$(date +%s)
 while true; do
 	# main loop
@@ -227,21 +216,17 @@ while true; do
 
 	readAKey
 
-	# handle brightness ans saturation
+	# handle brightness and saturation
 	if [ $_UP == 1 ] ; then
-		# echo -n "heller "
 		setBrightness 5
 	fi
 	if [ $_DOWN == 1 ] ; then
-		# echo -n "dunkler "
 		setBrightness -5
 	fi
 	if [ $_RIGHT == 1 ] ; then
-		# echo -n "> "
 		setSat 10
 	fi
 	if [ $_LEFT == 1 ] ; then
-		# echo -n "< "
 		setSat -10
 	fi
 	if [ $_Q == 1 ] ; then
@@ -255,7 +240,9 @@ while true; do
 
 	# toggle switch
 	if [ $_NEW_LAMP -lt 51 ] ; then
+		# debug
 		# echo "NL$_NEW_LAMP LL$_LAST_LAMP "
+
 		if [ $_LAST_LAMP == $_NEW_LAMP ] ; then
 			toggleSwitch
 			toggle=1
@@ -268,7 +255,6 @@ while true; do
 		toggle=0
 	fi
 
-	# TODO  hue
 	if [ ${_SAT[$_SELECTED_LAMP]} -lt 1 ] ; then
 		_SAT[$_SELECTED_LAMP]=1
 	fi
