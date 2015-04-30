@@ -21,4 +21,4 @@ Lamp 3 [==========--                                      ] off
 ```
 
 ## TODOs
-- [ ] add support for hue to set color with 
+- [ ] add support for hue to set color with Q and E
