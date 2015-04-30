@@ -129,6 +129,9 @@ setColor() {
 		hue=65279
 	fi
 
+	# debug
+	# echo " $hue "
+
 	_COLOR[$_SELECTED_LAMP]=$hue
 } 
 
@@ -143,12 +146,44 @@ setSwitch() {
 	fi
 }
 
+getColor() {
+	hue=${_COLOR[$_SELECTED_LAMP]}
+
+	bold=""
+	if [ ${_SWITCH[$_SELECTED_LAMP]} = "true" ] ; then
+		bold="lt"
+	fi
+	if [ $hue -lt 9001 ] ; then
+		# red
+		colorEscape="red"
+	elif [ $hue -gt 9000 ] && [ $hue -lt 19001 ] ; then
+		# orange, yellow
+		colorEscape="yellow"
+	elif [ $hue -gt 19000 ] && [ $hue -lt 31001 ] ; then
+		# green
+		colorEscape="green"
+	elif [ $hue -gt 31000 ] && [ $hue -lt 35001 ] ; then
+		# white, green-blue
+		colorEscape="white"
+	elif [ $hue -gt 35000 ] && [ $hue -lt 48001 ] ; then
+		# blue
+		colorEscape="blue"
+	elif [ $hue -gt 48000 ] && [ $hue -lt 63279 ] ; then
+		# purple
+		colorEscape="magenta"
+	elif [ $hue -gt 63279 ] ; then
+		# red
+		colorEscape="red"
+	fi
+	echo -en "$(color $bold$colorEscape)"
+}
+
 printMainScreen() {
 	currentBrightness=$((_BRIGHTNESS[$_SELECTED_LAMP]/5))
 	currentSat=$((_SAT[$_SELECTED_LAMP]*currentBrightness/254))
 
 	echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
-	echo -en "Lamp $_SELECTED_LAMP ["
+	echo -en "Lamp $(getColor)$_SELECTED_LAMP $(color off)["
 	for (( ii=0 ; ii<$currentBrightness ; ii=ii+1 )) ; do 
 		# i=$((i+1))
 		if [ $ii -lt $currentSat ] ; then
@@ -164,7 +199,7 @@ printMainScreen() {
 	if [ ${_SWITCH[$_SELECTED_LAMP]} != "true" ] ; then
 		echo -n "off "
 	else
-		echo -n "    "
+		echo -n "    " # ^
 	fi
 }
 
