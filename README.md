@@ -30,3 +30,4 @@ Lamp 3 [==========--                                      ] off
 - [x] add support for hue to set color with Q and E
 - [ ] hue-bridge discovery (without using meethue.com/api/nupnp if possible) and user-configuration
 - [ ] Option -h to show usage, addtionally show usage after first successful hue-bridge discovery and user-configuration
+- [ ] on start get current light-settings from hue-bridge

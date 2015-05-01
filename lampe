@@ -265,7 +265,7 @@ while true; do
 	# send to hue bridge
 	thisTime=$(date +%s)
 	if [ $thisTime-$lastTime > 250000 ] || [ $toggle == 1 ] ; then
-		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT http://$bridgeip/api/newdeveloper/lights/$_SELECTED_LAMP/state > /dev/null
+		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT http://$bridgeip/api/newdeveloper/lights/$_SELECTED_LAMP/state -m 1 > /dev/null
 		lastTime=$(date +%s)
 	fi
 	
