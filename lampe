@@ -266,7 +266,7 @@ while true; do
 	thisTime=$(date +%s%3N)
 	diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 250 ] || [ $toggle == 1 ] ; then
-		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT http://$bridgeip/api/newdeveloper/lights/"$_SELECTED_LAMP"/state -m 1 > /dev/null
+		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/newdeveloper/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		lastTime=$(date +%s%3N)
 	fi
 	
