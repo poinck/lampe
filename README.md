@@ -14,20 +14,25 @@ bridgeip="192.168.?.???"
 ## Usage
 Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
 ```
-  W - increase brightness
-  A - lower saturation
-  S - lower brightness
-  D - increase saturation
-Q,E - change hue-color
+  w - increase brightness
+  a - lower saturation
+  s - lower brightness
+  d - increase saturation
+q,e - change hue-color
 ```
 
 ### example output 
-```
-Lamp 3 [==========--                                      ] off  
+``` 
+   [======--PRESS-h-FOR-HELP--------------------------]
+      w,s   BRIGHTNESS   -
+      a,d   SATURATION   =
+      q,e   COLOR        o
+      1..9  LAMP
+ 1 [===o========================------                ] off 
 ```
 
 ## TODOs
 - [x] add support for hue to set color with Q and E
 - [ ] hue-bridge discovery (without using meethue.com/api/nupnp if possible) and user-configuration
-- [ ] Option -h to show usage, addtionally show usage after first successful hue-bridge discovery and user-configuration
+- [x] help option
 - [ ] on start get current light-settings from hue-bridge
