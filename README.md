@@ -1,5 +1,6 @@
 # Readme: lampe
 interactive bash-script to control up to 9 hue-lamps.
+
 ![lampe](/lampe.png)
 
 ## Requirements
