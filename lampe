@@ -1,4 +1,5 @@
 #!/bin/bash
+# by Andre Klausnitzer (poinck)
 
 bridgeip="192.168.2.172"
 
@@ -46,6 +47,10 @@ readAKey() {
 			# hue
 			_E=1
 		;;
+		"h")
+			# help
+			_H=1
+		;;
 		[1-9])
 			# select the current lamp
 			_SELECTED_LAMP=$_KEY
@@ -54,18 +59,22 @@ readAKey() {
 	esac
 }
 
+# init brightness
 declare -a _BRIGHTNESS
+for (( b=1 ; b<10 ; b=b+1 )) ; do 
+	_BRIGHTNESS[$b]=32
+done
 
 # init saturation
 declare -a _SAT
 for (( s=1 ; s<10 ; s=s+1 )) ; do 
-	_SAT[$s]=128
+	_SAT[$s]=192
 done
 
 # init switch
 declare -a _SWITCH # on or off
 for (( s=1 ; s<10 ; s=s+1 )) ; do 
-	_SWITCH[$s]="false"
+	_SWITCH[$s]="true"
 done
 
 # init color
@@ -137,6 +146,34 @@ setSwitch() {
 	fi
 }
 
+getColorByValue() {
+	hue=$1
+
+	if [ $hue -lt 9001 ] ; then
+		# red
+		colorEscape="red"
+	elif [ $hue -gt 9000 ] && [ $hue -lt 19001 ] ; then
+		# orange, yellow
+		colorEscape="yellow"
+	elif [ $hue -gt 19000 ] && [ $hue -lt 31001 ] ; then
+		# green
+		colorEscape="green"
+	elif [ $hue -gt 31000 ] && [ $hue -lt 35001 ] ; then
+		# white, green-blue
+		colorEscape="white"
+	elif [ $hue -gt 35000 ] && [ $hue -lt 48001 ] ; then
+		# blue
+		colorEscape="blue"
+	elif [ $hue -gt 48000 ] && [ $hue -lt 63279 ] ; then
+		# purple
+		colorEscape="magenta"
+	elif [ $hue -gt 63279 ] ; then
+		# red
+		colorEscape="red"
+	fi
+	echo -en "$(color $colorEscape)"
+}
+
 getColor() {
 	hue=${_COLOR[$_SELECTED_LAMP]}
 
@@ -172,20 +209,38 @@ getColor() {
 printMainScreen() {
 	currentBrightness=$((_BRIGHTNESS[_SELECTED_LAMP]/5))
 	currentSat=$((_SAT[_SELECTED_LAMP]*currentBrightness/254))
+	colorPosition=$((_COLOR[_SELECTED_LAMP]*currentBrightness/65279))
+	if [ $colorPosition -gt 49 ] ; then
+		colorPosition=49
+	fi
 
-	echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
-	echo -en "Lamp $(getColor)$_SELECTED_LAMP $(color off)["
+	# debug
+	# echo "$colorPosition"
+
+	echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
+	echo -en " $(getColor)$_SELECTED_LAMP $(color ltwhite)[$(color off)"
 	for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do 
+		colorValue=$((65279*ii/currentBrightness))
+		echo -en "$(getColorByValue $colorValue)"
+
 		if [ $ii -lt $currentSat ] ; then
-			echo -n "="
+			if [ $ii == $colorPosition ] ; then
+				echo -en "$(getColor)o$(color off)"
+			else
+				echo -n "="
+			fi
 		else
-			echo -n "-"
+			if [ $ii == $colorPosition ] ; then
+				echo -en "$(getColor)o$(color off)"
+			else
+				echo -n "-"
+			fi
 		fi
 	done
 	for (( ii=0 ; ii<50-currentBrightness ; ii=ii+1 )) ; do
 		echo -n " "
 	done
-	echo -n "] "
+	echo -en "$(color ltwhite)]$(color off) "
 	if [ ${_SWITCH[$_SELECTED_LAMP]} != "true" ] ; then
 		echo -n "off "
 	else
@@ -202,6 +257,18 @@ toggleSwitch() {
 }
 
 lastTime=$(date +%s%3N) # seconds + milliseconds
+
+# initial screen
+echo -en "   [$(color red)=$(color yellow)=$(color green)=$(color white)=$(color blue)=$(color magenta)=$(color ltwhite)--PRESS-h-FOR-HELP--------------------------$(color off)]"
+
+printHelpScreen() {
+	echo ""
+	echo "      w,s   BRIGHTNESS   -"
+	echo "      a,d   SATURATION   ="
+	echo "      q,e   COLOR        o"
+	echo "      1..9  LAMP"
+}
+
 while true; do
 	# main loop
 
@@ -213,6 +280,7 @@ while true; do
 	_NEW_LAMP=51;
 	_Q=0
 	_E=0
+	_H=0
 
 	readAKey
 
@@ -236,6 +304,9 @@ while true; do
 	if [ $_E == 1 ] ; then
 		# hue
 		setColor 1000
+	fi
+	if [ $_H == 1 ] ; then
+		printHelpScreen
 	fi
 
 	# toggle switch
