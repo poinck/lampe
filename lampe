@@ -130,7 +130,7 @@ setSwitch() {
 	# debug
 	# echo -n $1
 
-	if [ $1 == 1 ] ; then 
+	if [ "$1" == 1 ] ; then 
 		_SWITCH[$_SELECTED_LAMP]="true"
 	else
 		_SWITCH[$_SELECTED_LAMP]="false"
@@ -170,19 +170,19 @@ getColor() {
 }
 
 printMainScreen() {
-	currentBrightness=$((_BRIGHTNESS[$_SELECTED_LAMP]/5))
-	currentSat=$((_SAT[$_SELECTED_LAMP]*currentBrightness/254))
+	currentBrightness=$((_BRIGHTNESS[_SELECTED_LAMP]/5))
+	currentSat=$((_SAT[_SELECTED_LAMP]*currentBrightness/254))
 
 	echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
 	echo -en "Lamp $(getColor)$_SELECTED_LAMP $(color off)["
-	for (( ii=0 ; ii<$currentBrightness ; ii=ii+1 )) ; do 
+	for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do 
 		if [ $ii -lt $currentSat ] ; then
 			echo -n "="
 		else
 			echo -n "-"
 		fi
 	done
-	for (( ii=0 ; ii<50-$currentBrightness ; ii=ii+1 )) ; do
+	for (( ii=0 ; ii<50-currentBrightness ; ii=ii+1 )) ; do
 		echo -n " "
 	done
 	echo -n "] "
@@ -201,7 +201,7 @@ toggleSwitch() {
 	fi
 }
 
-lastTime=$(date +%s)
+lastTime=$(date +%s%3N) # seconds + milliseconds
 while true; do
 	# main loop
 
@@ -263,10 +263,11 @@ while true; do
 	printMainScreen
 	
 	# send to hue bridge
-	thisTime=$(date +%s)
-	if [ $thisTime-$lastTime > 250000 ] || [ $toggle == 1 ] ; then
-		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT http://$bridgeip/api/newdeveloper/lights/$_SELECTED_LAMP/state -m 1 > /dev/null
-		lastTime=$(date +%s)
+	thisTime=$(date +%s%3N)
+	diffTime=$((thisTime-lastTime))
+	if [ $diffTime -gt 250 ] || [ $toggle == 1 ] ; then
+		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT http://$bridgeip/api/newdeveloper/lights/"$_SELECTED_LAMP"/state -m 1 > /dev/null
+		lastTime=$(date +%s%3N)
 	fi
 	
 done
