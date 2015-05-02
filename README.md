@@ -22,7 +22,7 @@ q,e - change hue-color
 ```
 
 ### example output 
-![]("lampe.png")
+![lampe](/lampe/lampe.png)
 
 ``` 
    [======--PRESS-h-FOR-HELP--------------------------]
