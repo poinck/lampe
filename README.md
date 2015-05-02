@@ -22,6 +22,8 @@ q,e - change hue-color
 ```
 
 ### example output 
+![]("lampe.png")
+
 ``` 
    [======--PRESS-h-FOR-HELP--------------------------]
       w,s   BRIGHTNESS   -
