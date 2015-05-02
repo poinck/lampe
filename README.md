@@ -1,5 +1,6 @@
 # Readme: lampe
 interactive bash-script to control up to 9 hue-lamps.
+![lampe](/lampe.png)
 
 ## Requirements
 Following cli-tools need to be installed on your system in order to use "lampe"
@@ -22,7 +23,6 @@ q,e - change hue-color
 ```
 
 ### example output 
-![lampe](/lampe.png)
 
 ``` 
    [======--PRESS-h-FOR-HELP--------------------------]
