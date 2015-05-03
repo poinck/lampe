@@ -146,6 +146,51 @@ setSwitch() {
 	fi
 }
 
+# get colorEscapes from colors
+lColor() {
+	case $1 in
+		"red")
+			echo -en "\e[0;31m"
+		;;
+		"yellow")
+			echo -en "\e[0;33m"
+		;;
+		"green")
+			echo -en "\e[0;32m"
+		;;
+		"blue")
+			echo -en "\e[0;34m"
+		;;
+		"magenta")
+			echo -en "\e[0;35m"
+		;;
+		"white")
+			echo -en "\e[0;37m"
+		;;
+		"ltred")
+			echo -en "\e[1;31m"
+		;;
+		"ltyellow")
+			echo -en "\e[1;33m"
+		;;
+		"ltgreen")
+			echo -en "\e[1;32m"
+		;;
+		"ltblue")
+			echo -en "\e[1;34m"
+		;;
+		"ltmagenta")
+			echo -en "\e[1;35m"
+		;;
+		"ltwhite")
+			echo -en "\e[1;37m"
+		;;
+		"off")
+			echo -en "\e[0m"
+		;;
+	esac
+}
+
 getColorByValue() {
 	hue=$1
 
@@ -171,7 +216,7 @@ getColorByValue() {
 		# red
 		colorEscape="red"
 	fi
-	echo -en "$(color $colorEscape)"
+	echo -en "$(lColor $colorEscape)"
 }
 
 getColor() {
@@ -204,7 +249,7 @@ getColor() {
 		# red
 		colorEscape="red"
 	fi
-	echo -en "$(color $bold$colorEscape)"
+	echo -en "$(lColor $bold$colorEscape)"
 }
 
 printMainScreen() {
@@ -219,20 +264,20 @@ printMainScreen() {
 	# echo "$colorPosition"
 
 	echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
-	echo -en " $(getColor)$_SELECTED_LAMP $(color ltwhite)[$(color off)"
+	echo -en " $(getColor)$_SELECTED_LAMP $(lColor ltwhite)[$(lColor off)"
 	for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do 
 		colorValue=$((65279*ii/currentBrightness))
 		echo -en "$(getColorByValue $colorValue)"
 
 		if [ $ii -lt $currentSat ] ; then
 			if [ $ii == $colorPosition ] ; then
-				echo -en "$(getColor)o$(color off)"
+				echo -en "$(getColor)o$(lColor off)"
 			else
 				echo -n "="
 			fi
 		else
 			if [ $ii == $colorPosition ] ; then
-				echo -en "$(getColor)o$(color off)"
+				echo -en "$(getColor)o$(lColor off)"
 			else
 				echo -n "-"
 			fi
@@ -241,7 +286,7 @@ printMainScreen() {
 	for (( ii=0 ; ii<50-currentBrightness ; ii=ii+1 )) ; do
 		echo -n " "
 	done
-	echo -en "$(color ltwhite)]$(color off) "
+	echo -en "$(lColor ltwhite)]$(lColor off) "
 	if [ ${_SWITCH[$_SELECTED_LAMP]} != "true" ] ; then
 		echo -n "off "
 	else
@@ -260,7 +305,7 @@ toggleSwitch() {
 lastTime=$(date +%s%3N) # seconds + milliseconds
 
 # initial screen
-echo -en "   [$(color red)=$(color yellow)=$(color green)=$(color white)=$(color blue)=$(color magenta)=$(color ltwhite)--PRESS-h-FOR-HELP--------------------------$(color off)]"
+echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor white)=$(lColor blue)=$(lColor magenta)=$(lColor ltwhite)--PRESS-h-FOR-HELP--------------------------$(lColor off)]"
 
 printHelpScreen() {
 	echo ""
