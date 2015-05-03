@@ -271,13 +271,13 @@ printMainScreen() {
 
 		if [ $ii -lt $currentSat ] ; then
 			if [ $ii == $colorPosition ] ; then
-				echo -en "$(getColor)o$(lColor off)"
+				echo -en "$(getColor)C$(lColor off)"
 			else
 				echo -n "="
 			fi
 		else
 			if [ $ii == $colorPosition ] ; then
-				echo -en "$(getColor)o$(lColor off)"
+				echo -en "$(getColor)C$(lColor off)"
 			else
 				echo -n "-"
 			fi
@@ -311,7 +311,7 @@ printHelpScreen() {
 	echo ""
 	echo "      w,s   BRIGHTNESS   -"
 	echo "      a,d   SATURATION   ="
-	echo "      q,e   COLOR        o"
+	echo "      q,e   COLOR        C"
 	echo "      1..9  LAMP"
 }
 
