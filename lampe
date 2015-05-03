@@ -175,6 +175,7 @@ getColorByValue() {
 }
 
 getColor() {
+	# TODO  try to reuse getColorByValue()
 	hue=${_COLOR[$_SELECTED_LAMP]}
 
 	bold=""
