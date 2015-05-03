@@ -39,3 +39,4 @@ q,e - change hue-color
 - [ ] hue-bridge discovery (without using meethue.com/api/nupnp if possible) and user-configuration
 - [x] help option
 - [ ] on start get current light-settings from hue-bridge
+- [ ] depricate use of "color", use native color-escapes of bash
