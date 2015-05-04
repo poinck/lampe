@@ -1,4 +1,5 @@
 #!/bin/bash
+# interactive bash script to control up to 9 hue lamps
 # by Andre Klausnitzer (poinck)
 
 bridgeip="192.168.2.172"
@@ -50,6 +51,10 @@ readAKey() {
 		"h")
 			# help
 			_H=1
+		;;
+		"z")
+			# color-selection with zenity
+			_Z=1
 		;;
 		[1-9])
 			# select the current lamp
@@ -302,90 +307,253 @@ toggleSwitch() {
 	fi
 }
 
-lastTime=$(date +%s%3N) # seconds + milliseconds
-
-# initial screen
-echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor white)=$(lColor blue)=$(lColor magenta)=$(lColor ltwhite)--PRESS-h-FOR-HELP--------------------------$(lColor off)]"
-
 printHelpScreen() {
 	echo ""
 	echo "      w,s   BRIGHTNESS   -"
 	echo "      a,d   SATURATION   ="
 	echo "      q,e   COLOR        C"
 	echo "      1..9  LAMP"
+	echo "      z     ZENITY"
 }
 
-while true; do
-	# main loop
+lampeMain() {
+	# initial screen
+	echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor white)=$(lColor blue)=$(lColor magenta)=$(lColor ltwhite)--PRESS-h-FOR-HELP--------------------------$(lColor off)]"
 
-	# initialize global keys
-	_UP=0
-	_DOWN=0
-	_RIGHT=0
-	_LEFT=0
-	_NEW_LAMP=51;
-	_Q=0
-	_E=0
-	_H=0
+	lastTime=$(date +%s%3N) # seconds + milliseconds
+	while true; do
+		# main loop
 
-	readAKey
+		# initialize global keys
+		_UP=0
+		_DOWN=0
+		_RIGHT=0
+		_LEFT=0
+		_NEW_LAMP=51;
+		_Q=0
+		_E=0
+		_H=0
+		_Z=0
 
-	# handle brightness and saturation
-	if [ $_UP == 1 ] ; then
-		setBrightness 5
-	fi
-	if [ $_DOWN == 1 ] ; then
-		setBrightness -5
-	fi
-	if [ $_RIGHT == 1 ] ; then
-		setSat 10
-	fi
-	if [ $_LEFT == 1 ] ; then
-		setSat -10
-	fi
-	if [ $_Q == 1 ] ; then
-		# hue
-		setColor -1000
-	fi
-	if [ $_E == 1 ] ; then
-		# hue
-		setColor 1000
-	fi
-	if [ $_H == 1 ] ; then
-		printHelpScreen
-	fi
+		readAKey
 
-	# toggle switch
-	if [ $_NEW_LAMP -lt 51 ] ; then
-		# debug
-		# echo "NL$_NEW_LAMP LL$_LAST_LAMP "
+		# handle brightness and saturation
+		if [ $_UP == 1 ] ; then
+			setBrightness 5
+		fi
+		if [ $_DOWN == 1 ] ; then
+			setBrightness -5
+		fi
+		if [ $_RIGHT == 1 ] ; then
+			setSat 10
+		fi
+		if [ $_LEFT == 1 ] ; then
+			setSat -10
+		fi
+		if [ $_Q == 1 ] ; then
+			# hue
+			setColor -1000
+		fi
+		if [ $_E == 1 ] ; then
+			# hue
+			setColor 1000
+		fi
+		if [ $_H == 1 ] ; then
+			printHelpScreen
+		fi
+		if [ $_Z == 1 ] ; then
+			lampeZenityColor $_SELECTED_LAMP
+		fi
 
-		if [ $_LAST_LAMP == $_NEW_LAMP ] ; then
-			toggleSwitch
-			toggle=1
+		# toggle switch
+		if [ $_NEW_LAMP -lt 51 ] ; then
+			# debug
+			# echo "NL$_NEW_LAMP LL$_LAST_LAMP "
+
+			if [ $_LAST_LAMP == $_NEW_LAMP ] ; then
+				toggleSwitch
+				toggle=1
+			else
+				toggle=0
+			fi
+			_LAST_LAMP=$_NEW_LAMP
 		else
+			_LAST_LAMP=51
 			toggle=0
 		fi
-		_LAST_LAMP=$_NEW_LAMP
-	else
-		_LAST_LAMP=51
-		toggle=0
-	fi
 
-	if [ ${_SAT[$_SELECTED_LAMP]} -lt 1 ] ; then
-		_SAT[$_SELECTED_LAMP]=1
-	fi
-	color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
+		# FIXME is this workarround still needed?
+		if [ ${_SAT[$_SELECTED_LAMP]} -lt 1 ] ; then
+			_SAT[$_SELECTED_LAMP]=1
+		fi
 
-	printMainScreen
+		printMainScreen
 	
-	# send to hue bridge
+		sendToHueBridge
+	done
+}
+
+sendToHueBridge() {
+	color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
 	thisTime=$(date +%s%3N)
 	diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 250 ] || [ $toggle == 1 ] ; then
 		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/newdeveloper/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		lastTime=$(date +%s%3N)
 	fi
+}
+
+fEval() {
+	# taken from http://www.linuxjournal.com/content/floating-point-math-bash, 
+	# by Mitch Frazier
+
+    local stat=0
+    local result=0.0
+    if [[ $# -gt 0 ]]; then
+        result=$(echo "$fScale $*" | bc -q 2> /dev/null)
+        stat=$?
+        if [[ $stat -eq 0  &&  -z "$result" ]]; then stat=1; fi
+    fi
+    echo $result
+    return $stat
+}
+
+fCond() {
+	# taken from http://www.linuxjournal.com/content/floating-point-math-bash
+	# by Mitch Frazier
+
+    local cond=0
+    if [[ $# -gt 0 ]]; then
+        cond=$(echo "$*" | bc -q 2> /dev/null)
+        if [[ -z "$cond" ]]; then cond=0; fi
+        if [[ "$cond" != 0  &&  "$cond" != 1 ]]; then cond=0; fi
+    fi
+    local stat=$((cond == 0))
+    return $stat
+}
+
+rgbToHSB() {
+	# implementation ported from python2.7 colorsys.rgb_to_hsv()
+
+	fScale="scale=5;"
+	r=$(fEval "$1 / 255")
+	g=$(fEval "$2 / 255")
+	b=$(fEval "$3 / 255")
+
+	# debug
+	# echo "r = $r"
+	# echo "g = $g"
+	# echo "b = $b"
+
+	minc=$b
+	if fCond "$r < $g" ; then
+		if fCond "$r < $b" ; then
+			minc=$r
+		fi
+	else
+		if fCond "$g < $b" ; then
+			minc=$g
+		fi
+	fi
+
+	# debug
+	# echo "minc = $minc"
+
+	maxc=$b
+	if fCond "$r > $g" ; then
+		if fCond "$r > $b" ; then
+			maxc=$r
+		fi
+	else
+		if fCond "$g > $b" ; then
+			maxc=$g
+		fi
+	fi
+
+	# debug
+	# echo "maxc = $maxc"
+
+	_bri=$maxc
+	if [ $minc = $maxc ] ; then
+		_hue=0
+		_sat=0
+	else
+		_sat=$(fEval "($maxc - $minc) / $maxc")
+		rrrc=$(fEval "($maxc - $r) / ($maxc - $minc)")
+		gggc=$(fEval "($maxc - $g) / ($maxc - $minc)")
+		bbbc=$(fEval "($maxc - $b) / ($maxc - $minc)")
+		if [ "$r" = "$maxc" ] ; then
+			_hue=$(fEval "$bbbc - $gggc")
+
+			# debug
+			# echo "_hue = $_hue"
+		elif [ "$g" = "$maxc" ] ; then
+			_hue=$(fEval "2.0 + $rrrc - $bbbc")
+
+			# debug
+			# echo "_hue = $_hue"
+		else
+			_hue=$(fEval "4.0 + $gggc - $rrrc")
+
+			# debug
+			# echo "_hue = $_hue"
+		fi
+		_hue=$(fEval "$_hue / 6.0")
+
+		# debug
+		# echo "_hue = $_hue"
+	fi
+
+	set -f # turn off pathname expansion: *
+	fScale="scale=0;"
+	_hue=$(fEval "$_hue * 65535")
+	_hue=$(echo "$_hue" | cut -f 1 -d.)
+	_bri=$(fEval "$_bri * 255")
+	_bri=$(echo "$_bri" | cut -f 1 -d.)
+	_sat=$(fEval "$_sat * 255")
+	_sat=$(echo "$_sat" | cut -f 1 -d.)
+	set +f
+}
+
+lampeZenityColor() {
+	zColor=$(zenity --color-selection --show-palette 2> /dev/null)
+	rr=$(echo "$zColor" | cut -b 2-3)
+	gg=$(echo "$zColor" | cut -b 6-7)
+	bb=$(echo "$zColor" | cut -b 10-11)
+
+	# convert from hex to dec
+	rr=$((16#$rr))
+	gg=$((16#$gg))
+	bb=$((16#$bb))
+	rgbToHSB $rr $gg $bb
 	
-done
+	# debug
+	# echo $zColor
+	# echo "rr = $rr"
+	# echo "gg = $gg"
+	# echo "bb = $bb"	
+	# echo "hue = $_hue"
+	# echo "bri = $_bri"
+	# echo "sat = $_sat"
+
+	if [ $_hue -lt 0 ] ; then
+		_hue=$((_hue+65535)) # FIXME lucky guess
+	fi
+	_COLOR[$1]=$_hue
+	if [ $_bri -gt 254 ] ; then
+		_bri=254
+	fi
+	_BRIGHTNESS[$1]=$_bri
+	_SAT[$1]=$_sat
+}
+
+if [ "$1" = "-z" ] ; then
+	# open zenity dialog to select color and quit
+	_SELECTED_LAMP=$2
+	lampeZenityColor $2
+	sendToHueBridge
+else
+	# default: interactive-mode
+	lampeMain
+fi
 
