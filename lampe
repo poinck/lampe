@@ -256,8 +256,8 @@ printMainScreen() {
 	currentBrightness=$((_BRIGHTNESS[_SELECTED_LAMP]/5))
 	currentSat=$((_SAT[_SELECTED_LAMP]*currentBrightness/254))
 	colorPosition=$((_COLOR[_SELECTED_LAMP]*currentBrightness/65279))
-	if [ $colorPosition -gt 49 ] ; then
-		colorPosition=49
+	if [ $colorPosition -gt 1 ] ; then
+		colorPosition=$((colorPosition-1))
 	fi
 
 	# debug

@@ -34,8 +34,9 @@ q,e - change hue-color
 ```
 
 ## TODOs
-- [x] add support for hue to set color with Q and E
+- [x] add support for hue to set color with "q" and "e"
 - [ ] hue-bridge discovery (without using meethue.com/api/nupnp if possible) and user-configuration
 - [x] help option
 - [ ] on start get current light-settings from hue-bridge
 - [x] depricate use of "color", use native shell-escapes for colors in bash
+- [ ] option "v" to save current setting as new default for selected lamp and option "r" to restore this default (needs user-configuration)
