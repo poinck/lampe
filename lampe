@@ -531,13 +531,13 @@ lampeZenityColor() {
 	# echo $zColor
 	# echo "rr = $rr"
 	# echo "gg = $gg"
-	# echo "bb = $bb"	
+	# echo "bb = $bb"
 	# echo "hue = $_hue"
 	# echo "bri = $_bri"
 	# echo "sat = $_sat"
 
 	if [ $_hue -lt 0 ] ; then
-		_hue=$((_hue+65535)) # FIXME lucky guess
+		_hue=$((_hue+65535)) # rotate hue
 	fi
 	_COLOR[$1]=$_hue
 	if [ $_bri -gt 254 ] ; then
