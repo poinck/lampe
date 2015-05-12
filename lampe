@@ -224,8 +224,8 @@ getColorByValue() {
 	echo -en "$(lColor $colorEscape)"
 }
 
+# get color by color of selected lamp
 getColor() {
-	# TODO  try to reuse getColorByValue()
 	hue=${_COLOR[$_SELECTED_LAMP]}
 
 	bold=""
@@ -389,11 +389,12 @@ lampeMain() {
 
 		printMainScreen
 	
-		sendToHueBridge
+		hbSendLampState
 	done
 }
 
-sendToHueBridge() {
+# send lamp state (switch and color) to Hue Bridge
+hbSendLampState() {
 	color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
 	thisTime=$(date +%s%3N)
 	diffTime=$((thisTime-lastTime))
@@ -432,9 +433,9 @@ fCond() {
     return $stat
 }
 
+# convert RGB color to HSB/HSV color
+# implementation ported from python2.7 colorsys.rgb_to_hsv()
 rgbToHSB() {
-	# implementation ported from python2.7 colorsys.rgb_to_hsv()
-
 	fScale="scale=5;"
 	r=$(fEval "$1 / 255")
 	g=$(fEval "$2 / 255")
@@ -551,7 +552,7 @@ if [ "$1" = "-z" ] ; then
 	# open zenity dialog to select color and quit
 	_SELECTED_LAMP=$2
 	lampeZenityColor $2
-	sendToHueBridge
+	hbSendLampState
 else
 	# default: interactive-mode
 	lampeMain
