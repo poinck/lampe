@@ -50,3 +50,5 @@ q,e - change hue-color
 - [ ] option "v" or (SHIFT)"S" to save current setting as new default for selected lamp and option "r" or (SHIFT)"R" to restore this default (needs user-configuration: store in bridge or in ~/.lamperc?)
 - [x] special oneshot-mode to pick color with a GTK color selection dialog powered by "zenity" just for the @nylki
 - [x] enable oneshot-mode while running in interactive-mode with "z"
+- [ ] write Makefile to install the script system-wide
+- [ ] for the first major release: write ebuild for a Gentoo-overlay (which I need to provide anyway)
