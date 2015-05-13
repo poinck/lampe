@@ -45,12 +45,14 @@ q,e - change hue-color
 
 ## TODOs
 - [x] add support for hue to set color with "q" and "e"
-- [ ] hue-bridge discovery (without using meethue.com/api/nupnp if possible) and user-configuration (~/.lamperc)
 - [x] help option
-- [ ] on start get current light-settings from hue-bridge
 - [x] depricate use of "color", use native shell-escapes for colors in bash
-- [ ] option "v" or (SHIFT)"S" to save current setting as new default for selected lamp and option "r" or (SHIFT)"R" to restore this default (needs user-configuration: store in bridge or in ~/.lamperc?)
 - [x] special oneshot-mode to pick color with a GTK color selection dialog powered by "zenity" just for the @nylki
 - [x] enable oneshot-mode while running in interactive-mode with "z"
-- [ ] write Makefile to install the script system-wide
-- [ ] for the first major release: write ebuild for a Gentoo-overlay (which I need to provide anyway)
+
+**following** TODOs are set up as Github-issues
+- hue-bridge discovery (without using meethue.com/api/nupnp if possible) and user-configuration (~/.lamperc)
+- write Makefile to install the script system-wide
+- for the first major release: write ebuild for a Gentoo-overlay (which I need to provide anyway)
+- on start get current light-settings from hue-bridge
+- option "v" or (SHIFT)"S" to save current setting as new default for selected lamp and option "r" or (SHIFT)"R" to restore this default (needs user-configuration: store in bridge or in ~/.lamperc?)
