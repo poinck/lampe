@@ -22,6 +22,7 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
   s - lower brightness
   d - increase saturation
 q,e - change hue-color
+  z - open zenity-dialog to pick RGB-color 
 ```
 **example output**
  
@@ -29,8 +30,9 @@ q,e - change hue-color
    [======--PRESS-h-FOR-HELP--------------------------]
       w,s   BRIGHTNESS   -
       a,d   SATURATION   =
-      q,e   COLOR        o
+      q,e   COLOR        C
       1..9  LAMP
+      z     ZENITY
  1 [===C========================------                ] off 
 ```
 
