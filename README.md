@@ -6,14 +6,27 @@ interactive bash-script to control up to 9 hue-lamps.
 ## Requirements
 Following cli-tools need to be installed on your system in order to use "lampe"
 - curl
+- ping
+- ip
 - bc (optional)
 - zenity (optinal)
 
+## Installation (optional)
+It is planned to provide an install-script using a Makefile
+
 ## Configuration
-This script does not register a user on the hue-bridge; see [Getting Started at meethue.com](http://www.developers.meethue.com/documentation/getting-started). After that you should set the IP of your bridge by modifying the variable "bridgeip" inside the "lampe"-script with your favourite editor.
+This script does not register a user on the hue-bridge, yet. See [Getting Started at meethue.com](http://www.developers.meethue.com/documentation/getting-started) to enable developer-mode. After that you can start "lampe" in a shell. It will ask you for automatic discovery. If you cannot use automatic discovery in your network or detection fails, you could set the IP of your bridge in "~/.lamperc" manually like this:
 ```.sh
 bridgeip="192.168.?.???"
 ```
+
+**Reset**
+
+To reset the configuration, remove '.lamperc' from your home-directory:
+```.sh
+rm ~/.lamperc
+```
+
 ## Usage
 Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
 ```
@@ -25,7 +38,7 @@ q,e - change hue-color
   z - open zenity-dialog to pick RGB-color 
 ```
 **example output**
- 
+
 ``` 
    [======--PRESS-h-FOR-HELP--------------------------]
       w,s   BRIGHTNESS   -
@@ -50,7 +63,7 @@ q,e - change hue-color
 - [x] special oneshot-mode to pick color with a GTK color selection dialog powered by "zenity" just for the @nylki
 - [x] enable oneshot-mode while running in interactive-mode with "z"
 
-**following** TODOs are set up as Github-issues
+**following** TODOs are set up as Github-issues:
 - hue-bridge discovery (without using meethue.com/api/nupnp if possible) and user-configuration (~/.lamperc)
 - write Makefile to install the script system-wide
 - for the first major release: write ebuild for a Gentoo-overlay (which I need to provide anyway)

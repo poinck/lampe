@@ -2,8 +2,6 @@
 # interactive bash script to control up to 9 hue lamps
 # by Andre Klausnitzer (poinck)
 
-bridgeip="192.168.2.172"
-
 readKey() {
     # Wait for first char
     if read -s -n 1 _KEY; then
@@ -551,77 +549,89 @@ lampeZenityColor() {
 
 # try to detect one Hue Bridge in the LAN (ipv4 class-C networks only, can detect only one bridge)
 hbDetect() {
-	# TODO  try to use something like this to narrow the range of IPs that need to be tested:
-	#       rm /tmp/lampe-1 ; $subnet=192.168.2. ( for addr in `seq 1 1 254 `; do   ( ping -c 1 -t 1 $subnet$addr > /dev/null && echo $subnet$addr >> /tmp/lampe-1 ) & done ) > /dev/null ; cat /tmp/lampe-1
-	#       - it removes any previous findings (this should be done after the scan)
-	#       - than it pings the whole subnet in parallel and writes ip-adresses to a file
-	#       - this file could be read line by line to find the webserver on the Hue Bridge
+	_BRIDGE_FOUND=false
 	
-	bridgeNotFound=true
+	# find out subnet and own IP
 	ipByte4=$(ip -f inet addr show | grep "/24" | sed -r "s/inet //" | cut -f 1-4 -d. | cut -f 1 -d"/" | cut -f 4 -d.)
 	currentIpByte4=$ipByte4
 	ipBytes13=$(ip -f inet addr show | grep "/24" | sed -r "s/inet //" | cut -f 1-3 -d.)
 	
 	# debug
-	echo "ipByte4 = '$ipByte4', ipBytes13 = '$ipBytes13'"
+	# echo "ipByte4 = '$ipByte4', ipBytes13 = '$ipBytes13'"
 	
-	ipsCount=0
-	while [ $ipsCount -lt 254 ] && [ $bridgeNotFound == true ] ; do
-		ipsCount=$((ipsCount+1))
-		
-		# debug 
-		echo "ipsCount = $ipsCount"
-		
-		if [ $currentIpByte4 -ge $ipByte4 ] ; then
-			if [ $currentIpByte4 -lt 254 ] ; then
-				currentIpByte4=$((currentIpByte4+1))
-			else 
-				currentIpByte4=1
-			fi
-		else
-			if [ $currentIpByte4 -lt $ipByte4 ] ; then
-				currentIpByte4=$((currentIpByte4+1))
-			else
-				ipsCount=254
-			fi
-		fi
-		ipBytes14="$ipBytes13.$currentIpByte4"
-		
-		# debug
-		echo "ip = $ipBytes14"
+	# ping the whole subnet in parallel and write ip-adresses to a file
+	tmpIPsFile="/tmp/lampe$$.tmp"
+	subnet="$ipBytes13."
+	( for addr in `seq 1 1 254 `; do ( ping -c 1 -t 3 $subnet$addr > /dev/null && echo $subnet$addr >> "$tmpIPsFile" ) & done ) > /dev/null 
 	
-		hbDescription=$(curl -D -X http://$ipBytes14/description.xml -m 1 2> /dev/null)
-		hbModel=$(echo $hbDescription | grep "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>")
-		
+	# debug
+	# cat $tmpIPsFile
+	
+	# check for model description
+	while read nextIP ; do
 		# debug
-		echo "hbDescription (response) = '$hbDescription'"
-		echo "hbModel = '$hbModel'"
+		# echo "nextIP = $nextIP"
 		
-		if [ -n "$hbModel" ] ; then
-			bridgeNotFound=false
-			
+		ownIP="$subnet$currentIpByte4"
+		if [ $nextIP != $ownIP ] ; then
+			hbDescription=$(curl -D -X http://$nextIP/description.xml -m 3 2> /dev/null)
+			hbModel=$(echo $hbDescription | grep "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>")
+		
 			# debug
-			echo "bridge found at '$ipBytes14'"
-		fi
+			# echo "hbDescription (response) = '$hbDescription'"
+			# echo "hbModel = '$hbModel'"
 		
-	done
-	
+			if [ -n "$hbModel" ] ; then
+				_BRIDGE_FOUND=true
+				bridgeip=$nextIP
+				echo "    bridge found at '$nextIP'"
+				break
+			fi	
+		fi
+	done < $tmpIPsFile
+	rm $tmpIPsFile
 }
 
-if [ "$1" = "-z" ] ; then
-	# open zenity dialog to select color and quit
-	_SELECTED_LAMP=$2
-	lampeZenityColor $2
-	hbSendLampState
-elif [ "$1" = "--detect" ] ; then
-	# detect Hue Bridge
-	
-	# TODO  detect Hue Bridge on first start
+# this function will be called, if the configuration is valid
+startLampe() {
+	if [ "$1" = "-z" ] ; then
+		# open zenity dialog to select color and quit
+		_SELECTED_LAMP=$2
+		lampeZenityColor $2
+		hbSendLampState
+	else
+		# default: interactive-mode
+		lampeMain
+	fi
+}
 
-	hbDetect
-		# FIXME remove test
+# check for first start (configuration)
+if [ -f ~/.lamperc ] ; then
+	# read configuration
+	source ~/.lamperc
+
+	startLampe
 else
-	# default: interactive-mode
-	lampeMain
+	
+	echo " $(lColor ltyellow)?$(lColor off) [======--$(lColor ltwhite)LAMPE$(lColor off)-------------------------------------]"
+	echo "    You are running 'lampe' for the first time. Do you "
+	echo -n "    wish automatic discovery and configuration? [y/n] "
+	read doIt
+	if [ "$doIt" == "y" ] || [ "$doIt" == "Y" ] ; then
+		hbDetect
+	fi
+		# TODO  else: give option to enter bridge-IP manually
+	
+	if [ "$_BRIDGE_FOUND" == true ] ; then
+		# store configuration
+		echo "bridgeip=\"$bridgeip\"" > ~/.lamperc
+
+		# TODO  register user at bridge
+		
+		startLampe
+	else
+		echo " $(lColor ltred)!$(lColor off)  no bridge found, error 2"
+		exit 2
+	fi
 fi
 
