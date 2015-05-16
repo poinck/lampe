@@ -8,6 +8,9 @@ Following cli-tools need to be installed on your system in order to use "lampe"
 - curl
 - ping
 - ip
+- sed
+- cut
+- grep 
 - bc (optional)
 - zenity (optinal)
 
@@ -36,17 +39,6 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
   d - increase saturation
 q,e - change hue-color
   z - open zenity-dialog to pick RGB-color 
-```
-**example output**
-
-``` 
-   [======--PRESS-h-FOR-HELP--------------------------]
-      w,s   BRIGHTNESS   -
-      a,d   SATURATION   =
-      q,e   COLOR        C
-      1..9  LAMP
-      z     ZENITY
- 1 [===C========================------                ] off 
 ```
 
 **oneshot mode**
