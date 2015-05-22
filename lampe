@@ -551,7 +551,7 @@ lampeZenityColor() {
 hbDetect() {
 	_BRIDGE_FOUND=false
 	
-	# XXX   bug#4 fixed, all subnets will be searched, but discovery will stop on the first found hue-bridge
+	# XXX   bug#4 fixed, all subnets will be searched, but discovery will stop at the first found hue-bridge
 	tmpIPsFile="/tmp/lampe$$.tmp"
 	L_ips=$(ip -f inet addr show | grep "/24" | sed -r "s/inet //" | cut -f 1-4 -d. | cut -f 1 -d"/")
 	for L_ip in $L_ips ; do 
