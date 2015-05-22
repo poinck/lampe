@@ -557,7 +557,7 @@ lampeZenityColor() {
 
 # checks wether there is a hue bridge at given IP
 hbCheck() {
-	hbDescription=$(curl -D -X http://$1/description.xml -m 3 2> /dev/null)
+	hbDescription=$(curl http://$1/description.xml -m 3 2> /dev/null)
 	hbModel=$(echo $hbDescription | grep "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>")
 }
 
@@ -595,8 +595,6 @@ hbDetect() {
 		ownIP="$subnet$currentIpByte4"
 		if [ $nextIP != $ownIP ] ; then
 			hbCheck $nextIP
-#			hbDescription=$(curl -D -X http://$nextIP/description.xml -m 3 2> /dev/null)
-#			hbModel=$(echo $hbDescription | grep "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>")
 		
 			# debug
 			# echo "hbDescription (response) = '$hbDescription'"
