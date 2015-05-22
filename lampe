@@ -167,6 +167,9 @@ lColor() {
 		"magenta")
 			echo -en "\e[0;35m"
 		;;
+		"cyan")
+			echo -en "\e[0;36m"
+		;;
 		"white")
 			echo -en "\e[0;37m"
 		;;
@@ -184,6 +187,9 @@ lColor() {
 		;;
 		"ltmagenta")
 			echo -en "\e[1;35m"
+		;;
+		"ltcyan")
+			echo -en "\e[1;36m"
 		;;
 		"ltwhite")
 			echo -en "\e[1;37m"
@@ -207,8 +213,8 @@ getColorByValue() {
 		# green
 		colorEscape="green"
 	elif [ $hue -gt 31000 ] && [ $hue -lt 35001 ] ; then
-		# white, green-blue
-		colorEscape="white"
+		# white, green-blue, cyan
+		colorEscape="cyan"
 	elif [ $hue -gt 35000 ] && [ $hue -lt 48001 ] ; then
 		# blue
 		colorEscape="blue"
@@ -240,8 +246,8 @@ getColor() {
 		# green
 		colorEscape="green"
 	elif [ $hue -gt 31000 ] && [ $hue -lt 35001 ] ; then
-		# white, green-blue
-		colorEscape="white"
+		# white, green-blue, cyan
+		colorEscape="cyan"
 	elif [ $hue -gt 35000 ] && [ $hue -lt 48001 ] ; then
 		# blue
 		colorEscape="blue"
@@ -414,6 +420,7 @@ fEval() {
         stat=$?
         if [[ $stat -eq 0  &&  -z "$result" ]]; then stat=1; fi
     fi
+    
     echo $result
     return $stat
 }
@@ -429,6 +436,7 @@ fCond() {
         if [[ "$cond" != 0  &&  "$cond" != 1 ]]; then cond=0; fi
     fi
     local stat=$((cond == 0))
+    
     return $stat
 }
 
@@ -556,7 +564,7 @@ hbDetect() {
 	L_ips=$(ip -f inet addr show | grep "/24" | sed -r "s/inet //" | cut -f 1-4 -d. | cut -f 1 -d"/")
 	for L_ip in $L_ips ; do 
 		# debug
-		# echo " L_ip = '$L_ip'"
+		# echo "L_ip = '$L_ip'"
 		
 		ipByte4=$(echo $L_ip | cut -f 4 -d.)
 		currentIpByte4=$ipByte4
@@ -621,9 +629,9 @@ else
 	
 	echo " $(lColor ltyellow)?$(lColor off) [======--$(lColor ltwhite)LAMPE$(lColor off)-------------------------------------]"
 	echo "    You are running 'lampe' for the first time. Do you "
-	echo -n "    wish automatic discovery and configuration? [y/n] "
+	echo -n "    wish automatic discovery and configuration? [$(lColor ltwhite)y$(lColor off)/$(lColor red)n$(lColor off)] "
 	read doIt
-	if [ "$doIt" == "y" ] || [ "$doIt" == "Y" ] ; then
+	if [ "$doIt" == "y" ] || [ "$doIt" == "Y" ] || [ "$doIt" == "" ] ; then
 		hbDetect
 	fi
 		# TODO  else: give option to enter bridge-IP manually
