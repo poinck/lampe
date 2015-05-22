@@ -555,6 +555,12 @@ lampeZenityColor() {
 	_SAT[$1]=$_sat
 }
 
+# checks wether there is a hue bridge at given IP
+hbCheck() {
+	hbDescription=$(curl -D -X http://$1/description.xml -m 3 2> /dev/null)
+	hbModel=$(echo $hbDescription | grep "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>")
+}
+
 # try to detect the first Hue Bridge in the LAN (ipv4 class-C networks only, can detect only one bridge)
 hbDetect() {
 	_BRIDGE_FOUND=false
@@ -588,8 +594,9 @@ hbDetect() {
 		
 		ownIP="$subnet$currentIpByte4"
 		if [ $nextIP != $ownIP ] ; then
-			hbDescription=$(curl -D -X http://$nextIP/description.xml -m 3 2> /dev/null)
-			hbModel=$(echo $hbDescription | grep "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>")
+			hbCheck $nextIP
+#			hbDescription=$(curl -D -X http://$nextIP/description.xml -m 3 2> /dev/null)
+#			hbModel=$(echo $hbDescription | grep "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>")
 		
 			# debug
 			# echo "hbDescription (response) = '$hbDescription'"
@@ -598,12 +605,23 @@ hbDetect() {
 			if [ -n "$hbModel" ] ; then
 				_BRIDGE_FOUND=true
 				bridgeip=$nextIP
-				echo "    bridge found at '$nextIP'"
+				echo "    bridge found at '$nextIP'."
 				break
 			fi	
 		fi
 	done < $tmpIPsFile
-	rm $tmpIPsFile
+	rm $tmpIPsFile 2> /dev/null
+}
+
+hbEnterIP() {
+	echo -n "    Please enter the IP of your HUE-bridge: "
+	read manualIP
+	hbCheck $manualIP
+	if [ -n "$hbModel" ] ; then
+		_BRIDGE_FOUND=true
+		bridgeip=$manualIP
+		echo "    bridge found."
+	fi	
 }
 
 # this function will be called, if the configuration is valid
@@ -626,18 +644,23 @@ if [ -f ~/.lamperc ] ; then
 
 	startLampe
 else
-	
+	# first start: ask user what to do
 	echo " $(lColor ltyellow)?$(lColor off) [======--$(lColor ltwhite)LAMPE$(lColor off)-------------------------------------]"
 	echo "    You are running 'lampe' for the first time. Do you "
-	echo -n "    wish automatic discovery and configuration? [$(lColor ltwhite)y$(lColor off)/$(lColor red)n$(lColor off)] "
+	echo -n "    wish automatic discovery and configuration? [$(lColor ltwhite)y$(lColor off)/$(lColor ltred)n$(lColor off)] "
 	read doIt
 	if [ "$doIt" == "y" ] || [ "$doIt" == "Y" ] || [ "$doIt" == "" ] ; then
-		hbDetect
+		hbDetect 2> /dev/null
+		if [ "$_BRIDGE_FOUND" == false ] ; then
+			echo " $(lColor ltred)?$(lColor off)  warning, unable to find bridge"
+			hbEnterIP
+		fi
+	else 
+		hbEnterIP
 	fi
-		# TODO  else: give option to enter bridge-IP manually
 	
 	if [ "$_BRIDGE_FOUND" == true ] ; then
-		# store configuration
+		# store configuration if bridge was found
 		echo "bridgeip=\"$bridgeip\"" > ~/.lamperc
 
 		# TODO  register user at bridge
