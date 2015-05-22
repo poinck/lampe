@@ -547,22 +547,28 @@ lampeZenityColor() {
 	_SAT[$1]=$_sat
 }
 
-# try to detect one Hue Bridge in the LAN (ipv4 class-C networks only, can detect only one bridge)
+# try to detect the first Hue Bridge in the LAN (ipv4 class-C networks only, can detect only one bridge)
 hbDetect() {
 	_BRIDGE_FOUND=false
 	
-	# find out subnet and own IP
-	ipByte4=$(ip -f inet addr show | grep "/24" | sed -r "s/inet //" | cut -f 1-4 -d. | cut -f 1 -d"/" | cut -f 4 -d.)
-	currentIpByte4=$ipByte4
-	ipBytes13=$(ip -f inet addr show | grep "/24" | sed -r "s/inet //" | cut -f 1-3 -d.)
-	
-	# debug
-	# echo "ipByte4 = '$ipByte4', ipBytes13 = '$ipBytes13'"
-	
-	# ping the whole subnet in parallel and write ip-adresses to a file
+	# XXX   bug#4: bridge discovery uses wrong subnet
 	tmpIPsFile="/tmp/lampe$$.tmp"
-	subnet="$ipBytes13."
-	( for addr in `seq 1 1 254 `; do ( ping -c 1 -t 3 $subnet$addr > /dev/null && echo $subnet$addr >> "$tmpIPsFile" ) & done ) > /dev/null 
+	L_ips=$(ip -f inet addr show | grep "/24" | sed -r "s/inet //" | cut -f 1-4 -d. | cut -f 1 -d"/")
+	for L_ip in $L_ips ; do 
+		# debug
+		# echo " L_ip = '$L_ip'"
+		
+		ipByte4=$(echo $L_ip | cut -f 4 -d.)
+		currentIpByte4=$ipByte4
+		ipBytes13=$(echo $L_ip | cut -f 1-3 -d.)
+		
+		# debug
+		# echo "ipByte4 = '$ipByte4', ipBytes13 = '$ipBytes13'"
+		
+		# ping the whole subnet in parallel and write ip-adresses to a file
+		subnet="$ipBytes13."
+		( for addr in `seq 1 1 254 `; do ( ping -c 1 -t 3 $subnet$addr > /dev/null && echo $subnet$addr >> "$tmpIPsFile" ) & done ) > /dev/null 
+	done
 	
 	# debug
 	# cat $tmpIPsFile
