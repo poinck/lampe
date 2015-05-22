@@ -1,13 +1,12 @@
 #!/bin/bash
+# interactive bash script to control up to 9 hue lamps
 # by Andre Klausnitzer (poinck)
-
-bridgeip="192.168.2.172"
 
 readKey() {
     # Wait for first char
     if read -s -n 1 _KEY; then
       	# Read rest of chars
-      	while read -s -N 1 -t 0.001 ; do # FIXME is there a timeout-problem? 
+      	while read -s -N 1 -t 0.001 ; do # FIXME is there a timeout-problem?
       		_KEY+="${REPLY}"
       	done
     fi
@@ -51,6 +50,10 @@ readAKey() {
 			# help
 			_H=1
 		;;
+		"z")
+			# color-selection with zenity
+			_Z=1
+		;;
 		[1-9])
 			# select the current lamp
 			_SELECTED_LAMP=$_KEY
@@ -61,31 +64,31 @@ readAKey() {
 
 # init brightness
 declare -a _BRIGHTNESS
-for (( b=1 ; b<10 ; b=b+1 )) ; do 
+for (( b=1 ; b<10 ; b=b+1 )) ; do
 	_BRIGHTNESS[$b]=32
 done
 
 # init saturation
 declare -a _SAT
-for (( s=1 ; s<10 ; s=s+1 )) ; do 
+for (( s=1 ; s<10 ; s=s+1 )) ; do
 	_SAT[$s]=192
 done
 
 # init switch
 declare -a _SWITCH # on or off
-for (( s=1 ; s<10 ; s=s+1 )) ; do 
+for (( s=1 ; s<10 ; s=s+1 )) ; do
 	_SWITCH[$s]="true"
 done
 
 # init color
-declare -a _COLOR 
-for (( s=1 ; s<10 ; s=s+1 )) ; do 
+declare -a _COLOR
+for (( s=1 ; s<10 ; s=s+1 )) ; do
 	_COLOR[$s]=12000 # orange
 done
 
 setBrightness() {
 	brightness=${_BRIGHTNESS[$_SELECTED_LAMP]}
-	
+
 	brightness=$((brightness+$1))
 	if [ $brightness -lt 1 ] ; then
 		# switch off lamp
@@ -104,11 +107,11 @@ setBrightness() {
 	# debug
 	# echo -n "param = $1 "
 	# echo "brightness = ${_BRIGHTNESS[$_SELECTED_LAMP]} "
-} 
+}
 
 setSat() {
 	sat=${_SAT[$_SELECTED_LAMP]}
-	
+
 	sat=$((sat+$1))
 	if [ $sat -lt 1 ] ; then
 		sat=1
@@ -121,7 +124,7 @@ setSat() {
 
 setColor() {
 	hue=${_COLOR[$_SELECTED_LAMP]}
-	
+
 	hue=$((hue+$1))
 	if [ $hue -lt 1 ] ; then
 		hue=1
@@ -133,13 +136,13 @@ setColor() {
 	# echo " $hue "
 
 	_COLOR[$_SELECTED_LAMP]=$hue
-} 
+}
 
 setSwitch() {
 	# debug
 	# echo -n $1
 
-	if [ "$1" == 1 ] ; then 
+	if [ "$1" == 1 ] ; then
 		_SWITCH[$_SELECTED_LAMP]="true"
 	else
 		_SWITCH[$_SELECTED_LAMP]="false"
@@ -164,6 +167,9 @@ lColor() {
 		"magenta")
 			echo -en "\e[0;35m"
 		;;
+		"cyan")
+			echo -en "\e[0;36m"
+		;;
 		"white")
 			echo -en "\e[0;37m"
 		;;
@@ -181,6 +187,9 @@ lColor() {
 		;;
 		"ltmagenta")
 			echo -en "\e[1;35m"
+		;;
+		"ltcyan")
+			echo -en "\e[1;36m"
 		;;
 		"ltwhite")
 			echo -en "\e[1;37m"
@@ -204,8 +213,8 @@ getColorByValue() {
 		# green
 		colorEscape="green"
 	elif [ $hue -gt 31000 ] && [ $hue -lt 35001 ] ; then
-		# white, green-blue
-		colorEscape="white"
+		# white, green-blue, cyan
+		colorEscape="cyan"
 	elif [ $hue -gt 35000 ] && [ $hue -lt 48001 ] ; then
 		# blue
 		colorEscape="blue"
@@ -219,8 +228,8 @@ getColorByValue() {
 	echo -en "$(lColor $colorEscape)"
 }
 
+# get color by color of selected lamp
 getColor() {
-	# TODO  try to reuse getColorByValue()
 	hue=${_COLOR[$_SELECTED_LAMP]}
 
 	bold=""
@@ -237,8 +246,8 @@ getColor() {
 		# green
 		colorEscape="green"
 	elif [ $hue -gt 31000 ] && [ $hue -lt 35001 ] ; then
-		# white, green-blue
-		colorEscape="white"
+		# white, green-blue, cyan
+		colorEscape="cyan"
 	elif [ $hue -gt 35000 ] && [ $hue -lt 48001 ] ; then
 		# blue
 		colorEscape="blue"
@@ -256,8 +265,8 @@ printMainScreen() {
 	currentBrightness=$((_BRIGHTNESS[_SELECTED_LAMP]/5))
 	currentSat=$((_SAT[_SELECTED_LAMP]*currentBrightness/254))
 	colorPosition=$((_COLOR[_SELECTED_LAMP]*currentBrightness/65279))
-	if [ $colorPosition -gt 49 ] ; then
-		colorPosition=49
+	if [ $colorPosition -gt 1 ] ; then
+		colorPosition=$((colorPosition-1))
 	fi
 
 	# debug
@@ -265,21 +274,21 @@ printMainScreen() {
 
 	echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
 	echo -en " $(getColor)$_SELECTED_LAMP $(lColor ltwhite)[$(lColor off)"
-	for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do 
+	for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do
 		colorValue=$((65279*ii/currentBrightness))
 		echo -en "$(getColorByValue $colorValue)"
 
 		if [ $ii -lt $currentSat ] ; then
 			if [ $ii == $colorPosition ] ; then
-				echo -en "$(getColor)o$(lColor off)"
+				echo -en "$(getColor)╋$(lColor off)"
 			else
-				echo -n "="
+				echo -n "━"
 			fi
 		else
 			if [ $ii == $colorPosition ] ; then
-				echo -en "$(getColor)o$(lColor off)"
+				echo -en "$(getColor)┻$(lColor off)"
 			else
-				echo -n "-"
+				echo -n "┈"
 			fi
 		fi
 	done
@@ -297,95 +306,368 @@ printMainScreen() {
 toggleSwitch() {
 	if [ ${_SWITCH[$_SELECTED_LAMP]} = "true" ] ; then
 		setSwitch 0
-	else 
+	else
 		setSwitch 1
 	fi
 }
-
-lastTime=$(date +%s%3N) # seconds + milliseconds
-
-# initial screen
-echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor white)=$(lColor blue)=$(lColor magenta)=$(lColor ltwhite)--PRESS-h-FOR-HELP--------------------------$(lColor off)]"
 
 printHelpScreen() {
 	echo ""
 	echo "      w,s   BRIGHTNESS   -"
 	echo "      a,d   SATURATION   ="
-	echo "      q,e   COLOR        o"
+	echo "      q,e   COLOR        C"
 	echo "      1..9  LAMP"
+	echo "      z     ZENITY"
 }
 
-while true; do
-	# main loop
+lampeMain() {
+	# initial screen
+	echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor white)=$(lColor blue)=$(lColor magenta)=$(lColor ltwhite)--PRESS-h-FOR-HELP--------------------------$(lColor off)]"
 
-	# initialize global keys
-	_UP=0
-	_DOWN=0
-	_RIGHT=0
-	_LEFT=0
-	_NEW_LAMP=51;
-	_Q=0
-	_E=0
-	_H=0
+	lastTime=$(date +%s%3N) # seconds + milliseconds
+	while true; do
+		# main loop
 
-	readAKey
+		# initialize global keys
+		_UP=0
+		_DOWN=0
+		_RIGHT=0
+		_LEFT=0
+		_NEW_LAMP=51;
+		_Q=0
+		_E=0
+		_H=0
+		_Z=0
 
-	# handle brightness and saturation
-	if [ $_UP == 1 ] ; then
-		setBrightness 5
-	fi
-	if [ $_DOWN == 1 ] ; then
-		setBrightness -5
-	fi
-	if [ $_RIGHT == 1 ] ; then
-		setSat 10
-	fi
-	if [ $_LEFT == 1 ] ; then
-		setSat -10
-	fi
-	if [ $_Q == 1 ] ; then
-		# hue
-		setColor -1000
-	fi
-	if [ $_E == 1 ] ; then
-		# hue
-		setColor 1000
-	fi
-	if [ $_H == 1 ] ; then
-		printHelpScreen
-	fi
+		readAKey
 
-	# toggle switch
-	if [ $_NEW_LAMP -lt 51 ] ; then
-		# debug
-		# echo "NL$_NEW_LAMP LL$_LAST_LAMP "
+		# handle brightness and saturation
+		if [ $_UP == 1 ] ; then
+			setBrightness 5
+		fi
+		if [ $_DOWN == 1 ] ; then
+			setBrightness -5
+		fi
+		if [ $_RIGHT == 1 ] ; then
+			setSat 10
+		fi
+		if [ $_LEFT == 1 ] ; then
+			setSat -10
+		fi
+		if [ $_Q == 1 ] ; then
+			# hue
+			setColor -1000
+		fi
+		if [ $_E == 1 ] ; then
+			# hue
+			setColor 1000
+		fi
+		if [ $_H == 1 ] ; then
+			printHelpScreen
+		fi
+		if [ $_Z == 1 ] ; then
+			lampeZenityColor $_SELECTED_LAMP
+		fi
 
-		if [ $_LAST_LAMP == $_NEW_LAMP ] ; then
-			toggleSwitch
-			toggle=1
+		# toggle switch
+		if [ $_NEW_LAMP -lt 51 ] ; then
+			# debug
+			# echo "NL$_NEW_LAMP LL$_LAST_LAMP "
+
+			if [ $_LAST_LAMP == $_NEW_LAMP ] ; then
+				toggleSwitch
+				toggle=1
+			else
+				toggle=0
+			fi
+			_LAST_LAMP=$_NEW_LAMP
 		else
+			_LAST_LAMP=51
 			toggle=0
 		fi
-		_LAST_LAMP=$_NEW_LAMP
-	else
-		_LAST_LAMP=51
-		toggle=0
-	fi
 
-	if [ ${_SAT[$_SELECTED_LAMP]} -lt 1 ] ; then
-		_SAT[$_SELECTED_LAMP]=1
-	fi
+		# FIXME is this workarround still needed?
+		if [ ${_SAT[$_SELECTED_LAMP]} -lt 1 ] ; then
+			_SAT[$_SELECTED_LAMP]=1
+		fi
+
+		printMainScreen
+
+		hbSendLampState
+	done
+}
+
+# send lamp state (switch and color) to Hue Bridge
+hbSendLampState() {
 	color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
-
-	printMainScreen
-	
-	# send to hue bridge
 	thisTime=$(date +%s%3N)
 	diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 250 ] || [ $toggle == 1 ] ; then
+		# only send new state every 250ms
 		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/newdeveloper/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		lastTime=$(date +%s%3N)
 	fi
-	
-done
+}
 
+fEval() {
+	# taken from http://www.linuxjournal.com/content/floating-point-math-bash,
+	# by Mitch Frazier
+
+    local stat=0
+    local result=0.0
+    if [[ $# -gt 0 ]]; then
+        result=$(echo "$fScale $*" | bc -q 2> /dev/null)
+        stat=$?
+        if [[ $stat -eq 0  &&  -z "$result" ]]; then stat=1; fi
+    fi
+
+    echo $result
+    return $stat
+}
+
+fCond() {
+	# taken from http://www.linuxjournal.com/content/floating-point-math-bash
+	# by Mitch Frazier
+
+    local cond=0
+    if [[ $# -gt 0 ]]; then
+        cond=$(echo "$*" | bc -q 2> /dev/null)
+        if [[ -z "$cond" ]]; then cond=0; fi
+        if [[ "$cond" != 0  &&  "$cond" != 1 ]]; then cond=0; fi
+    fi
+    local stat=$((cond == 0))
+
+    return $stat
+}
+
+# convert RGB color to HSB/HSV color
+# implementation ported from python2.7 colorsys.rgb_to_hsv()
+rgbToHSB() {
+	fScale="scale=5;"
+	r=$(fEval "$1 / 255")
+	g=$(fEval "$2 / 255")
+	b=$(fEval "$3 / 255")
+
+	# debug
+	# echo "r = $r"
+	# echo "g = $g"
+	# echo "b = $b"
+
+	minc=$b
+	if fCond "$r < $g" ; then
+		if fCond "$r < $b" ; then
+			minc=$r
+		fi
+	else
+		if fCond "$g < $b" ; then
+			minc=$g
+		fi
+	fi
+
+	# debug
+	# echo "minc = $minc"
+
+	maxc=$b
+	if fCond "$r > $g" ; then
+		if fCond "$r > $b" ; then
+			maxc=$r
+		fi
+	else
+		if fCond "$g > $b" ; then
+			maxc=$g
+		fi
+	fi
+
+	# debug
+	# echo "maxc = $maxc"
+
+	_bri=$maxc
+	if [ $minc = $maxc ] ; then
+		_hue=0
+		_sat=0
+	else
+		_sat=$(fEval "($maxc - $minc) / $maxc")
+		rrrc=$(fEval "($maxc - $r) / ($maxc - $minc)")
+		gggc=$(fEval "($maxc - $g) / ($maxc - $minc)")
+		bbbc=$(fEval "($maxc - $b) / ($maxc - $minc)")
+		if [ "$r" = "$maxc" ] ; then
+			_hue=$(fEval "$bbbc - $gggc")
+
+			# debug
+			# echo "_hue = $_hue"
+		elif [ "$g" = "$maxc" ] ; then
+			_hue=$(fEval "2.0 + $rrrc - $bbbc")
+
+			# debug
+			# echo "_hue = $_hue"
+		else
+			_hue=$(fEval "4.0 + $gggc - $rrrc")
+
+			# debug
+			# echo "_hue = $_hue"
+		fi
+		_hue=$(fEval "$_hue / 6.0")
+
+		# debug
+		# echo "_hue = $_hue"
+	fi
+
+	set -f # turn off pathname expansion: *
+	fScale="scale=0;"
+	_hue=$(fEval "$_hue * 65535")
+	_hue=$(echo "$_hue" | cut -f 1 -d.)
+	_bri=$(fEval "$_bri * 255")
+	_bri=$(echo "$_bri" | cut -f 1 -d.)
+	_sat=$(fEval "$_sat * 255")
+	_sat=$(echo "$_sat" | cut -f 1 -d.)
+	set +f
+}
+
+lampeZenityColor() {
+	zColor=$(zenity --color-selection --show-palette 2> /dev/null)
+	rr=$(echo "$zColor" | cut -b 2-3)
+	gg=$(echo "$zColor" | cut -b 6-7)
+	bb=$(echo "$zColor" | cut -b 10-11)
+
+	# convert from hex to dec
+	rr=$((16#$rr))
+	gg=$((16#$gg))
+	bb=$((16#$bb))
+	rgbToHSB $rr $gg $bb
+
+	# debug
+	# echo $zColor
+	# echo "rr = $rr"
+	# echo "gg = $gg"
+	# echo "bb = $bb"
+	# echo "hue = $_hue"
+	# echo "bri = $_bri"
+	# echo "sat = $_sat"
+
+	if [ $_hue -lt 0 ] ; then
+		_hue=$((_hue+65535)) # rotate hue
+	fi
+	_COLOR[$1]=$_hue
+	if [ $_bri -gt 254 ] ; then
+		_bri=254
+	fi
+	_BRIGHTNESS[$1]=$_bri
+	_SAT[$1]=$_sat
+}
+
+# checks wether there is a hue bridge at given IP
+hbCheck() {
+	hbDescription=$(curl -D -X http://$1/description.xml -m 3 2> /dev/null)
+	hbModel=$(echo $hbDescription | grep "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>")
+}
+
+# try to detect the first Hue Bridge in the LAN (ipv4 class-C networks only, can detect only one bridge)
+hbDetect() {
+	_BRIDGE_FOUND=false
+
+	# XXX   bug#4 fixed, all subnets will be searched, but discovery will stop at the first found hue-bridge
+	tmpIPsFile="/tmp/lampe$$.tmp"
+	L_ips=$(ip -f inet addr show | grep "/24" | sed -r "s/inet //" | cut -f 1-4 -d. | cut -f 1 -d"/")
+	for L_ip in $L_ips ; do
+		# debug
+		# echo "L_ip = '$L_ip'"
+
+		ipByte4=$(echo $L_ip | cut -f 4 -d.)
+		currentIpByte4=$ipByte4
+		ipBytes13=$(echo $L_ip | cut -f 1-3 -d.)
+
+		# debug
+		# echo "ipByte4 = '$ipByte4', ipBytes13 = '$ipBytes13'"
+
+		# ping the whole subnet in parallel and write ip-adresses to a file
+		subnet="$ipBytes13."
+		( for addr in `seq 1 1 254 `; do ( ping -c 1 -t 3 $subnet$addr > /dev/null && echo $subnet$addr >> "$tmpIPsFile" ) & done ) > /dev/null
+	done
+
+	# debug
+	# cat $tmpIPsFile
+
+	# check for model description
+	while read nextIP ; do
+		# debug
+		# echo "nextIP = $nextIP"
+
+		ownIP="$subnet$currentIpByte4"
+		if [ $nextIP != $ownIP ] ; then
+			hbCheck $nextIP
+#			hbDescription=$(curl -D -X http://$nextIP/description.xml -m 3 2> /dev/null)
+#			hbModel=$(echo $hbDescription | grep "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>")
+
+			# debug
+			# echo "hbDescription (response) = '$hbDescription'"
+			# echo "hbModel = '$hbModel'"
+
+			if [ -n "$hbModel" ] ; then
+				_BRIDGE_FOUND=true
+				bridgeip=$nextIP
+				echo "    bridge found at '$nextIP'."
+				break
+			fi
+		fi
+	done < $tmpIPsFile
+	rm $tmpIPsFile 2> /dev/null
+}
+
+hbEnterIP() {
+	echo -n "    Please enter the IP of your HUE-bridge: "
+	read manualIP
+	hbCheck $manualIP
+	if [ -n "$hbModel" ] ; then
+		_BRIDGE_FOUND=true
+		bridgeip=$manualIP
+		echo "    bridge found."
+	fi
+}
+
+# this function will be called, if the configuration is valid
+startLampe() {
+	if [ "$1" = "-z" ] ; then
+		# open zenity dialog to select color and quit
+		_SELECTED_LAMP=$2
+		lampeZenityColor $2
+		hbSendLampState
+	else
+		# default: interactive-mode
+		lampeMain
+	fi
+}
+
+# check for first start (configuration)
+if [ -f ~/.lamperc ] ; then
+	# read configuration
+	source ~/.lamperc
+
+	startLampe
+else
+	# first start: ask user what to do
+	echo " $(lColor ltyellow)?$(lColor off) [======--$(lColor ltwhite)LAMPE$(lColor off)-------------------------------------]"
+	echo "    You are running 'lampe' for the first time. Do you "
+	echo -n "    wish automatic discovery and configuration? [$(lColor ltwhite)y$(lColor off)/$(lColor ltred)n$(lColor off)] "
+	read doIt
+	if [ "$doIt" == "y" ] || [ "$doIt" == "Y" ] || [ "$doIt" == "" ] ; then
+		hbDetect 2> /dev/null
+		if [ "$_BRIDGE_FOUND" == false ] ; then
+			echo " $(lColor ltred)?$(lColor off)  warning, unable to find bridge"
+			hbEnterIP
+		fi
+	else
+		hbEnterIP
+	fi
+
+	if [ "$_BRIDGE_FOUND" == true ] ; then
+		# store configuration if bridge was found
+		echo "bridgeip=\"$bridgeip\"" > ~/.lamperc
+
+		# TODO  register user at bridge
+
+		startLampe
+	else
+		echo " $(lColor ltred)!$(lColor off)  no bridge found, error 2"
+		exit 2
+	fi
+fi
