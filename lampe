@@ -262,44 +262,46 @@ getColor() {
 }
 
 printMainScreen() {
-	currentBrightness=$((_BRIGHTNESS[_SELECTED_LAMP]/5))
-	currentSat=$((_SAT[_SELECTED_LAMP]*currentBrightness/254))
-	colorPosition=$((_COLOR[_SELECTED_LAMP]*currentBrightness/65279))
-	if [ $colorPosition -gt 1 ] ; then
-		colorPosition=$((colorPosition-1))
-	fi
-
-	# debug
-	# echo "$colorPosition"
-
-	echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
-	echo -en " $(getColor)$_SELECTED_LAMP $(lColor ltwhite)[$(lColor off)"
-	for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do 
-		colorValue=$((65279*ii/currentBrightness))
-		echo -en "$(getColorByValue $colorValue)"
-
-		if [ $ii -lt $currentSat ] ; then
-			if [ $ii == $colorPosition ] ; then
-				echo -en "$(getColor)C$(lColor off)"
-			else
-				echo -n "="
-			fi
-		else
-			if [ $ii == $colorPosition ] ; then
-				echo -en "$(getColor)C$(lColor off)"
-			else
-				echo -n "-"
-			fi
+	if [ $L_BLIND == 0 ] ; then
+		currentBrightness=$((_BRIGHTNESS[_SELECTED_LAMP]/5))
+		currentSat=$((_SAT[_SELECTED_LAMP]*currentBrightness/254))
+		colorPosition=$((_COLOR[_SELECTED_LAMP]*currentBrightness/65279))
+		if [ $colorPosition -gt 1 ] ; then
+			colorPosition=$((colorPosition-1))
 		fi
-	done
-	for (( ii=0 ; ii<50-currentBrightness ; ii=ii+1 )) ; do
-		echo -n " "
-	done
-	echo -en "$(lColor ltwhite)]$(lColor off) "
-	if [ ${_SWITCH[$_SELECTED_LAMP]} != "true" ] ; then
-		echo -n "off "
-	else
-		echo -n "    "
+
+		# debug
+		# echo "$colorPosition"
+
+		echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
+		echo -en " $(getColor)$_SELECTED_LAMP $(lColor ltwhite)[$(lColor off)"
+		for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do 
+			colorValue=$((65279*ii/currentBrightness))
+			echo -en "$(getColorByValue $colorValue)"
+
+			if [ $ii -lt $currentSat ] ; then
+				if [ $ii == $colorPosition ] ; then
+					echo -en "$(getColor)C$(lColor off)"
+				else
+					echo -n "="
+				fi
+			else
+				if [ $ii == $colorPosition ] ; then
+					echo -en "$(getColor)C$(lColor off)"
+				else
+					echo -n "-"
+				fi
+			fi
+		done
+		for (( ii=0 ; ii<50-currentBrightness ; ii=ii+1 )) ; do
+			echo -n " "
+		done
+		echo -en "$(lColor ltwhite)]$(lColor off) "
+		if [ ${_SWITCH[$_SELECTED_LAMP]} != "true" ] ; then
+			echo -n "off "
+		else
+			echo -n "    "
+		fi
 	fi
 }
 
@@ -624,11 +626,16 @@ hbEnterIP() {
 
 # this function will be called, if the configuration is valid
 startLampe() {
-	if [ "$1" = "-z" ] ; then
+	L_BLIND=0
+	if [ "$1" == "-z" ] ; then
 		# open zenity dialog to select color and quit
 		_SELECTED_LAMP=$2
 		lampeZenityColor $2
 		hbSendLampState
+	elif [ "$1" == "-b" ] ; then
+		# blind modus: do not print main screen
+		L_BLIND=1
+		lampeMain
 	else
 		# default: interactive-mode
 		lampeMain
@@ -640,7 +647,7 @@ if [ -f ~/.lamperc ] ; then
 	# read configuration
 	source ~/.lamperc
 
-	startLampe
+	startLampe $*
 else
 	# first start: ask user what to do
 	echo " $(lColor ltyellow)?$(lColor off) [======--$(lColor ltwhite)LAMPE$(lColor off)-------------------------------------]"
@@ -663,7 +670,7 @@ else
 
 		# TODO  register user at bridge
 		
-		startLampe
+		startLampe $*
 	else
 		echo " $(lColor ltred)!$(lColor off)  no bridge found, error 2"
 		exit 2

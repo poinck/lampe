@@ -48,6 +48,12 @@ q,e - change hue-color
 ./lampe -z 2 # where 2 is the lamp-number
 ```
 
+**blind mode**
+if you have a very slow terminal, you can use the blind mode as follows; it won't show up the current lamp state; everything else is still accessible:
+```.sh
+./lampe -b
+```
+
 ## TODOs
 - [x] add support for hue to set color with "q" and "e"
 - [x] help option
