@@ -668,7 +668,7 @@ else
 		# store configuration if bridge was found
 		echo "bridgeip=\"$bridgeip\"" > ~/.lamperc
 
-		# TODO  register user at bridge
+		# TODO  register user at bridge. what should be the name of this user?
 		
 		startLampe $*
 	else
