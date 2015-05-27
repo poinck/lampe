@@ -408,7 +408,7 @@ hbSendLampState() {
 	diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 250 ] || [ $toggle == 1 ] ; then
 		# only send new state every 250ms
-		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/newdeveloper/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		lastTime=$(date +%s%3N)
 	fi
 }
@@ -645,13 +645,13 @@ startLampe() {
 }
 
 hbRegisterUser() {
-	echo "    Please press the $(lColor ltblue)Link$(lColor off)-button on your bridge to "
+	echo "    Please press the $(lColor ltblue)Link-button$(lColor off) on your bridge to "
 	echo -n "    register a user ... "
 	while true ; do
 		# try user registration every two seconds
 		sleep 2
 		
-		hbUser=$(curl -d "{\"devicetype\": \"lampe-$version\", \"username\": \"lampe-test\"}" http://$bridgeip/api -m 2 2> /dev/null)
+		hbUser=$(curl -d "{\"devicetype\": \"lampe-$version\", \"username\": \"lampe-bash\"}" http://$bridgeip/api -m 2 2> /dev/null)
 		success=$(echo $hbUser | grep "success")
 		
 		# debug
@@ -687,7 +687,7 @@ else
 	fi
 	
 	if [ "$_BRIDGE_FOUND" == true ] ; then
-		# TODO  register user at bridge. what should be the name of this user?
+		# register a user at bridge
 		hbRegisterUser
 		
 		# store configuration if bridge was found
