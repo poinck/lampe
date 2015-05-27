@@ -1,6 +1,7 @@
 #!/bin/bash
-# interactive bash script to control up to 9 hue lamps
-# by Andre Klausnitzer (poinck)
+# interactive bash script to control up to 9 Philips Hue lghts
+# by Andre Klausnitzer
+# licensed under CC0
 
 version="0.9.0"
 
