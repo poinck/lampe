@@ -18,7 +18,11 @@ Following cli-tools need to be installed on your system in order to use "lampe"
 It is planned to provide an install-script using a Makefile
 
 ## Configuration
-This script does not register a user on the hue-bridge, yet. See [Getting Started at meethue.com](http://www.developers.meethue.com/documentation/getting-started) to enable developer-mode. After that you can start "lampe" in a shell. It will ask you for automatic discovery. If you cannot use automatic discovery in your network or detection fails, you can enter the IP of your bridge manually. If you cannot enter the IP interactively, you can create the file "~/.lamperc" with following content:
+"lampe" will ask you for automatic discovery on first start. If you cannot use automatic discovery in your network or detection fails, you can enter the IP of your bridge manually. After that it will try to register the user "lampe-bash" at your Hue-bridge and ask you to press the Link-button.  
+
+**Problems?**
+
+If you cannot enter the IP interactively, you can create the file "~/.lamperc" with following content (for now it is not possible to register a user if you create this file yourself):
 ```.sh
 bridgeip="192.168.?.?" # replace ? with respective IP bytes
 ```
