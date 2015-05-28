@@ -8,6 +8,7 @@ compile:
 install:
 	# cp ./lampe $(DESTDIR)
 	# chmod a+rX $(DESTDIR)/lampe
+	install --mode=755 -d $(BINDIR)/
 	install --mode=755 lampe $(BINDIR)/
 	
 clean:
