@@ -17,7 +17,7 @@ Following cli-tools need to be installed on your system in order to use "lampe"
 ## Installation (optional)
 If you want to use "lampe" system-wide, you can install it this way:
 ```.sh
-make DESTDIR="/" install # as root or use sudo
+make DESTDIR="/usr/bin" install # as root or use sudo
 ```
 
 ## Configuration
