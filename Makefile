@@ -1,7 +1,7 @@
 default: compile
 
 compile:
-	# nothing to do here
+	# nothing to do here 
 
 install:
 	cp ./lampe /usr/bin/
