@@ -4,11 +4,11 @@ compile:
 	# nothing to do here 
 
 install:
-	cp ./lampe /usr/bin/
-	chmod a+rX /usr/bin/lampe
+	cp ./lampe $(DESTDIR)
+	chmod a+rX $(DESTDIR)/lampe
 	
 clean:
 	# nothing to do here
 	
 uninstall:
-	rm /usr/bin/lampe
+	rm $(DESTDIR)/lampe
