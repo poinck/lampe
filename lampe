@@ -1,7 +1,6 @@
 #!/bin/bash
-# interactive bash script to control up to 9 Philips Hue lghts
-# by Andre Klausnitzer
-# licensed under CC0
+# lampe by André Klausnitzer, CC0
+# interactive bash script to control up to 9 Philips Hue lights
 
 version="0.9.0"
 
@@ -322,12 +321,12 @@ printHelpScreen() {
 	echo "      a,d   SATURATION   ="
 	echo "      q,e   COLOR        C"
 	echo "      1..9  LAMP"
-	echo "      z     ZENITY"
+	echo "      z     ZENITY       choose RGB-color"
 }
 
 lampeMain() {
 	# initial screen
-	echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor white)=$(lColor blue)=$(lColor magenta)=$(lColor ltwhite)--PRESS-h-FOR-HELP--------------------------$(lColor off)]"
+	echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor cyan)=$(lColor blue)=$(lColor magenta)=$(lColor ltwhite)--PRESS-h-FOR-HELP--------------------------$(lColor off)]"
 
 	lastTime=$(date +%s%3N) # seconds + milliseconds
 	while true; do
@@ -367,6 +366,7 @@ lampeMain() {
 			# hue
 			setColor 1000
 		fi
+		
 		if [ $_H == 1 ] ; then
 			printHelpScreen
 		fi
@@ -630,15 +630,18 @@ hbEnterIP() {
 # this function will be called, if the configuration is valid
 startLampe() {
 	L_BLIND=0
-	if [ "$1" == "-z" ] ; then
+	if [ "$1" == "-z" ] || [ "$1" == "--zenity" ] ; then
 		# open zenity dialog to select color and quit
 		_SELECTED_LAMP=$2
 		lampeZenityColor $2
 		hbSendLampState
-	elif [ "$1" == "-b" ] ; then
+	elif [ "$1" == "-b" ] || [ "$1" == "--blind" ] ; then
 		# blind modus: do not print main screen
 		L_BLIND=1
 		lampeMain
+	elif [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
+		# show help and quit
+		showHelp 
 	else
 		# default: interactive-mode
 		lampeMain
@@ -665,12 +668,26 @@ hbRegisterUser() {
 	done
 }
 
+showHelp() {
+	echo "lampe-$version by André Klausnitzer, CC0"
+	echo "    without option (interactive)"
+	echo " -b, --blind"
+	echo "    blind-mode (interactive)"
+	echo " -h, --help"
+	echo "    show this help"
+	echo " -z, --zenity [LIGHT-ID]"
+	echo "    pick a RGB-color with zenity color selection (non-interactive)"
+}
+
 # check for first start (configuration)
 if [ -f ~/.lamperc ] ; then
 	# read configuration
 	source ~/.lamperc
 
 	startLampe $*
+elif [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
+	# show help and quit
+	showHelp
 else
 	# first start: ask user what to do
 	echo " $(lColor ltyellow)?$(lColor off) [======--$(lColor ltwhite)LAMPE$(lColor off)-------------------------------------]"
