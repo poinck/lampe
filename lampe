@@ -205,25 +205,25 @@ lColor() {
 getColorByValue() {
 	hue=$1
 
-	if [ $hue -lt 9001 ] ; then
+	if [ "$hue" -lt 9001 ] ; then
 		# red
 		colorEscape="red"
-	elif [ $hue -gt 9000 ] && [ $hue -lt 19001 ] ; then
+	elif [ "$hue" -gt 9000 ] && [ "$hue" -lt 19001 ] ; then
 		# orange, yellow
 		colorEscape="yellow"
-	elif [ $hue -gt 19000 ] && [ $hue -lt 31001 ] ; then
+	elif [ "$hue" -gt 19000 ] && [ "$hue" -lt 31001 ] ; then
 		# green
 		colorEscape="green"
-	elif [ $hue -gt 31000 ] && [ $hue -lt 35001 ] ; then
+	elif [ "$hue" -gt 31000 ] && [ "$hue" -lt 35001 ] ; then
 		# white, green-blue, cyan
 		colorEscape="cyan"
-	elif [ $hue -gt 35000 ] && [ $hue -lt 48001 ] ; then
+	elif [ "$hue" -gt 35000 ] && [ "$hue" -lt 48001 ] ; then
 		# blue
 		colorEscape="blue"
-	elif [ $hue -gt 48000 ] && [ $hue -lt 63279 ] ; then
+	elif [ "$hue" -gt 48000 ] && [ "$hue" -lt 63279 ] ; then
 		# purple
 		colorEscape="magenta"
-	elif [ $hue -gt 63279 ] ; then
+	elif [ "$hue" -gt 63279 ] ; then
 		# red
 		colorEscape="red"
 	fi
@@ -235,7 +235,7 @@ getColor() {
 	hue=${_COLOR[$_SELECTED_LAMP]}
 
 	bold=""
-	if [ ${_SWITCH[$_SELECTED_LAMP]} = "true" ] ; then
+	if [[ ${_SWITCH[$_SELECTED_LAMP]} == "true" ]] ; then
 		bold="lt"
 	fi
 	if [ $hue -lt 9001 ] ; then
@@ -264,7 +264,7 @@ getColor() {
 }
 
 printMainScreen() {
-	if [ $L_BLIND == 0 ] ; then
+	if [[ "$L_BLIND" == 0 ]] ; then
 		currentBrightness=$((_BRIGHTNESS[_SELECTED_LAMP]/5))
 		currentSat=$((_SAT[_SELECTED_LAMP]*currentBrightness/254))
 		colorPosition=$((_COLOR[_SELECTED_LAMP]*currentBrightness/65279))
@@ -371,7 +371,7 @@ lampeMain() {
 			printHelpScreen
 		fi
 		if [ $_Z == 1 ] ; then
-			lampeZenityColor $_SELECTED_LAMP
+			lampeZenityColor "$_SELECTED_LAMP"
 		fi
 
 		# toggle switch
@@ -426,7 +426,7 @@ fEval() {
         if [[ $stat -eq 0  &&  -z "$result" ]]; then stat=1; fi
     fi
     
-    echo $result
+    echo "$result"
     return $stat
 }
 
@@ -487,7 +487,7 @@ rgbToHSB() {
 	# echo "maxc = $maxc"
 
 	_bri=$maxc
-	if [ $minc = $maxc ] ; then
+	if [[ "$minc" == "$maxc" ]] ; then
 		_hue=0
 		_sat=0
 	else
@@ -549,11 +549,11 @@ lampeZenityColor() {
 	# echo "bri = $_bri"
 	# echo "sat = $_sat"
 
-	if [ $_hue -lt 0 ] ; then
+	if [ "$_hue" -lt 0 ] ; then
 		_hue=$((_hue+65535)) # rotate hue
 	fi
 	_COLOR[$1]=$_hue
-	if [ $_bri -gt 254 ] ; then
+	if [ "$_bri" -gt 254 ] ; then
 		_bri=254
 	fi
 	_BRIGHTNESS[$1]=$_bri
@@ -562,8 +562,8 @@ lampeZenityColor() {
 
 # checks wether there is a hue bridge at given IP
 hbCheck() {
-	hbDescription=$(curl http://$1/description.xml -m 3 2> /dev/null)
-	hbModel=$(echo $hbDescription | grep "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>")
+	hbDescription=$(curl "http://$1/description.xml" -m 3 2> /dev/null)
+	hbModel=$(echo "$hbDescription" | grep "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>")
 }
 
 # try to detect the first Hue Bridge in the LAN (ipv4 class-C networks only, can detect only one bridge)
@@ -577,16 +577,16 @@ hbDetect() {
 		# debug
 		# echo "L_ip = '$L_ip'"
 		
-		ipByte4=$(echo $L_ip | cut -f 4 -d.)
+		ipByte4=$(echo "$L_ip" | cut -f 4 -d.)
 		currentIpByte4=$ipByte4
-		ipBytes13=$(echo $L_ip | cut -f 1-3 -d.)
+		ipBytes13=$(echo "$L_ip" | cut -f 1-3 -d.)
 		
 		# debug
 		# echo "ipByte4 = '$ipByte4', ipBytes13 = '$ipBytes13'"
 		
 		# ping the whole subnet in parallel and write ip-adresses to a file
 		subnet="$ipBytes13."
-		( for addr in `seq 1 1 254 `; do ( ping -c 1 -t 3 $subnet$addr > /dev/null && echo $subnet$addr >> "$tmpIPsFile" ) & done ) > /dev/null 
+		( for addr in $(seq 1 1 254); do ( ping -c 1 -t 3 "$subnet$addr" > /dev/null && echo "$subnet$addr" >> "$tmpIPsFile" ) & done ) > /dev/null 
 	done
 	
 	# debug
@@ -598,8 +598,8 @@ hbDetect() {
 		# echo "nextIP = $nextIP"
 		
 		ownIP="$subnet$currentIpByte4"
-		if [ $nextIP != $ownIP ] ; then
-			hbCheck $nextIP
+		if [[ "$nextIP" != "$ownIP" ]] ; then
+			hbCheck "$nextIP"
 		
 			# debug
 			# echo "hbDescription (response) = '$hbDescription'"
@@ -619,7 +619,7 @@ hbDetect() {
 hbEnterIP() {
 	echo -n "    Please enter the IP of your HUE-bridge: "
 	read manualIP
-	hbCheck $manualIP
+	hbCheck "$manualIP"
 	if [ -n "$hbModel" ] ; then
 		_BRIDGE_FOUND=true
 		bridgeip=$manualIP
@@ -630,16 +630,16 @@ hbEnterIP() {
 # this function will be called, if the configuration is valid
 startLampe() {
 	L_BLIND=0
-	if [ "$1" == "-z" ] || [ "$1" == "--zenity" ] ; then
+	if [[ "$1" == "-z" ]] || [[ "$1" == "--zenity" ]] ; then
 		# open zenity dialog to select color and quit
 		_SELECTED_LAMP=$2
-		lampeZenityColor $2
+		lampeZenityColor "$2"
 		hbSendLampState
-	elif [ "$1" == "-b" ] || [ "$1" == "--blind" ] ; then
+	elif [[ "$1" == "-b" ]] || [[ "$1" == "--blind" ]] ; then
 		# blind modus: do not print main screen
 		L_BLIND=1
 		lampeMain
-	elif [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
+	elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
 		# show help and quit
 		showHelp 
 	else
@@ -655,8 +655,8 @@ hbRegisterUser() {
 		# try user registration every two seconds
 		sleep 2
 		
-		hbUser=$(curl -d "{\"devicetype\": \"lampe-$version\", \"username\": \"lampe-bash\"}" http://$bridgeip/api -m 2 2> /dev/null)
-		success=$(echo $hbUser | grep "success")
+		hbUser=$(curl -d "{\"devicetype\": \"lampe-$version\", \"username\": \"lampe-bash\"}" "http://$bridgeip/api" -m 2 2> /dev/null)
+		success=$(echo "$hbUser" | grep "success")
 		
 		# debug
 		# echo "hbUser = $hbUser"
@@ -684,7 +684,7 @@ if [ -f ~/.lamperc ] ; then
 	# read configuration
 	source ~/.lamperc
 
-	startLampe $*
+	startLampe "$@"
 elif [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
 	# show help and quit
 	showHelp
@@ -711,7 +711,7 @@ else
 		# store configuration if bridge was found
 		echo "bridgeip=\"$bridgeip\"" > ~/.lamperc
 		
-		startLampe $*
+		startLampe "$@"
 	else
 		echo " $(lColor ltred)!$(lColor off)  no bridge found, error 2"
 		exit 2
