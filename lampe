@@ -2,7 +2,7 @@
 # lampe by André Klausnitzer, CC0
 # interactive bash script to control up to 9 Philips Hue lights
 
-version="0.9.0"
+version="1.0.0"
 
 readKey() {
     # Wait for first char
