@@ -2,7 +2,7 @@
 # lampe by André Klausnitzer, CC0
 # interactive bash script to control up to 9 Philips Hue lights
 
-version="1.0.1"
+version="1.0.2"
 
 readKey() {
     # Wait for first char
@@ -15,14 +15,12 @@ readKey() {
 }
 
 declare _SELECTED_LAMP=1 # defaults to first lamp
-declare _LAST_LAMP=51
+# declare _LAST_LAMP=51
 
 readAKey() {
 	# readKey
 	read -s -n 1 _KEY
 
-	# XXX   catch cursor keys without modifiers (removed)
-	# catch WASD for basic stuff
 	case $_KEY in
 		# $'\e[A' |
 		"w")
@@ -48,6 +46,14 @@ readAKey() {
 			# hue
 			_E=1
 		;;
+		"y")
+			# on
+			_Y=1
+		;;
+		"n")
+			# off
+			_N=1
+		;;
 		"h")
 			# help
 			_H=1
@@ -59,7 +65,7 @@ readAKey() {
 		[1-9])
 			# select the current lamp
 			_SELECTED_LAMP=$_KEY
-			_NEW_LAMP=$_KEY
+			# _NEW_LAMP=$_KEY
 		;;
 	esac
 }
@@ -144,7 +150,7 @@ setSwitch() {
 	# debug
 	# echo -n $1
 
-	if [ "$1" == 1 ] ; then 
+	if [[ "$1" == 1 ]] ; then 
 		_SWITCH[$_SELECTED_LAMP]="true"
 	else
 		_SWITCH[$_SELECTED_LAMP]="false"
@@ -307,88 +313,69 @@ printMainScreen() {
 	fi
 }
 
-toggleSwitch() {
-	if [ ${_SWITCH[$_SELECTED_LAMP]} = "true" ] ; then
-		setSwitch 0
-	else 
-		setSwitch 1
-	fi
-}
+#toggleSwitch() {
+#	if [ ${_SWITCH[$_SELECTED_LAMP]} = "true" ] ; then
+#		setSwitch 0
+#	else 
+#		setSwitch 1
+#	fi
+#}
 
 printHelpScreen() {
 	echo ""
-	echo "      w,s   BRIGHTNESS   -"
-	echo "      a,d   SATURATION   ="
-	echo "      q,e   COLOR        C"
-	echo "      1..9  LIGHT"
-	echo "      z     ZENITY       choose RGB-color"
+	echo "      1..50  LIGHT"
+	echo "      w, s   BRIGHTNESS    -"
+	echo "      a, d   SATURATION    ="
+	echo "      q, e   COLOR         C"
+	echo "      y, n   SWITCH        on, off"
+	echo "      z      ZENITY        choose RGB-color"
 }
 
 lampeMain() {
 	# initial screen
-	echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor cyan)=$(lColor blue)=$(lColor magenta)=$(lColor ltwhite)--PRESS-h-FOR-HELP--------------------------$(lColor off)]"
+	echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor cyan)=$(lColor blue)=$(lColor magenta)=$(lColor ltwhite)---LAMPE-$version---PRESS-h-FOR-HELP-----------$(lColor off)]"
 
 	lastTime=$(date +%s%3N) # seconds + milliseconds
 	while true; do
 		# main loop
 
-		# initialize global keys
+		# initialize keys
 		_UP=0
 		_DOWN=0
 		_RIGHT=0
 		_LEFT=0
-		_NEW_LAMP=51;
 		_Q=0
 		_E=0
+		_Y=0
+		_N=0
 		_H=0
 		_Z=0
 
 		readAKey
 
-		# handle brightness and saturation
-		if [ $_UP == 1 ] ; then
+		# handle keys
+		if [[ "$_UP" == 1 ]] ; then
 			setBrightness 5
-		fi
-		if [ $_DOWN == 1 ] ; then
+		elif [[ "$_DOWN" == 1 ]] ; then
 			setBrightness -5
-		fi
-		if [ $_RIGHT == 1 ] ; then
+		elif [[ "$_RIGHT" == 1 ]] ; then
 			setSat 10
-		fi
-		if [ $_LEFT == 1 ] ; then
+		elif [[ "$_LEFT" == 1 ]] ; then
 			setSat -10
-		fi
-		if [ $_Q == 1 ] ; then
+		elif [[ "$_Q" == 1 ]] ; then
 			# hue
 			setColor -1000
-		fi
-		if [ $_E == 1 ] ; then
+		elif [[ "$_E" == 1 ]] ; then
 			# hue
 			setColor 1000
-		fi
-		
-		if [ $_H == 1 ] ; then
+		elif [[ "$_Y" == 1 ]] ; then
+			setSwitch 1
+		elif [[ "$_N" == 1 ]] ; then
+			setSwitch 0
+		elif [[ "$_H" == 1 ]] ; then
 			printHelpScreen
-		fi
-		if [ $_Z == 1 ] ; then
+		elif [[ "$_Z" == 1 ]] ; then
 			lampeZenityColor "$_SELECTED_LAMP"
-		fi
-
-		# toggle switch
-		if [ $_NEW_LAMP -lt 51 ] ; then
-			# debug
-			# echo "NL$_NEW_LAMP LL$_LAST_LAMP "
-
-			if [ $_LAST_LAMP == $_NEW_LAMP ] ; then
-				toggleSwitch
-				toggle=1
-			else
-				toggle=0
-			fi
-			_LAST_LAMP=$_NEW_LAMP
-		else
-			_LAST_LAMP=51
-			toggle=0
 		fi
 
 		# FIXME is this workarround still needed?
@@ -407,17 +394,17 @@ hbSendLampState() {
 	color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
 	thisTime=$(date +%s%3N)
 	diffTime=$((thisTime-lastTime))
-	if [ $diffTime -gt 250 ] || [ $toggle == 1 ] ; then
-		# only send new state every 250ms
+	if [ $diffTime -gt 125 ] ; then # || [[ "$toggle" == 1 ]]
+		# only send new state every 125ms
 		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		lastTime=$(date +%s%3N)
 	fi
 }
 
+# evaluate floating-point expression
+# taken from http://www.linuxjournal.com/content/floating-point-math-bash, 
+# by Mitch Frazier
 fEval() {
-	# taken from http://www.linuxjournal.com/content/floating-point-math-bash, 
-	# by Mitch Frazier
-
     local stat=0
     local result=0.0
     if [[ $# -gt 0 ]]; then
@@ -430,10 +417,10 @@ fEval() {
     return $stat
 }
 
+# check floating-point condition
+# taken from http://www.linuxjournal.com/content/floating-point-math-bash
+# by Mitch Frazier
 fCond() {
-	# taken from http://www.linuxjournal.com/content/floating-point-math-bash
-	# by Mitch Frazier
-
     local cond=0
     if [[ $# -gt 0 ]]; then
         cond=$(echo "$*" | bc -q 2> /dev/null)
@@ -685,7 +672,7 @@ if [ -f ~/.lamperc ] ; then
 	source ~/.lamperc
 
 	startLampe "$@"
-elif [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
+elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
 	# show help and quit
 	showHelp
 else
@@ -694,7 +681,7 @@ else
 	echo "    You are running 'lampe' for the first time. Do you "
 	echo -n "    wish automatic discovery and configuration? [$(lColor ltwhite)y$(lColor off)/$(lColor ltred)n$(lColor off)] "
 	read doIt
-	if [ "$doIt" == "y" ] || [ "$doIt" == "Y" ] || [ "$doIt" == "" ] ; then
+	if [[ "$doIt" == "y" ]] || [[ "$doIt" == "Y" ]] || [[ "$doIt" == "" ]] ; then
 		hbDetect 2> /dev/null
 		if [ "$_BRIDGE_FOUND" == false ] ; then
 			echo " $(lColor ltred)?$(lColor off)  warning, unable to find bridge"
@@ -704,7 +691,7 @@ else
 		hbEnterIP
 	fi
 	
-	if [ "$_BRIDGE_FOUND" == true ] ; then
+	if [[ "$_BRIDGE_FOUND" == true ]] ; then
 		# register a user at bridge
 		hbRegisterUser
 		
