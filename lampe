@@ -2,7 +2,7 @@
 # lampe by André Klausnitzer, CC0
 # interactive bash script to control up to 9 Philips Hue lights
 
-version="1.0.0"
+version="1.0.1"
 
 readKey() {
     # Wait for first char
@@ -129,9 +129,9 @@ setColor() {
 	
 	hue=$((hue+$1))
 	if [ $hue -lt 1 ] ; then
-		hue=1
+		hue=65280
 	elif [ $hue -gt 65280 ] ; then
-		hue=65279
+		hue=1
 	fi
 
 	# debug
