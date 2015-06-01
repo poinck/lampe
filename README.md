@@ -48,6 +48,7 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
  q, e - change hue-color
  y, n - switch on, off
     z - open zenity-dialog to pick RGB-color 
+    i - info: receive light state
 ```
 
 **oneshot mode**
