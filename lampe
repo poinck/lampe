@@ -360,7 +360,7 @@ printMainScreen() {
 
 printHelpScreen() {
 	echo ""
-	echo "      1..50  LIGHT"
+	echo "      1..99  LIGHT"
 	echo "      w, s   BRIGHTNESS    -"
 	echo "      a, d   SATURATION    ="
 	echo "      q, e   COLOR         C"
