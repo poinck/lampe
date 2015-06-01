@@ -320,7 +320,7 @@ printHelpScreen() {
 	echo "      w,s   BRIGHTNESS   -"
 	echo "      a,d   SATURATION   ="
 	echo "      q,e   COLOR        C"
-	echo "      1..9  LAMP"
+	echo "      1..9  LIGHT"
 	echo "      z     ZENITY       choose RGB-color"
 }
 
