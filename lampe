@@ -2,7 +2,7 @@
 # lampe by André Klausnitzer, CC0
 # interactive bash script to control up to 9 Philips Hue lights
 
-version="1.0.2"
+version="1.0.3"
 
 readKey() {
     # Wait for first char
@@ -57,6 +57,11 @@ checkKey() {
 		"z")
 			# color-selection with zenity
 			_Z=1
+		;;
+		"i")
+			# info: do not send new light state
+			# TODO  receive light state from bridge
+			_I=1
 		;;
 	esac
 }
@@ -366,6 +371,7 @@ printHelpScreen() {
 	echo "      q, e   COLOR         C"
 	echo "      y, n   SWITCH        on, off"
 	echo "      z      ZENITY        choose RGB-color"
+	echo "      i      INFO          receive light state"
 }
 
 lampeMain() {
@@ -387,6 +393,7 @@ lampeMain() {
 		_N=0
 		_H=0
 		_Z=0
+		_I=0
 
 		readAKey
 
@@ -413,6 +420,9 @@ lampeMain() {
 			printHelpScreen
 		elif [[ "$_Z" == 1 ]] ; then
 			lampeZenityColor "$_SELECTED_LAMP"
+		elif [[ "$_I" == 1 ]] ; then
+			# TODO  receive current light state
+			echo -en ""
 		fi
 
 		# FIXME is this workarround still needed?
@@ -422,12 +432,14 @@ lampeMain() {
 
 		printMainScreen
 	
-		hbSendLampState
+		if [[ "$_I" == 0 ]] ; then
+			hbSendLightsState
+		fi
 	done
 }
 
 # send lamp state (switch and color) to Hue Bridge
-hbSendLampState() {
+hbSendLightsState() {
 	color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
 	thisTime=$(date +%s%3N)
 	diffTime=$((thisTime-lastTime))
@@ -658,7 +670,7 @@ startLampe() {
 		# open zenity dialog to select color and quit
 		_SELECTED_LAMP=$2
 		lampeZenityColor "$2"
-		hbSendLampState
+		hbSendLightsState
 	elif [[ "$1" == "-b" ]] || [[ "$1" == "--blind" ]] ; then
 		# blind modus: do not print main screen
 		L_BLIND=1
@@ -703,10 +715,61 @@ showHelp() {
 	echo "    pick a RGB-color with zenity color selection (non-interactive)"
 }
 
+hbReceiveLightStates() {
+	local lightState=""
+	
+	# defaults
+	local lightHue=12000
+	local lightBri=32
+	local lightSat=192
+	local lightSwi="true"
+	
+	for (( light=1 ; light<51 ; light=light+1 )) ; do 
+		hbLightState=$(curl "http://$bridgeip/api/lampe-bash/lights/$light" -m 2 2> /dev/null)
+		lightState=$(echo "$hbLightState" | grep "state")
+		if [ -n "$lightState" ] ; then
+			# debug
+			echo "lightState[$light] = '$lightState'"
+			
+			lightSwi=$(echo "$lightState" | sed -r "s/\"on\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
+			lightBri=$(echo "$lightState" | sed -r "s/\"bri\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
+			lightHue=$(echo "$lightState" | sed -r "s/\"hue\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
+			lightSat=$(echo "$lightState" | sed -r "s/\"sat\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
+			
+			# debug
+			echo "lightSwi[$light] = '$lightSwi'" 
+			echo "lightBri[$light] = '$lightBri'"
+			echo "lightHue[$light] = '$lightHue'"
+			echo "lightSat[$light] = '$lightSat'"
+			
+			_SWITCH[$light]=$lightSwi
+			_BRIGHTNESS[$light]=$lightBri
+			_COLOR[$light]=$lightHue
+			_SAT[$light]=$lightSat
+		fi
+		
+		# debug
+		# echo "hbLightState = '$hbLightState'"
+	done
+
+	
+	
+#	for L_line in $hbLightStates ; do
+#		# debug
+#		echo "L_line = '$L_line'"
+#	
+#	done
+	
+
+}
+
 # check for first start (configuration)
 if [ -f ~/.lamperc ] ; then
 	# read configuration
 	source ~/.lamperc
+	
+	# receive light states
+	hbReceiveLightStates
 
 	startLampe "$@"
 elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
