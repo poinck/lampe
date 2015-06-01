@@ -73,6 +73,7 @@ readAKey() {
 	case $_KEY in
 		[1-9])
 			# select light
+			printMainScreen "$_KEY"
 			readLightNumber "$_KEY"
 		;;
 		*)
@@ -83,6 +84,9 @@ readAKey() {
 
 readLightNumber() {
 	local number=$_KEY
+	
+	# debug
+	# echo "number = '$number'"
 	
 	read -s -n 1 _NEXT_KEY
 	case $_NEXT_KEY in
@@ -309,6 +313,8 @@ getColor() {
 }
 
 printMainScreen() {
+	local firstNumer=$1
+
 	if [[ "$L_BLIND" == 0 ]] ; then
 		currentBrightness=$((_BRIGHTNESS[_SELECTED_LAMP]/5))
 		currentSat=$((_SAT[_SELECTED_LAMP]*currentBrightness/254))
@@ -319,12 +325,19 @@ printMainScreen() {
 
 		# debug
 		# echo "$colorPosition"
+		# echo "firstNumer = '$firstNumer'"
 
 		echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
-		if [ "$_SELECTED_LAMP" -lt 10 ] ; then
-			echo -n " "
+		if [ -n "$firstNumer" ] ; then
+			echo -n "$firstNumer. "
+		else
+			if [ "$_SELECTED_LAMP" -lt 10 ] ; then
+				echo -n " "
+			fi
+			echo -en "$(getColor)$_SELECTED_LAMP $(lColor ltwhite)"
 		fi
-		echo -en "$(getColor)$_SELECTED_LAMP $(lColor ltwhite)[$(lColor off)"
+		
+		echo -en "[$(lColor off)"
 		for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do 
 			colorValue=$((65279*ii/currentBrightness))
 			echo -en "$(getColorByValue $colorValue)"
