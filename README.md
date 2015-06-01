@@ -46,6 +46,7 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
     s - lower brightness
     d - increase saturation
  q, e - change hue-color
+ y, n - switch on, off
     z - open zenity-dialog to pick RGB-color 
 ```
 
