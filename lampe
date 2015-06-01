@@ -15,13 +15,9 @@ readKey() {
 }
 
 declare _SELECTED_LAMP=1 # defaults to first lamp
-# declare _LAST_LAMP=51
 
-readAKey() {
-	# readKey
-	read -s -n 1 _KEY
-
-	case $_KEY in
+checkKey() {
+	case $1 in
 		# $'\e[A' |
 		"w")
 			_UP=1
@@ -62,35 +58,67 @@ readAKey() {
 			# color-selection with zenity
 			_Z=1
 		;;
-		[1-9])
-			# select the current lamp
-			_SELECTED_LAMP=$_KEY
-			# _NEW_LAMP=$_KEY
+	esac
+}
+
+readAKey() {
+	# readKey
+	read -s -n 1 _KEY
+
+	case $_KEY in
+		[0-9])
+			# select light
+			readLightNumber "$_KEY"
+		;;
+		*)
+			checkKey "$_KEY"
 		;;
 	esac
 }
 
+readLightNumber() {
+	local number=$_KEY
+	
+	read -s -n 1 _NEXT_KEY
+	case $_NEXT_KEY in
+		[0-9])
+			number=$number$_NEXT_KEY
+			
+			# debug
+			# echo " number = $number"
+		;;
+		*)
+			checkKey "$_NEXT_KEY"
+		;;
+	esac
+	
+	_SELECTED_LAMP=$number
+	
+	# debug
+	# echo " _SELECTED_LAMP = '$_SELECTED_LAMP'"
+}
+
 # init brightness
 declare -a _BRIGHTNESS
-for (( b=1 ; b<10 ; b=b+1 )) ; do 
+for (( b=1 ; b<100 ; b=b+1 )) ; do 
 	_BRIGHTNESS[$b]=32
 done
 
 # init saturation
 declare -a _SAT
-for (( s=1 ; s<10 ; s=s+1 )) ; do 
+for (( s=1 ; s<100 ; s=s+1 )) ; do 
 	_SAT[$s]=192
 done
 
 # init switch
 declare -a _SWITCH # on or off
-for (( s=1 ; s<10 ; s=s+1 )) ; do 
+for (( s=1 ; s<100 ; s=s+1 )) ; do 
 	_SWITCH[$s]="true"
 done
 
 # init color
 declare -a _COLOR 
-for (( s=1 ; s<10 ; s=s+1 )) ; do 
+for (( s=1 ; s<100 ; s=s+1 )) ; do 
 	_COLOR[$s]=12000 # orange
 done
 
@@ -238,7 +266,13 @@ getColorByValue() {
 
 # get color by color of selected lamp
 getColor() {
+	# debug
+	# echo " getColor._SELECTED_LAMP = $_SELECTED_LAMP"
+
 	hue=${_COLOR[$_SELECTED_LAMP]}
+	
+	# debug
+	# echo " getColor.hue = '$hue'"
 
 	bold=""
 	if [[ ${_SWITCH[$_SELECTED_LAMP]} == "true" ]] ; then
@@ -282,7 +316,10 @@ printMainScreen() {
 		# echo "$colorPosition"
 
 		echo -en "    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
-		echo -en " $(getColor)$_SELECTED_LAMP $(lColor ltwhite)[$(lColor off)"
+		if [ "$_SELECTED_LAMP" -lt 10 ] ; then
+			echo -n " "
+		fi
+		echo -en "$(getColor)$_SELECTED_LAMP $(lColor ltwhite)[$(lColor off)"
 		for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do 
 			colorValue=$((65279*ii/currentBrightness))
 			echo -en "$(getColorByValue $colorValue)"
@@ -379,7 +416,7 @@ lampeMain() {
 		fi
 
 		# FIXME is this workarround still needed?
-		if [ ${_SAT[$_SELECTED_LAMP]} -lt 1 ] ; then
+		if [[ "${_SAT[$_SELECTED_LAMP]}" -lt 1 ]] ; then
 			_SAT[$_SELECTED_LAMP]=1
 		fi
 
