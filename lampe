@@ -1,14 +1,15 @@
 #!/bin/bash
 # lampe by André Klausnitzer, CC0
-# interactive bash script to control up to 9 Philips Hue lights
+# interactive bash script to control your Philips Hue lights
 
 version="1.0.3"
 
+# XXX   not used
 readKey() {
     # Wait for first char
     if read -s -n 1 _KEY; then
       	# Read rest of chars
-      	while read -s -N 1 -t 0.001 ; do # FIXME is there a timeout-problem? 
+      	while read -s -N 1 -t 0.001 ; do
       		_KEY+="${REPLY}"
       	done
     fi
@@ -92,9 +93,6 @@ readLightNumber() {
 	case $_NEXT_KEY in
 		[0-9])
 			number=$number$_NEXT_KEY
-			
-			# debug
-			# echo " number = $number"
 		;;
 		*)
 			checkKey "$_NEXT_KEY"
@@ -104,7 +102,7 @@ readLightNumber() {
 	_SELECTED_LAMP=$number
 	
 	# debug
-	# echo " _SELECTED_LAMP = '$_SELECTED_LAMP'"
+	# echo "_SELECTED_LAMP = '$_SELECTED_LAMP'"
 }
 
 # init brightness
@@ -368,13 +366,14 @@ printMainScreen() {
 	fi
 }
 
-#toggleSwitch() {
-#	if [ ${_SWITCH[$_SELECTED_LAMP]} = "true" ] ; then
-#		setSwitch 0
-#	else 
-#		setSwitch 1
-#	fi
-#}
+# XXX   not used
+toggleSwitch() {
+	if [ ${_SWITCH[$_SELECTED_LAMP]} = "true" ] ; then
+		setSwitch 0
+	else 
+		setSwitch 1
+	fi
+}
 
 printHelpScreen() {
 	echo ""
@@ -760,20 +759,7 @@ hbReceiveLightStates() {
 			_COLOR[$light]=$lightHue
 			_SAT[$light]=$lightSat
 		fi
-		
-		# debug
-		# echo "hbLightState = '$hbLightState'"
 	done
-
-	
-	
-#	for L_line in $hbLightStates ; do
-#		# debug
-#		echo "L_line = '$L_line'"
-#	
-#	done
-	
-
 }
 
 # check for first start (configuration)
@@ -783,6 +769,8 @@ if [ -f ~/.lamperc ] ; then
 	
 	# receive light states
 	hbReceiveLightStates
+	
+	# TODO  load user defaults from ~/.lamperc
 
 	startLampe "$@"
 elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
@@ -790,7 +778,7 @@ elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
 	showHelp
 else
 	# first start: ask user what to do
-	echo " $(lColor ltyellow)?$(lColor off) [======--$(lColor ltwhite)LAMPE$(lColor off)-------------------------------------]"
+	echo " $(lColor ltyellow)?$(lColor off) [======---$(lColor ltwhite)LAMPE$(lColor off)------------------------------------]"
 	echo "    You are running 'lampe' for the first time. Do you "
 	echo -n "    wish automatic discovery and configuration? [$(lColor ltwhite)y$(lColor off)/$(lColor ltred)n$(lColor off)] "
 	read doIt
@@ -810,6 +798,9 @@ else
 		
 		# store configuration if bridge was found
 		echo "bridgeip=\"$bridgeip\"" > ~/.lamperc
+		
+		# receive light states
+		hbReceiveLightStates
 		
 		startLampe "$@"
 	else
