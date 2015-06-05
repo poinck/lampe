@@ -60,9 +60,27 @@ checkKey() {
 			_Z=1
 		;;
 		"i")
-			# info: do not send new light state
-			# TODO  receive light state from bridge
+			# info: do not send new, but receive light state
 			_I=1
+		;;
+		"r")
+			# random (preview sequence)
+			if [[ "$LAMPE_R" == 1 ]] ; then
+				# stop
+				export LAMPE_R=0 
+				rm "$sequenceFileName" > /dev/null
+				
+				# debug
+				# echo "stop random"
+			else
+				# start
+				export LAMPE_R=1 
+				sequenceFileName="/tmp/lampeSequence$_SELECTED_LAMP"
+				touch "$sequenceFileName" > /dev/null
+				
+				# debug
+				# echo "start random"
+			fi
 		;;
 	esac
 }
@@ -128,6 +146,28 @@ declare -a _COLOR
 for (( s=1 ; s<100 ; s=s+1 )) ; do 
 	_COLOR[$s]=12000 # orange
 done
+
+# GPN15 preview sequence
+previewRandom() {
+	# debug
+	# echo "random called, '$LAMPE_R'"
+
+	local on="true" 
+		# FIXME or should only be done by the main loop?
+	while [[ -f "$sequenceFileName" ]] ; do
+		# debug
+		# echo "do random, '$LAMPE_R'"
+	
+		local hue=$(( $RANDOM*2 )) 
+		local color="\"hue\":$hue,\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]},\"transitiontime\":100"
+		curl -s -d "{\"on\":$on,$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+	
+		hbReceiveLightState "$_SELECTED_LAMP"
+		# printMainScreen ""
+		sleep 10
+			# FIXME or use a param for a callback?
+	done
+}
 
 setBrightness() {
 	brightness=${_BRIGHTNESS[$_SELECTED_LAMP]}
@@ -342,13 +382,21 @@ printMainScreen() {
 
 			if [ $ii -lt $currentSat ] ; then
 				if [ $ii == $colorPosition ] ; then
-					echo -en "$(getColor)C$(lColor off)"
+					if [[ "$LAMPE_R" == 1 ]] ; then
+						echo -en "$(getColor)R$(lColor off)"
+					else
+						echo -en "$(getColor)C$(lColor off)"
+					fi
 				else
 					echo -n "="
 				fi
 			else
 				if [ $ii == $colorPosition ] ; then
-					echo -en "$(getColor)C$(lColor off)"
+					if [[ "$LAMPE_R" == 1 ]] ; then
+						echo -en "$(getColor)R$(lColor off)"
+					else
+						echo -en "$(getColor)C$(lColor off)"
+					fi
 				else
 					echo -n "-"
 				fi
@@ -384,7 +432,8 @@ printHelpScreen() {
 	echo "      y, n   SWITCH        on, off"
 	echo "      z      ZENITY        choose RGB-color"
 	echo "      i      INFO          receive light state"
-	echo "      S, L   CONFIG        save, load"
+	echo "      S, L   CONFIG        save, load (TODO)"
+	echo "      r      RANDOM        GPN15 preview sequence"
 }
 
 lampeMain() {
@@ -407,6 +456,7 @@ lampeMain() {
 		_H=0
 		_Z=0
 		_I=0
+		# _R=0
 
 		readAKey
 
@@ -450,8 +500,18 @@ lampeMain() {
 		else
 			# send
 			printMainScreen
-			hbSendLightsState 
+			if [[ "$_H" == 0 ]] ; then
+				# do not send new light state if help screen was shown
+				hbSendLightsState
+			fi
 			
+			# start preview sequence
+			if [[ "$LAMPE_R" == 1 ]] ; then
+				# echo
+				# echo "got key to call random"
+			
+				( previewRandom ) &
+			fi
 		fi
 	done
 }
@@ -627,6 +687,7 @@ hbDetect() {
 	# XXX   bug#4 fixed, all subnets will be searched, but discovery will stop at the first found hue-bridge
 	tmpIPsFile="/tmp/lampe$$.tmp"
 	L_ips=$(ip -f inet addr show | grep "/24" | sed -r "s/inet //" | cut -f 1-4 -d. | cut -f 1 -d"/")
+		# TODO support subnets other than /24, maybe all that are <= /24 (for that, it is necessary to calculate the range of IPs in the subnet)
 	for L_ip in $L_ips ; do 
 		# debug
 		# echo "L_ip = '$L_ip'"
