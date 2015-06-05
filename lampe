@@ -384,6 +384,7 @@ printHelpScreen() {
 	echo "      y, n   SWITCH        on, off"
 	echo "      z      ZENITY        choose RGB-color"
 	echo "      i      INFO          receive light state"
+	echo "      S, L   CONFIG        save, load"
 }
 
 lampeMain() {
