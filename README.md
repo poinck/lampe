@@ -1,5 +1,5 @@
 # Readme: lampe
-interactive bash-script to control up to 99 Philips hue lights.
+interactive bash-script to control your Philips hue lights.
 
 ![lampe](/lampe.png)
 
@@ -50,6 +50,7 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
     z - open zenity-dialog to pick RGB-color 
     i - info: receive light state
  S, L - save and load user configuration
+    r - start and stop GPN15 preview sequence
 ```
 
 **oneshot mode**
