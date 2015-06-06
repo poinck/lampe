@@ -2,7 +2,7 @@
 # lampe by André Klausnitzer, CC0
 # interactive bash script to control your Philips Hue lights
 
-version="1.0.3"
+version="1.0.4"
 
 # XXX   not used
 readKey() {
@@ -68,7 +68,7 @@ checkKey() {
 			if [[ "$LAMPE_R" == 1 ]] ; then
 				# stop
 				export LAMPE_R=0 
-				rm "$sequenceFileName" > /dev/null
+				rm "$sequenceFileName" 2> /dev/null
 				
 				# debug
 				# echo "stop random"
@@ -76,10 +76,23 @@ checkKey() {
 				# start
 				export LAMPE_R=1 
 				sequenceFileName="/tmp/lampeSequence$_SELECTED_LAMP"
-				touch "$sequenceFileName" > /dev/null
+				touch "$sequenceFileName" 2> /dev/null
 				
 				# debug
 				# echo "start random"
+			fi
+		;;
+		"b")
+			# blink (preview sequence)
+			if [[ "$LAMPE_B" == 1 ]] ; then
+				# stop
+				export LAMPE_B=0 
+				rm "$sequenceFileName" 2> /dev/null
+			else
+				# start
+				export LAMPE_B=1 
+				sequenceFileName="/tmp/lampeSequence$_SELECTED_LAMP"
+				touch "$sequenceFileName" 2> /dev/null
 			fi
 		;;
 	esac
@@ -163,9 +176,32 @@ previewRandom() {
 		curl -s -d "{\"on\":$on,$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 	
 		hbReceiveLightState "$_SELECTED_LAMP"
-		# printMainScreen ""
 		sleep 10
 			# FIXME or use a param for a callback?
+	done
+}
+
+# blink preview sequence
+previewBlink() {
+	local on="true" 
+	local bri="$1"
+	
+	# debug
+	# echo "previewBlink.bri = '$bri'"
+	
+	while [[ -f "$sequenceFileName" ]] ; do
+		curl -s -d "{\"on\":$on,\"transitiontime\":0,\"bri\":$bri}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+	
+		# hbReceiveLightState "$_SELECTED_LAMP"
+		sleep 1
+		if [[ "$on" == "true" ]] ; then
+			on="false"
+		else
+			on="true"
+		fi
+		
+		# debug
+		# echo "on = '$on'"
 	done
 }
 
@@ -384,6 +420,8 @@ printMainScreen() {
 				if [ $ii == $colorPosition ] ; then
 					if [[ "$LAMPE_R" == 1 ]] ; then
 						echo -en "$(getColor)R$(lColor off)"
+					elif [[ "$LAMPE_B" == 1 ]] ; then
+						echo -en "$(getColor)B$(lColor off)"
 					else
 						echo -en "$(getColor)C$(lColor off)"
 					fi
@@ -394,6 +432,8 @@ printMainScreen() {
 				if [ $ii == $colorPosition ] ; then
 					if [[ "$LAMPE_R" == 1 ]] ; then
 						echo -en "$(getColor)R$(lColor off)"
+					elif [[ "$LAMPE_B" == 1 ]] ; then
+						echo -en "$(getColor)B$(lColor off)"
 					else
 						echo -en "$(getColor)C$(lColor off)"
 					fi
@@ -434,6 +474,7 @@ printHelpScreen() {
 	echo "      i      INFO          receive light state"
 	echo "      S, L   CONFIG        save, load (TODO)"
 	echo "      r      RANDOM        GPN15 preview sequence"
+	echo "      b      BLINK"
 }
 
 lampeMain() {
@@ -456,7 +497,6 @@ lampeMain() {
 		_H=0
 		_Z=0
 		_I=0
-		# _R=0
 
 		readAKey
 
@@ -511,6 +551,11 @@ lampeMain() {
 				# echo "got key to call random"
 			
 				( previewRandom ) &
+			elif [[ "$LAMPE_B" == 1 ]] ; then
+				# debug
+				# echo "main.bri = '${_BRIGHTNESS[$_SELECTED_LAMP]}'"
+			
+				( previewBlink "${_BRIGHTNESS[$_SELECTED_LAMP]}" ) &
 			fi
 		fi
 	done
