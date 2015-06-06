@@ -11,6 +11,7 @@ Following cli-tools need to be installed on your system in order to use "lampe"
 - sed
 - cut
 - grep 
+- JSON.sh
 - bc (optional)
 - zenity (optinal)
 
