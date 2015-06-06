@@ -52,6 +52,7 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
  S, L - save and load user configuration
     r - start and stop GPN15 preview sequence
     b - start and stop blinking
+    A - alert
 ```
 
 **oneshot mode**

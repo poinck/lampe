@@ -465,7 +465,7 @@ toggleSwitch() {
 
 printHelpScreen() {
 	echo ""
-	echo "      1..99  LIGHT"
+	echo "      1..99  LIGHT         confirm with any key"
 	echo "      w, s   BRIGHTNESS    -"
 	echo "      a, d   SATURATION    ="
 	echo "      q, e   COLOR         C"
@@ -475,7 +475,7 @@ printHelpScreen() {
 	echo "      S, L   CONFIG        save, load (TODO)"
 	echo "      r      RANDOM        GPN15 preview sequence"
 	echo "      b      BLINK"
-	echo "      A      ALERT         select"
+	echo "      A      ALERT"
 }
 
 lampeMain() {
