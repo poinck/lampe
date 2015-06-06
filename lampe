@@ -95,6 +95,10 @@ checkKey() {
 				touch "$sequenceFileName" 2> /dev/null
 			fi
 		;;
+		"A")
+			# alert select
+			_A=1
+		;;
 	esac
 }
 
@@ -185,24 +189,20 @@ previewRandom() {
 previewBlink() {
 	local on="true" 
 	local bri="$1"
-	
-	# debug
-	# echo "previewBlink.bri = '$bri'"
-	
 	while [[ -f "$sequenceFileName" ]] ; do
 		curl -s -d "{\"on\":$on,\"transitiontime\":0,\"bri\":$bri}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
-	
-		# hbReceiveLightState "$_SELECTED_LAMP"
+
 		sleep 1
 		if [[ "$on" == "true" ]] ; then
 			on="false"
 		else
 			on="true"
 		fi
-		
-		# debug
-		# echo "on = '$on'"
 	done
+}
+
+selectAlert() {
+	curl -s -d "{\"alert\":\"select\"}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 }
 
 setBrightness() {
@@ -475,6 +475,7 @@ printHelpScreen() {
 	echo "      S, L   CONFIG        save, load (TODO)"
 	echo "      r      RANDOM        GPN15 preview sequence"
 	echo "      b      BLINK"
+	echo "      A      ALERT         select"
 }
 
 lampeMain() {
@@ -497,6 +498,7 @@ lampeMain() {
 		_H=0
 		_Z=0
 		_I=0
+		_A=0
 
 		readAKey
 
@@ -523,9 +525,8 @@ lampeMain() {
 			printHelpScreen
 		elif [[ "$_Z" == 1 ]] ; then
 			lampeZenityColor "$_SELECTED_LAMP"
-		elif [[ "$_I" == 1 ]] ; then
-			# TODO  receive current light state
-			echo -en ""
+		elif [[ "$_A" == 1 ]] ; then
+			selectAlert
 		fi
 
 		# FIXME is this workarround still needed?
@@ -566,7 +567,7 @@ hbSendLightsState() {
 	color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
 	thisTime=$(date +%s%3N)
 	diffTime=$((thisTime-lastTime))
-	if [ $diffTime -gt 125 ] ; then # || [[ "$toggle" == 1 ]]
+	if [ $diffTime -gt 125 ] ; then
 		# only send new state every 125ms
 		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		lastTime=$(date +%s%3N)
