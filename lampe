@@ -869,6 +869,7 @@ hbReceiveLightState() {
 		lightBri=$(echo "$lightState" | sed -r "s/\"bri\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 		lightHue=$(echo "$lightState" | sed -r "s/\"hue\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 		lightSat=$(echo "$lightState" | sed -r "s/\"sat\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
+		# TODO  reuse functionality from hbReceiveLightStates()
 		
 		# debug
 		# echo "lightSwi[$light] = '$lightSwi'" 
@@ -925,6 +926,7 @@ hbReceiveLightStates() {
 		else
 			_SAT[$light]=192
 		fi
+			# TODO  swap out the setting of light states to a new function, so that it can be reused by hbReceiveLightState()
 		
 		# debug
 		# echo "_COLOR = ${_COLOR[$light]}"
