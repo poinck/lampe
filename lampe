@@ -68,14 +68,14 @@ checkKey() {
 			if [[ "$LAMPE_R" == 1 ]] ; then
 				# stop
 				export LAMPE_R=0 
-				rm "$sequenceFileName" 2> /dev/null
+				rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
 				
 				# debug
 				# echo "stop random"
 			else
 				# start
 				export LAMPE_R=1 
-				sequenceFileName="/tmp/lampeSequence$_SELECTED_LAMP"
+				sequenceFileName="/tmp/lampeSequenceR$_SELECTED_LAMP"
 				touch "$sequenceFileName" 2> /dev/null
 				
 				# debug
@@ -87,11 +87,11 @@ checkKey() {
 			if [[ "$LAMPE_B" == 1 ]] ; then
 				# stop
 				export LAMPE_B=0 
-				rm "$sequenceFileName" 2> /dev/null
+				rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
 			else
 				# start
 				export LAMPE_B=1 
-				sequenceFileName="/tmp/lampeSequence$_SELECTED_LAMP"
+				sequenceFileName="/tmp/lampeSequenceB$_SELECTED_LAMP"
 				touch "$sequenceFileName" 2> /dev/null
 			fi
 		;;
@@ -110,6 +110,7 @@ readAKey() {
 		[1-9])
 			# select light
 			printMainScreen "$_KEY"
+			_SELECTED_LAMP=$_KEY
 			readLightNumber "$_KEY"
 		;;
 		*)
@@ -175,7 +176,7 @@ previewRandom() {
 		# debug
 		# echo "do random, '$LAMPE_R'"
 	
-		local hue=$(( $RANDOM*2 )) 
+		local hue=$(( RANDOM*2 )) 
 		local color="\"hue\":$hue,\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]},\"transitiontime\":100"
 		curl -s -d "{\"on\":$on,$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 	
@@ -418,9 +419,9 @@ printMainScreen() {
 
 			if [ $ii -lt $currentSat ] ; then
 				if [ $ii == $colorPosition ] ; then
-					if [[ "$LAMPE_R" == 1 ]] ; then
+					if [[ -f "/tmp/lampeSequenceR$_SELECTED_LAMP" ]] ; then
 						echo -en "$(getColor)R$(lColor off)"
-					elif [[ "$LAMPE_B" == 1 ]] ; then
+					elif [[ -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; then
 						echo -en "$(getColor)B$(lColor off)"
 					else
 						echo -en "$(getColor)C$(lColor off)"
@@ -430,9 +431,9 @@ printMainScreen() {
 				fi
 			else
 				if [ $ii == $colorPosition ] ; then
-					if [[ "$LAMPE_R" == 1 ]] ; then
+					if [[ -f "/tmp/lampeSequenceR$_SELECTED_LAMP" ]] ; then 
 						echo -en "$(getColor)R$(lColor off)"
-					elif [[ "$LAMPE_B" == 1 ]] ; then
+					elif [[ -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; then
 						echo -en "$(getColor)B$(lColor off)"
 					else
 						echo -en "$(getColor)C$(lColor off)"
@@ -446,7 +447,7 @@ printMainScreen() {
 			echo -n " "
 		done
 		echo -en "$(lColor ltwhite)]$(lColor off) "
-		if [ ${_SWITCH[$_SELECTED_LAMP]} != "true" ] ; then
+		if [[ ${_SWITCH[$_SELECTED_LAMP]} != "true" ]] ; then
 			echo -n "off "
 		else
 			echo -n "    "
@@ -473,8 +474,8 @@ printHelpScreen() {
 	echo "      z      ZENITY        choose RGB-color"
 	echo "      i      INFO          receive light state"
 	echo "      S, L   CONFIG        save, load (TODO)"
-	echo "      r      RANDOM        GPN15 preview sequence"
-	echo "      b      BLINK"
+	echo "      r      RANDOM        R"
+	echo "      b      BLINK         B"
 	echo "      A      ALERT"
 }
 
@@ -840,6 +841,22 @@ showHelp() {
 	echo "    pick a RGB-color with zenity color selection (non-interactive)"
 }
 
+# parse JSON by using JSON.sh
+# XXX   not used
+parseJson() {
+	read -r json
+	local pattern=$1
+	local result=""
+	
+	# debug
+	# echo "json = '$json'"
+	# echo "pattern = '$pattern'"
+	
+	result=$(echo "$json" | JSON.sh -b | grep '$pattern' | cut -f 2)
+	
+	echo "$result"
+}
+
 hbReceiveLightState() {
 	local light=$1
 	hbLightState=$(curl "http://$bridgeip/api/lampe-bash/lights/$light" -m 2 2> /dev/null)
@@ -867,7 +884,7 @@ hbReceiveLightState() {
 }
 
 hbReceiveLightStates() {
-	local lightState=""
+	local lightStates=""
 	
 	# defaults
 	local lightHue=12000
@@ -875,8 +892,42 @@ hbReceiveLightStates() {
 	local lightSat=192
 	local lightSwi="true"
 	
-	for (( light=1 ; light<51 ; light=light+1 )) ; do 
-		hbReceiveLightState "$light"
+	lightStates=$(curl "http://$bridgeip/api/lampe-bash/lights" -m 2 2> /dev/null)
+	parsedJsonLightStates=$(echo "$lightStates" | JSON.sh -b)
+	for (( light=1 ; light<51 ; light=light+1 )) ; do
+		# debug
+		# echo "light = $light"	
+			
+		lightSwi=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"on\"" | cut -f 2)
+		if [[ -n "$lightSwi" ]] ; then
+			_SWITCH[$light]=$lightSwi
+		else
+			_SWITCH[$light]="true"
+		fi
+		
+		lightBri=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"bri\"" | cut -f 2)
+		if [[ -n "$lightBri" ]] ; then
+			_BRIGHTNESS[$light]=$lightBri
+		else
+			_BRIGHTNESS[$light]=32
+		fi
+		
+		lightHue=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"hue\"" | cut -f 2)
+		if [[ -n "$lightHue" ]] ; then
+			_COLOR[$light]=$lightHue
+		else
+			_COLOR[$light]=12000
+		fi
+		
+		lightSat=$(echo "$parsedJsonLightStates" | grep "\"${light}\",\"state\",\"sat\"" | cut -f 2)
+		if [[ -n "$lightSat" ]] ; then
+			_SAT[$light]=$lightSat
+		else
+			_SAT[$light]=192
+		fi
+		
+		# debug
+		# echo "_COLOR = ${_COLOR[$light]}"
 	done
 }
 
