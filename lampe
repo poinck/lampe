@@ -172,7 +172,7 @@ previewRandom() {
 
 	local on="true" 
 		# FIXME or should only be done by the main loop?
-	while [[ -f "$sequenceFileName" ]] ; do
+	while [[ -f "/tmp/lampeSequenceR$_SELECTED_LAMP" ]] ; do
 		# debug
 		# echo "do random, '$LAMPE_R'"
 	
@@ -190,7 +190,7 @@ previewRandom() {
 previewBlink() {
 	local on="true" 
 	local bri="$1"
-	while [[ -f "$sequenceFileName" ]] ; do
+	while [[ -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; do
 		curl -s -d "{\"on\":$on,\"transitiontime\":0,\"bri\":$bri}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
 		sleep 1
