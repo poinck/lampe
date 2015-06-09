@@ -11,7 +11,7 @@ Following cli-tools need to be installed on your system in order to use "lampe"
 - sed
 - cut
 - grep 
-- JSON.sh
+- JSON.sh (optional)
 - bc (optional)
 - zenity (optinal)
 
@@ -50,9 +50,9 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
  y, n - switch on, off
     z - open zenity-dialog to pick RGB-color 
     i - info: receive light state
- S, L - save and load user configuration
-    r - start and stop GPN15 preview sequence
-    b - start and stop blinking
+ S, L - save and load user configuration (TODO)
+    r - start or stop random sequence
+    b - start or stop blinking sequence
     A - alert
 ```
 

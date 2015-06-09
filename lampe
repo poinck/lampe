@@ -857,6 +857,7 @@ parseJson() {
 	echo "$result"
 }
 
+# receive just one light state.
 hbReceiveLightState() {
 	local light=$1
 	hbLightState=$(curl "http://$bridgeip/api/lampe-bash/lights/$light" -m 2 2> /dev/null)
@@ -869,7 +870,7 @@ hbReceiveLightState() {
 		lightBri=$(echo "$lightState" | sed -r "s/\"bri\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 		lightHue=$(echo "$lightState" | sed -r "s/\"hue\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 		lightSat=$(echo "$lightState" | sed -r "s/\"sat\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
-		# TODO  reuse functionality from hbReceiveLightStates()
+			# TODO  reuse functionality from hbReceiveLightStates()
 		
 		# debug
 		# echo "lightSwi[$light] = '$lightSwi'" 
@@ -884,6 +885,7 @@ hbReceiveLightState() {
 	fi
 }
 
+# receives all light states. received json will be parsed by using JSON.sh
 hbReceiveLightStates() {
 	local lightStates=""
 	
@@ -894,7 +896,7 @@ hbReceiveLightStates() {
 	local lightSwi="true"
 	
 	lightStates=$(curl "http://$bridgeip/api/lampe-bash/lights" -m 2 2> /dev/null)
-	parsedJsonLightStates=$(echo "$lightStates" | JSON.sh -b)
+	parsedJsonLightStates=$(echo "$lightStates" | JSON.sh -b 2> /dev/null)
 	for (( light=1 ; light<51 ; light=light+1 )) ; do
 		# debug
 		# echo "light = $light"	
@@ -932,6 +934,17 @@ hbReceiveLightStates() {
 		# echo "_COLOR = ${_COLOR[$light]}"
 	done
 }
+
+checkDependency() {
+	which $1 2> /dev/null 1> /dev/null
+	if [[ "$?" -gt 0 ]] ; then
+		echo " $(lColor ltred)?$(lColor off)  warning, '$1' is not installed"
+	fi
+}
+
+# check for dependencies
+checkDependency "JSON.sh"
+checkDependency "zenity"
 
 # check for first start (configuration)
 if [ -f ~/.lamperc ] ; then
