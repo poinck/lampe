@@ -60,7 +60,7 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
 
 "lampe" does support a graphical way to set a RGB color like this. The color will be choosen by the GTK color selection dialog powered by "zenity" (optional dependencies have to be installed on your system)
 ```.sh
-lampe -z 2 # where 2 is the lamp-number
+lampe -z 2 # where 2 is the light number
 ```
 
 **blind mode**
