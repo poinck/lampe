@@ -15,10 +15,22 @@ Following cli-tools need to be installed on your system in order to use "lampe"
 - bc (optional)
 - zenity (optinal)
 
-## Installation (optional)
+## Installation
 If you want to use "lampe" system-wide, you can install it this way:
 ```.sh
 make install # as root or use sudo, DESTDIR="/usr/bin"
+```
+
+**on Arch Linux**
+Thx to FSMaxB there is an Arch package availabe in the AUR: 
+```.sh
+yaourt lampe
+```
+
+**on Gentoo Linux**
+Add my overlay ["koo"](https://github.com/poinck/koo) (instructions there) layman and than simply:
+```.sh
+emerge -av lampe
 ```
 
 ## Configuration
@@ -54,6 +66,7 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
     r - start or stop random sequence
     b - start or stop blinking sequence
     A - alert
+    Q - quit
 ```
 
 **oneshot mode**

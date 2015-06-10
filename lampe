@@ -2,7 +2,7 @@
 # lampe by André Klausnitzer, CC0
 # interactive bash script to control your Philips Hue lights
 
-version="1.0.4"
+version="1.0.5"
 
 # XXX   not used
 readKey() {
@@ -98,6 +98,10 @@ checkKey() {
 		"A")
 			# alert select
 			_A=1
+		;;
+		"Q")
+			# quit
+			_QQ=1
 		;;
 	esac
 }
@@ -477,6 +481,17 @@ printHelpScreen() {
 	echo "      r      RANDOM        R"
 	echo "      b      BLINK         B"
 	echo "      A      ALERT"
+	
+	echo "      Q      QUIT"
+}
+
+lampeQuit() {
+	echo -en "\n    Do you really want to quit 'lampe'? [$(lColor ltwhite)y$(lColor off)/$(lColor ltred)n$(lColor off)] "
+	read doQuit
+	if [[ "$doQuit" == "y" ]] || [[ "$doQuit" == "Y" ]] || [[ "$doQuit" == "" ]] ; then
+		echo " $(lColor ltgreen)!$(lColor off)  bye"
+		exit 0
+	fi
 }
 
 lampeMain() {
@@ -500,6 +515,7 @@ lampeMain() {
 		_Z=0
 		_I=0
 		_A=0
+		_QQ=0
 
 		readAKey
 
@@ -528,6 +544,8 @@ lampeMain() {
 			lampeZenityColor "$_SELECTED_LAMP"
 		elif [[ "$_A" == 1 ]] ; then
 			selectAlert
+		elif [[ "$_QQ" == 1 ]] ; then
+			lampeQuit
 		fi
 
 		# FIXME is this workarround still needed?
