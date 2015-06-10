@@ -21,13 +21,13 @@ If you want to use "lampe" system-wide, you can install it this way:
 make install # as root or use sudo, DESTDIR="/usr/bin"
 ```
 
-**on Arch Linux**
+**on Arch Linux:**
 Thx to FSMaxB there is an Arch package availabe in the AUR: 
 ```.sh
 yaourt lampe
 ```
 
-**on Gentoo Linux**
+**on Gentoo Linux:**
 Add my overlay ["koo"](https://github.com/poinck/koo) (instructions there) layman and than simply:
 ```.sh
 emerge -av lampe
