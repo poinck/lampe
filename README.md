@@ -22,7 +22,7 @@ make install # as root or use sudo, DESTDIR="/usr/bin"
 ```
 
 **on Arch Linux:**
-Thx to FSMaxB there is an Arch package availabe in the AUR: 
+Thx to [FSMaxB](https://github.com/FSMaxB) there is an Arch package availabe in the AUR: 
 ```.sh
 yaourt lampe
 ```
