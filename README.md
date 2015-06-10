@@ -28,7 +28,7 @@ yaourt lampe
 ```
 
 **on Gentoo Linux:**
-Add my overlay ["koo"](https://github.com/poinck/koo) (instructions there) layman and than simply:
+Add my overlay ["koo"](https://github.com/poinck/koo) (instructions there) with layman and than simply:
 ```.sh
 emerge -av lampe
 ```
