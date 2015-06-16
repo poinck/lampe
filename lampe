@@ -63,6 +63,10 @@ checkKey() {
 			# info: do not send new, but receive light state
 			_I=1
 		;;
+		"I")
+			# info: receive state of all lights
+			_II=1
+		;;
 		"r")
 			# random (preview sequence)
 			if [[ "$LAMPE_R" == 1 ]] ; then
@@ -476,7 +480,7 @@ printHelpScreen() {
 	echo "      q, e   COLOR         C"
 	echo "      y, n   SWITCH        on, off"
 	echo "      z      ZENITY        choose RGB-color"
-	echo "      i      INFO          receive light state"
+	echo "      i, I   INFO          receive current, all light state(s)"
 	echo "      S, L   CONFIG        save, load (TODO)"
 	echo "      r      RANDOM        R"
 	echo "      b      BLINK         B"
@@ -514,6 +518,7 @@ lampeMain() {
 		_H=0
 		_Z=0
 		_I=0
+		_II=0
 		_A=0
 		_QQ=0
 
@@ -554,8 +559,12 @@ lampeMain() {
 		fi
 
 		if [[ "$_I" == 1 ]] ; then
-			# receive
+			# receive current light state
 			hbReceiveLightState "$_SELECTED_LAMP" 
+			printMainScreen
+		elif [[ "$_II" == 1 ]] ; then
+			# receive all light states
+			hbReceiveLightStates
 			printMainScreen
 		else
 			# send
@@ -859,22 +868,6 @@ showHelp() {
 	echo "    pick a RGB-color with zenity color selection (non-interactive)"
 }
 
-# parse JSON by using JSON.sh
-# XXX   not used
-parseJson() {
-	read -r json
-	local pattern=$1
-	local result=""
-	
-	# debug
-	# echo "json = '$json'"
-	# echo "pattern = '$pattern'"
-	
-	result=$(echo "$json" | JSON.sh -b | grep '$pattern' | cut -f 2)
-	
-	echo "$result"
-}
-
 # receive just one light state.
 hbReceiveLightState() {
 	local light=$1
@@ -884,11 +877,12 @@ hbReceiveLightState() {
 		# debug
 		# echo "lightState[$light] = '$lightState'"
 		
+		# no use of JSON.sh, so that users who cannot install JSON.sh are still able to receive the
+		# state of the current light
 		lightSwi=$(echo "$lightState" | sed -r "s/\"on\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 		lightBri=$(echo "$lightState" | sed -r "s/\"bri\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 		lightHue=$(echo "$lightState" | sed -r "s/\"hue\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 		lightSat=$(echo "$lightState" | sed -r "s/\"sat\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
-			# TODO  reuse functionality from hbReceiveLightStates()
 		
 		# debug
 		# echo "lightSwi[$light] = '$lightSwi'" 
@@ -908,10 +902,10 @@ hbReceiveLightStates() {
 	local lightStates=""
 	
 	# defaults
-	local lightHue=12000
-	local lightBri=32
-	local lightSat=192
-	local lightSwi="true"
+	# local lightHue=12000
+	# local lightBri=32
+	# local lightSat=192
+	# local lightSwi="true"
 	
 	lightStates=$(curl "http://$bridgeip/api/lampe-bash/lights" -m 2 2> /dev/null)
 	parsedJsonLightStates=$(echo "$lightStates" | JSON.sh -b 2> /dev/null)
@@ -922,31 +916,22 @@ hbReceiveLightStates() {
 		lightSwi=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"on\"" | cut -f 2)
 		if [[ -n "$lightSwi" ]] ; then
 			_SWITCH[$light]=$lightSwi
-		else
-			_SWITCH[$light]="true"
-		fi
-		
-		lightBri=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"bri\"" | cut -f 2)
-		if [[ -n "$lightBri" ]] ; then
+			
+			lightBri=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"bri\"" | cut -f 2)
 			_BRIGHTNESS[$light]=$lightBri
-		else
-			_BRIGHTNESS[$light]=32
-		fi
 		
-		lightHue=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"hue\"" | cut -f 2)
-		if [[ -n "$lightHue" ]] ; then
+			lightHue=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"hue\"" | cut -f 2)
 			_COLOR[$light]=$lightHue
-		else
-			_COLOR[$light]=12000
-		fi
-		
-		lightSat=$(echo "$parsedJsonLightStates" | grep "\"${light}\",\"state\",\"sat\"" | cut -f 2)
-		if [[ -n "$lightSat" ]] ; then
+			
+			lightSat=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"sat\"" | cut -f 2)
 			_SAT[$light]=$lightSat
 		else
+			# defaults
+			_SWITCH[$light]="true"
+			_BRIGHTNESS[$light]=32
+			_COLOR[$light]=12000
 			_SAT[$light]=192
 		fi
-			# TODO  swap out the setting of light states to a new function, so that it can be reused by hbReceiveLightState()
 		
 		# debug
 		# echo "_COLOR = ${_COLOR[$light]}"
