@@ -488,7 +488,7 @@ printHelpScreen() {
 	echo "      q, e   COLOR         C"
 	echo "      y, n   SWITCH        on, off"
 	echo "      z      ZENITY        choose RGB-color"
-	echo "      i, I   INFO          receive current, all light state(s)"
+	echo "      i, I   INFO          receive current, all states"
 	echo "      S, L   SETTINGS      save, load user defaults"
 	echo "      r      RANDOM        R"
 	echo "      b      BLINK         B"
