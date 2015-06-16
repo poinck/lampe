@@ -482,19 +482,19 @@ toggleSwitch() {
 
 printHelpScreen() {
 	echo ""
-	echo "      1..99  LIGHT         confirm with any key"
-	echo "      w, s   BRIGHTNESS    -"
-	echo "      a, d   SATURATION    ="
-	echo "      q, e   COLOR         C"
-	echo "      y, n   SWITCH        on, off"
-	echo "      z      ZENITY        choose RGB-color"
-	echo "      i, I   INFO          receive current, all states"
-	echo "      S, L   SETTINGS      save, load user defaults"
-	echo "      r      RANDOM        R"
-	echo "      b      BLINK         B"
-	echo "      A      ALERT"
-	
-	echo "      Q      QUIT"
+	echo "    1..99    LIGHT         confirm with any key"
+	echo "    w, s     BRIGHTNESS    -"
+	echo "    a, d     SATURATION    ="
+	echo "    q, e     COLOR         C"
+	echo "    y, n     SWITCH        on, off"
+	echo "    z        ZENITY        choose RGB-color"
+	echo "    i, I     INFO          receive (all) light state/s"
+	echo "    S, L     SETTINGS      save, load user defaults"
+	echo "    r        RANDOM        R"
+	echo "    b        BLINK         B"
+	echo "    A        ALERT"
+	#        [--------------------------------------------------]
+	echo "    Q        QUIT"
 }
 
 lampeQuit() {
@@ -961,10 +961,14 @@ checkDependency "JSON.sh"
 checkDependency "zenity"
 
 loadLightSetting() {
-	_SWITCH[$_SELECTED_LAMP]=${SAVED_SWITCH[$_SELECTED_LAMP]}
-	_BRIGHTNESS[$_SELECTED_LAMP]=${SAVED_BRIGHTNESS[$_SELECTED_LAMP]}
-	_COLOR[$_SELECTED_LAMP]=${SAVED_COLOR[$_SELECTED_LAMP]}
-	_SAT[$_SELECTED_LAMP]=${SAVED_SAT[$_SELECTED_LAMP]}
+	if [[ -n "${SAVED_SWITCH[$_SELECTED_LAMP]}" ]] ; then
+		# it is assumed that for every light that has a saved switch state 
+		# there are saved values for all following params
+		_SWITCH[$_SELECTED_LAMP]=${SAVED_SWITCH[$_SELECTED_LAMP]}
+		_BRIGHTNESS[$_SELECTED_LAMP]=${SAVED_BRIGHTNESS[$_SELECTED_LAMP]}
+		_COLOR[$_SELECTED_LAMP]=${SAVED_COLOR[$_SELECTED_LAMP]}
+		_SAT[$_SELECTED_LAMP]=${SAVED_SAT[$_SELECTED_LAMP]}
+	fi
 }
 
 saveLightSetting() {
