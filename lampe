@@ -107,6 +107,14 @@ checkKey() {
 			# quit
 			_QQ=1
 		;;
+		"S")
+			# save current light-setting as new user default
+			_S=1
+		;;
+		"L")
+			# load light-setting from saved user default
+			_L=1
+		;;
 	esac
 }
 
@@ -481,7 +489,7 @@ printHelpScreen() {
 	echo "      y, n   SWITCH        on, off"
 	echo "      z      ZENITY        choose RGB-color"
 	echo "      i, I   INFO          receive current, all light state(s)"
-	echo "      S, L   CONFIG        save, load (TODO)"
+	echo "      S, L   SETTINGS      save, load user defaults"
 	echo "      r      RANDOM        R"
 	echo "      b      BLINK         B"
 	echo "      A      ALERT"
@@ -521,6 +529,8 @@ lampeMain() {
 		_II=0
 		_A=0
 		_QQ=0
+		_S=0
+		_L=0
 
 		readAKey
 
@@ -551,6 +561,11 @@ lampeMain() {
 			selectAlert
 		elif [[ "$_QQ" == 1 ]] ; then
 			lampeQuit
+		elif [[ "$_S" == 1 ]] ; then
+			saveLightSetting
+			saveAllSettings
+		elif [[ "$_L" == 1 ]] ; then
+			loadLightSetting
 		fi
 
 		# FIXME is this workarround still needed?
@@ -949,15 +964,32 @@ checkDependency() {
 checkDependency "JSON.sh"
 checkDependency "zenity"
 
+saveLightSetting() {
+	SAVED_SWITCH[$_SELECTED_LAMP]=${_SWITCH[$_SELECTED_LAMP]}
+}
+
+saveAllSettings() {
+	mkdir -p ~/.config/lampe 2> /dev/null
+	echo "" > ~/.config/lampe/light-settings
+	for (( light=1 ; light<51 ; light=light+1 )) ; do
+		if [[ -n "${SAVED_SWITCH[$light]}" ]] ; then
+			echo "_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" >> ~/.config/lampe/light-settings
+		fi
+	done
+}
+
 # check for first start (configuration)
-if [ -f ~/.lamperc ] ; then
+if [[ -f ~/.lamperc ]] ; then
 	# read configuration
 	source ~/.lamperc
 	
 	# receive light states
 	hbReceiveLightStates
 	
-	# TODO  load user defaults from ~/.lamperc
+	# load user defaults from light-settings
+	if [[ -f ~/.config/lampe/light-settings ]] ; then
+		source ~/.config/lampe/light-settings
+	fi
 
 	startLampe "$@"
 elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
