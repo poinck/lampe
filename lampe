@@ -843,9 +843,9 @@ startLampe() {
 		# blind modus: do not print main screen
 		L_BLIND=1
 		lampeMain
-	elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
-		# show help and quit
-		showHelp 
+#	elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
+#		# show help and quit
+#		showHelp 
 	else
 		# default: interactive-mode
 		lampeMain
@@ -993,8 +993,10 @@ saveAllSettings() {
 	done
 }
 
-# check for first start (configuration)
-if [[ -f ~/.lamperc ]] ; then
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
+	# show help and quit
+	showHelp
+elif [[ -f ~/.lamperc ]] ; then
 	# read configuration
 	source ~/.lamperc
 	
@@ -1007,9 +1009,6 @@ if [[ -f ~/.lamperc ]] ; then
 	hbReceiveLightStates
 
 	startLampe "$@"
-elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
-	# show help and quit
-	showHelp
 else
 	# first start: ask user what to do
 	echo " $(lColor ltyellow)?$(lColor off) [======---$(lColor ltwhite)LAMPE$(lColor off)------------------------------------]"
