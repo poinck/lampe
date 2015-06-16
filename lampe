@@ -916,12 +916,6 @@ hbReceiveLightState() {
 hbReceiveLightStates() {
 	local lightStates=""
 	
-	# defaults
-	# local lightHue=12000
-	# local lightBri=32
-	# local lightSat=192
-	# local lightSwi="true"
-	
 	lightStates=$(curl "http://$bridgeip/api/lampe-bash/lights" -m 2 2> /dev/null)
 	parsedJsonLightStates=$(echo "$lightStates" | JSON.sh -b 2> /dev/null)
 	for (( light=1 ; light<51 ; light=light+1 )) ; do
@@ -932,6 +926,8 @@ hbReceiveLightStates() {
 		if [[ -n "$lightSwi" ]] ; then
 			_SWITCH[$light]=$lightSwi
 			
+			# it is assumed that for every light that has a switch the 
+			# following params are availabe in the json output
 			lightBri=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"bri\"" | cut -f 2)
 			_BRIGHTNESS[$light]=$lightBri
 		
@@ -964,8 +960,18 @@ checkDependency() {
 checkDependency "JSON.sh"
 checkDependency "zenity"
 
+loadLightSetting() {
+	_SWITCH[$_SELECTED_LAMP]=${SAVED_SWITCH[$_SELECTED_LAMP]}
+	_BRIGHTNESS[$_SELECTED_LAMP]=${SAVED_BRIGHTNESS[$_SELECTED_LAMP]}
+	_COLOR[$_SELECTED_LAMP]=${SAVED_COLOR[$_SELECTED_LAMP]}
+	_SAT[$_SELECTED_LAMP]=${SAVED_SAT[$_SELECTED_LAMP]}
+}
+
 saveLightSetting() {
 	SAVED_SWITCH[$_SELECTED_LAMP]=${_SWITCH[$_SELECTED_LAMP]}
+	SAVED_BRIGHTNESS[$_SELECTED_LAMP]=${_BRIGHTNESS[$_SELECTED_LAMP]}
+	SAVED_COLOR[$_SELECTED_LAMP]=${_COLOR[$_SELECTED_LAMP]}
+	SAVED_SAT[$_SELECTED_LAMP]=${_SAT[$_SELECTED_LAMP]}
 }
 
 saveAllSettings() {
@@ -974,6 +980,18 @@ saveAllSettings() {
 	for (( light=1 ; light<51 ; light=light+1 )) ; do
 		if [[ -n "${SAVED_SWITCH[$light]}" ]] ; then
 			echo "_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" >> ~/.config/lampe/light-settings
+			echo "SAVED_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" >> ~/.config/lampe/light-settings
+			
+			# it is assumed that for every light that has a saved switch state 
+			# there saved values for following params
+			echo "_BRIGHTNESS[$light]=\"${SAVED_BRIGHTNESS[$light]}\"" >> ~/.config/lampe/light-settings
+			echo "SAVED_BRIGHTNESS[$light]=\"${SAVED_BRIGHTNESS[$light]}\"" >> ~/.config/lampe/light-settings
+			
+			echo "_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" >> ~/.config/lampe/light-settings
+			echo "SAVED_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" >> ~/.config/lampe/light-settings
+			
+			echo "_SAT[$light]=\"${SAVED_SAT[$light]}\"" >> ~/.config/lampe/light-settings
+			echo "SAVED_SAT[$light]=\"${SAVED_SAT[$light]}\"" >> ~/.config/lampe/light-settings
 		fi
 	done
 }
@@ -983,13 +1001,13 @@ if [[ -f ~/.lamperc ]] ; then
 	# read configuration
 	source ~/.lamperc
 	
-	# receive light states
-	hbReceiveLightStates
-	
 	# load user defaults from light-settings
 	if [[ -f ~/.config/lampe/light-settings ]] ; then
 		source ~/.config/lampe/light-settings
 	fi
+	
+	# receive light states
+	hbReceiveLightStates
 
 	startLampe "$@"
 elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
