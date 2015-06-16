@@ -2,7 +2,7 @@
 # lampe by André Klausnitzer, CC0
 # interactive bash script to control your Philips Hue lights
 
-version="1.0.5"
+version="1.1.0"
 
 # XXX   not used
 readKey() {
@@ -950,7 +950,7 @@ hbReceiveLightStates() {
 }
 
 checkDependency() {
-	which $1 2> /dev/null 1> /dev/null
+	which "$1" 2> /dev/null 1> /dev/null
 	if [[ "$?" -gt 0 ]] ; then
 		echo " $(lColor ltred)?$(lColor off)  warning, '$1' is not installed"
 	fi
@@ -978,20 +978,17 @@ saveAllSettings() {
 	mkdir -p ~/.config/lampe 2> /dev/null
 	echo "" > ~/.config/lampe/light-settings
 	for (( light=1 ; light<51 ; light=light+1 )) ; do
-		if [[ -n "${SAVED_SWITCH[$light]}" ]] ; then
-			echo "_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" >> ~/.config/lampe/light-settings
-			echo "SAVED_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" >> ~/.config/lampe/light-settings
-			
+		if [[ -n "${SAVED_SWITCH[$light]}" ]] ; then			
 			# it is assumed that for every light that has a saved switch state 
-			# there saved values for following params
-			echo "_BRIGHTNESS[$light]=\"${SAVED_BRIGHTNESS[$light]}\"" >> ~/.config/lampe/light-settings
-			echo "SAVED_BRIGHTNESS[$light]=\"${SAVED_BRIGHTNESS[$light]}\"" >> ~/.config/lampe/light-settings
-			
-			echo "_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" >> ~/.config/lampe/light-settings
-			echo "SAVED_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" >> ~/.config/lampe/light-settings
-			
-			echo "_SAT[$light]=\"${SAVED_SAT[$light]}\"" >> ~/.config/lampe/light-settings
-			echo "SAVED_SAT[$light]=\"${SAVED_SAT[$light]}\"" >> ~/.config/lampe/light-settings
+			# there are saved values for all following params
+			{ echo "_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" ; 
+			echo "SAVED_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" ; 
+			echo "_BRIGHTNESS[$light]=\"${SAVED_BRIGHTNESS[$light]}\"" ; 
+			echo "SAVED_BRIGHTNESS[$light]=\"${SAVED_BRIGHTNESS[$light]}\"" ; 
+			echo "_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" ; 
+			echo "SAVED_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" ; 
+			echo "_SAT[$light]=\"${SAVED_SAT[$light]}\"" ; 
+			echo "SAVED_SAT[$light]=\"${SAVED_SAT[$light]}\"" ; } >> ~/.config/lampe/light-settings
 		fi
 	done
 }
