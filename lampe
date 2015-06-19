@@ -15,7 +15,9 @@ readKey() {
     fi
 }
 
-declare _SELECTED_LAMP=1 # defaults to first lamp
+# defaults: can be redefined in ~/.lamperc
+declare _SELECTED_LAMP=1
+tmdCsvFile="$HOME/public_html/tm/tm_720.csv"
 
 checkKey() {
 	case $1 in
@@ -115,6 +117,19 @@ checkKey() {
 			# load light-setting from saved user default
 			_L=1
 		;;
+		"m")
+			# mood light
+			if [[ "$LAMPE_M" == 1 ]] ; then
+				# stop
+				export LAMPE_M=0 
+				rm "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
+			else
+				# start
+				export LAMPE_M=1 
+				sequenceFileName="/tmp/lampeSequenceM$_SELECTED_LAMP"
+				touch "$sequenceFileName" 2> /dev/null
+			fi
+		;;
 	esac
 }
 
@@ -180,6 +195,21 @@ declare -a _COLOR
 for (( s=1 ; s<100 ; s=s+1 )) ; do 
 	_COLOR[$s]=12000 # orange
 done
+
+moodSequence() {
+	while [[ -f "/tmp/lampeSequenceM$_SELECTED_LAMP" ]] ; do
+		tmdLine=$(cat "$tmdCsvFile" | tail -n 1 | cut -f 2-3 -d',' 2> /dev/null)
+		tmdInside=$(echo "$tmdLine" | cut -f 1 -d',')
+		tmdOutside=$(echo "$tmdLine" | cut -f 2 -d',')
+		
+		local hueDiff=$(( ($tmdOutside-$tmdInside)*2+25750 ))
+		local hue="\"hue\":$hueDiff"
+		curl -s -d "{$hue}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+	
+		hbReceiveLightState "$_SELECTED_LAMP"
+		sleep 60
+	done
+}
 
 # GPN15 preview sequence
 previewRandom() {
@@ -438,6 +468,8 @@ printMainScreen() {
 					echo -en "$(getColor)R$(lColor off)"
 				elif [[ -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; then
 					echo -en "$(getColor)B$(lColor off)"
+				elif [[ -f "/tmp/lampeSequenceM$_SELECTED_LAMP" ]] ; then
+					echo -en "$(getColor)M$(lColor off)"
 				else
 					echo -en "$(getColor)C$(lColor off)"
 				fi
@@ -448,19 +480,6 @@ printMainScreen() {
 					echo -n "-"
 				fi
 			fi
-#			else
-#				if [ $ii == $colorPosition ] ; then
-#					if [[ -f "/tmp/lampeSequenceR$_SELECTED_LAMP" ]] ; then 
-#						echo -en "$(getColor)R$(lColor off)"
-#					elif [[ -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; then
-#						echo -en "$(getColor)B$(lColor off)"
-#					else
-#						echo -en "$(getColor)C$(lColor off)"
-#					fi
-#				else
-#					
-#				fi
-#			fi
 		done
 		for (( ii=0 ; ii<50-currentBrightness ; ii=ii+1 )) ; do
 			echo -n " "
@@ -507,6 +526,10 @@ lampeQuit() {
 	read doQuit
 	if [[ "$doQuit" == "y" ]] || [[ "$doQuit" == "Y" ]] || [[ "$doQuit" == "" ]] ; then
 		echo " $(lColor ltgreen)!$(lColor off)  bye"
+		
+		# cleanup and quit
+		rm /tmp/lampeSequence* 2> /dev/null
+		# killall lampe > /dev/null
 		exit 0
 	fi
 }
@@ -605,6 +628,8 @@ lampeMain() {
 				# echo "main.bri = '${_BRIGHTNESS[$_SELECTED_LAMP]}'"
 			
 				( previewBlink "${_BRIGHTNESS[$_SELECTED_LAMP]}" ) &
+			elif [[ "$LAMPE_M" == 1 ]] ; then
+				( moodSequence ) &
 			fi
 		fi
 	done
@@ -848,9 +873,6 @@ startLampe() {
 		# blind modus: do not print main screen
 		L_BLIND=1
 		lampeMain
-#	elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
-#		# show help and quit
-#		showHelp 
 	else
 		# default: interactive-mode
 		lampeMain
