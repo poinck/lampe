@@ -490,9 +490,11 @@ printHelpScreen() {
 	echo "    z        ZENITY        choose RGB-color"
 	echo "    i, I     INFO          receive (all) light state/s"
 	echo "    S, L     SETTINGS      save, load user defaults"
-	echo "    r        RANDOM        R"
-	echo "    b        BLINK         B"
+	echo "    r        RANDOM        R: random color sequence"
+	echo "    b        BLINK         B: blinking sequence"
 	echo "    A        ALERT"
+	echo "    m        MOOD          M: temperature difference"
+	echo "                              based color sequence"
 	#        [--------------------------------------------------]
 	echo "    Q        QUIT"
 }
