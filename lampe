@@ -433,31 +433,34 @@ printMainScreen() {
 			colorValue=$((65279*ii/currentBrightness))
 			echo -en "$(getColorByValue $colorValue)"
 
-			if [ $ii -lt $currentSat ] ; then
-				if [ $ii == $colorPosition ] ; then
-					if [[ -f "/tmp/lampeSequenceR$_SELECTED_LAMP" ]] ; then
-						echo -en "$(getColor)R$(lColor off)"
-					elif [[ -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; then
-						echo -en "$(getColor)B$(lColor off)"
-					else
-						echo -en "$(getColor)C$(lColor off)"
-					fi
+			if [ $ii == $colorPosition ] ; then
+				if [[ -f "/tmp/lampeSequenceR$_SELECTED_LAMP" ]] ; then
+					echo -en "$(getColor)R$(lColor off)"
+				elif [[ -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; then
+					echo -en "$(getColor)B$(lColor off)"
 				else
-					echo -n "="
+					echo -en "$(getColor)C$(lColor off)"
 				fi
 			else
-				if [ $ii == $colorPosition ] ; then
-					if [[ -f "/tmp/lampeSequenceR$_SELECTED_LAMP" ]] ; then 
-						echo -en "$(getColor)R$(lColor off)"
-					elif [[ -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; then
-						echo -en "$(getColor)B$(lColor off)"
-					else
-						echo -en "$(getColor)C$(lColor off)"
-					fi
+				if [ $ii -lt $currentSat ] ; then
+					echo -n "="
 				else
 					echo -n "-"
 				fi
 			fi
+#			else
+#				if [ $ii == $colorPosition ] ; then
+#					if [[ -f "/tmp/lampeSequenceR$_SELECTED_LAMP" ]] ; then 
+#						echo -en "$(getColor)R$(lColor off)"
+#					elif [[ -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; then
+#						echo -en "$(getColor)B$(lColor off)"
+#					else
+#						echo -en "$(getColor)C$(lColor off)"
+#					fi
+#				else
+#					
+#				fi
+#			fi
 		done
 		for (( ii=0 ; ii<50-currentBrightness ; ii=ii+1 )) ; do
 			echo -n " "
