@@ -70,35 +70,31 @@ checkKey() {
 			_II=1
 		;;
 		"r")
-			# random (preview sequence)
+			# random
 			if [[ "$LAMPE_R" == 1 ]] ; then
 				# stop
-				export LAMPE_R=0 
+				LAMPE_R=0 
 				rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
 				
 				# debug
 				# echo "stop random"
 			else
 				# start
-				export LAMPE_R=1 
-				sequenceFileName="/tmp/lampeSequenceR$_SELECTED_LAMP"
-				touch "$sequenceFileName" 2> /dev/null
+				LAMPE_R=1
 				
 				# debug
 				# echo "start random"
 			fi
 		;;
 		"b")
-			# blink (preview sequence)
+			# blink
 			if [[ "$LAMPE_B" == 1 ]] ; then
 				# stop
-				export LAMPE_B=0 
+				LAMPE_B=0 
 				rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
 			else
 				# start
-				export LAMPE_B=1 
-				sequenceFileName="/tmp/lampeSequenceB$_SELECTED_LAMP"
-				touch "$sequenceFileName" 2> /dev/null
+				LAMPE_B=1
 			fi
 		;;
 		"A")
@@ -121,13 +117,11 @@ checkKey() {
 			# mood light
 			if [[ "$LAMPE_M" == 1 ]] ; then
 				# stop
-				export LAMPE_M=0 
+				LAMPE_M=0 
 				rm "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
 			else
 				# start
-				export LAMPE_M=1 
-				sequenceFileName="/tmp/lampeSequenceM$_SELECTED_LAMP"
-				touch "$sequenceFileName" 2> /dev/null
+				LAMPE_M=1 
 			fi
 		;;
 	esac
@@ -604,34 +598,37 @@ lampeMain() {
 		if [[ "$_I" == 1 ]] ; then
 			# receive current light state
 			hbReceiveLightState "$_SELECTED_LAMP" 
-			printMainScreen
+			# printMainScreen
 		elif [[ "$_II" == 1 ]] ; then
 			# receive all light states
 			hbReceiveLightStates
-			printMainScreen
+			# printMainScreen
 		else
 			# send
-			printMainScreen
 			if [[ "$_H" == 0 ]] ; then
 				# do not send new light state if help screen was shown
 				hbSendLightsState
 			fi
 			
 			# start preview sequence
-			if [[ "$LAMPE_R" == 1 ]] ; then
+			if [[ "$LAMPE_R" == 1 ]] && [[ ! -f "/tmp/lampeSequenceR$_SELECTED_LAMP" ]] ; then
 				# echo
 				# echo "got key to call random"
 			
+				touch "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
 				( previewRandom ) &
-			elif [[ "$LAMPE_B" == 1 ]] ; then
+			elif [[ "$LAMPE_B" == 1 ]] && [[ ! -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; then
 				# debug
 				# echo "main.bri = '${_BRIGHTNESS[$_SELECTED_LAMP]}'"
 			
+				touch "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
 				( previewBlink "${_BRIGHTNESS[$_SELECTED_LAMP]}" ) &
-			elif [[ "$LAMPE_M" == 1 ]] ; then
+			elif [[ "$LAMPE_M" == 1 ]] && [[ ! -f "/tmp/lampeSequenceM$_SELECTED_LAMP" ]] ; then
+				touch "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
 				( moodSequence ) &
 			fi
 		fi
+		printMainScreen
 	done
 }
 
