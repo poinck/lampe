@@ -205,8 +205,7 @@ moodSequence() {
 		local hueDiff=$(( temperatureDiff*diffFactor+25750 ))
 		local hue="\"hue\":$hueDiff,\"transitiontime\":30"
 		curl -s -d "{$hue}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
-	
-		hbReceiveLightState "$_SELECTED_LAMP"
+
 		sleep 60
 	done
 }
@@ -216,8 +215,7 @@ previewRandom() {
 	# debug
 	# echo "random called, '$LAMPE_R'"
 
-	local on="true" 
-		# FIXME or should only be done by the main loop?
+	local on="true"
 	while [[ -f "/tmp/lampeSequenceR$_SELECTED_LAMP" ]] ; do
 		# debug
 		# echo "do random, '$LAMPE_R'"
@@ -225,10 +223,8 @@ previewRandom() {
 		local hue=$(( RANDOM*2 )) 
 		local color="\"hue\":$hue,\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]},\"transitiontime\":100"
 		curl -s -d "{\"on\":$on,$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
-	
-		hbReceiveLightState "$_SELECTED_LAMP"
+
 		sleep 10
-			# FIXME or use a param for a callback?
 	done
 }
 
@@ -565,26 +561,35 @@ lampeMain() {
 		# handle keys
 		if [[ "$_UP" == 1 ]] ; then
 			setBrightness 5
+			hbSendLightBri
 		elif [[ "$_DOWN" == 1 ]] ; then
 			setBrightness -5
+			hbSendLightBri
 		elif [[ "$_RIGHT" == 1 ]] ; then
 			setSat 10
+			hbSendLightSat
 		elif [[ "$_LEFT" == 1 ]] ; then
 			setSat -10
+			hbSendLightSat
 		elif [[ "$_Q" == 1 ]] ; then
 			# hue
 			setColor -1000
+			hbSendLightColor
 		elif [[ "$_E" == 1 ]] ; then
 			# hue
 			setColor 1000
+			hbSendLightColor
 		elif [[ "$_Y" == 1 ]] ; then
 			setSwitch 1
+			hbSendLightSwitch
 		elif [[ "$_N" == 1 ]] ; then
 			setSwitch 0
+			hbSendLightSwitch
 		elif [[ "$_H" == 1 ]] ; then
 			printHelpScreen
 		elif [[ "$_Z" == 1 ]] ; then
 			lampeZenityColor "$_SELECTED_LAMP"
+			hbSendLightsState
 		elif [[ "$_A" == 1 ]] ; then
 			selectAlert
 		elif [[ "$_QQ" == 1 ]] ; then
@@ -594,6 +599,7 @@ lampeMain() {
 			saveAllSettings
 		elif [[ "$_L" == 1 ]] ; then
 			loadLightSetting
+			hbSendLightsState
 		fi
 
 		# FIXME is this workarround still needed?
@@ -610,13 +616,7 @@ lampeMain() {
 			hbReceiveLightStates
 			# printMainScreen
 		else
-			# send
-			if [[ "$_H" == 0 ]] ; then
-				# do not send new light state if help screen was shown
-				hbSendLightsState
-			fi
-			
-			# start preview sequence
+			# handle sequences
 			if [[ "$LAMPE_R" == 1 ]] && [[ ! -f "/tmp/lampeSequenceR$_SELECTED_LAMP" ]] ; then
 				# echo
 				# echo "got key to call random"
@@ -650,15 +650,66 @@ lampeMain() {
 	done
 }
 
-# send lamp state (switch and color) to Hue Bridge
-hbSendLightsState() {
-	color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
-	thisTime=$(date +%s%3N)
-	diffTime=$((thisTime-lastTime))
+# send hue and switch only
+hbSendLightColor() {
+	local color="\"hue\":${_COLOR[$_SELECTED_LAMP]}"
+	
+	local thisTime=$(date +%s%3N)
+	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 125 ] ; then
 		# only send new state every 125ms
 		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
-		lastTime=$(date +%s%3N)
+		local lastTime=$(date +%s%3N)
+	fi
+}
+
+# send on,off switch only
+hbSendLightSwitch() {
+	local thisTime=$(date +%s%3N)
+	local diffTime=$((thisTime-lastTime))
+	if [ $diffTime -gt 125 ] ; then
+		# only send new state every 125ms
+		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]}}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		local lastTime=$(date +%s%3N)
+	fi
+}
+
+# send light brightness and switch only
+hbSendLightBri() {
+	local color="\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]}"
+	
+	local thisTime=$(date +%s%3N)
+	local diffTime=$((thisTime-lastTime))
+	if [ $diffTime -gt 125 ] ; then
+		# only send new state every 125ms
+		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		local lastTime=$(date +%s%3N)
+	fi
+}
+
+# send light saturation and switch only
+hbSendLightSat() {
+	local color="\"sat\":${_SAT[$_SELECTED_LAMP]}"
+	
+	local thisTime=$(date +%s%3N)
+	local diffTime=$((thisTime-lastTime))
+	if [ $diffTime -gt 125 ] ; then
+		# only send new state every 125ms
+		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		local lastTime=$(date +%s%3N)
+	fi
+}
+
+# send light state (switch and color) to Hue Bridge
+hbSendLightsState() {
+	local color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
+	
+	local thisTime=$(date +%s%3N)
+	local diffTime=$((thisTime-lastTime))
+	if [ $diffTime -gt 125 ] ; then
+		# only send new state every 125ms
+		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		local lastTime=$(date +%s%3N)
 	fi
 }
 
