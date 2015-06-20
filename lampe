@@ -623,6 +623,7 @@ lampeMain() {
 				LAMPE_M=0
 				rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
 				LAMPE_B=0
+				_SWITCH[_SELECTED_LAMP]="true"
 				( previewRandom ) &
 			elif [[ "$LAMPE_B" == 1 ]] && [[ ! -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; then
 				# debug
@@ -633,6 +634,7 @@ lampeMain() {
 				LAMPE_M=0
 				rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
 				LAMPE_R=0
+				_SWITCH[_SELECTED_LAMP]="true"
 				( previewBlink "${_BRIGHTNESS[$_SELECTED_LAMP]}" ) &
 			elif [[ "$LAMPE_M" == 1 ]] && [[ ! -f "/tmp/lampeSequenceM$_SELECTED_LAMP" ]] ; then
 				touch "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
