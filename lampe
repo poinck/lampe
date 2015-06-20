@@ -252,13 +252,9 @@ setBrightness() {
 	brightness=${_BRIGHTNESS[$_SELECTED_LAMP]}
 	
 	brightness=$((brightness+$1))
-	if [ $brightness -lt 1 ] ; then
-		# switch off lamp
-		setSwitch 0
-		brightness=0
+	if [ $brightness -lt 2 ] ; then
+		brightness=1
 	elif [ $brightness -gt 0 ] ; then
-		# switch on lamp
-		setSwitch 1
 		if [ $brightness -gt 254 ] ; then
 			brightness=254
 		fi
@@ -581,7 +577,8 @@ lampeMain() {
 			hbSendLightColor
 		elif [[ "$_Y" == 1 ]] ; then
 			setSwitch 1
-			hbSendLightSwitch
+			# hbSendLightSwitch
+			hbSendLightsState
 		elif [[ "$_N" == 1 ]] ; then
 			setSwitch 0
 			hbSendLightSwitch
@@ -682,7 +679,7 @@ hbSendLightBri() {
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 125 ] ; then
 		# only send new state every 125ms
-		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
