@@ -650,7 +650,7 @@ lampeMain() {
 	done
 }
 
-# send hue and switch only
+# send hue light state only
 hbSendLightColor() {
 	local color="\"hue\":${_COLOR[$_SELECTED_LAMP]}"
 	
@@ -658,12 +658,12 @@ hbSendLightColor() {
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 125 ] ; then
 		# only send new state every 125ms
-		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
 
-# send on,off switch only
+# send on,off switch state only
 hbSendLightSwitch() {
 	local thisTime=$(date +%s%3N)
 	local diffTime=$((thisTime-lastTime))
@@ -674,7 +674,7 @@ hbSendLightSwitch() {
 	fi
 }
 
-# send light brightness and switch only
+# send brightness and switch light state only
 hbSendLightBri() {
 	local color="\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]}"
 	
@@ -687,7 +687,7 @@ hbSendLightBri() {
 	fi
 }
 
-# send light saturation and switch only
+# send saturation light state only
 hbSendLightSat() {
 	local color="\"sat\":${_SAT[$_SELECTED_LAMP]}"
 	
@@ -695,7 +695,7 @@ hbSendLightSat() {
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 125 ] ; then
 		# only send new state every 125ms
-		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
