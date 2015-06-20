@@ -192,12 +192,18 @@ done
 
 moodSequence() {
 	while [[ -f "/tmp/lampeSequenceM$_SELECTED_LAMP" ]] ; do
-		tmdLine=$(cat "$tmdCsvFile" | tail -n 1 | cut -f 2-3 -d',' 2> /dev/null)
+		# tmdLine=$(cat "$tmdCsvFile" | tail -n 1 | cut -f 2-3 -d',' 2> /dev/null)
+		tmdLine=$(tail -n 1 < "$tmdCsvFile" | cut -f 2-3 -d',' 2> /dev/null)
 		tmdInside=$(echo "$tmdLine" | cut -f 1 -d',')
 		tmdOutside=$(echo "$tmdLine" | cut -f 2 -d',')
 		
-		local hueDiff=$(( ($tmdOutside-$tmdInside)*2+25750 ))
-		local hue="\"hue\":$hueDiff"
+		local temperatureDiff=$(( tmdOutside-tmdInside ))
+		local diffFactor=1
+		if [[ "$temperatureDiff" -gt 0 ]] ; then
+			diffFactor=4
+		fi
+		local hueDiff=$(( temperatureDiff*diffFactor+25750 ))
+		local hue="\"hue\":$hueDiff,\"transitiontime\":30"
 		curl -s -d "{$hue}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 	
 		hbReceiveLightState "$_SELECTED_LAMP"
