@@ -622,15 +622,27 @@ lampeMain() {
 				# echo "got key to call random"
 			
 				touch "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
+				rm "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
+				LAMPE_M=0
+				rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
+				LAMPE_B=0
 				( previewRandom ) &
 			elif [[ "$LAMPE_B" == 1 ]] && [[ ! -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; then
 				# debug
 				# echo "main.bri = '${_BRIGHTNESS[$_SELECTED_LAMP]}'"
 			
 				touch "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
+				rm "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
+				LAMPE_M=0
+				rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
+				LAMPE_R=0
 				( previewBlink "${_BRIGHTNESS[$_SELECTED_LAMP]}" ) &
 			elif [[ "$LAMPE_M" == 1 ]] && [[ ! -f "/tmp/lampeSequenceM$_SELECTED_LAMP" ]] ; then
 				touch "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
+				rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
+				LAMPE_R=0
+				rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
+				LAMPE_B=0
 				( moodSequence ) &
 			fi
 		fi
