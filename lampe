@@ -198,7 +198,7 @@ moodSequence() {
 		tmdOutside=$(echo "$tmdLine" | cut -f 2 -d',')
 		
 		local temperatureDiff=$(( tmdOutside-tmdInside ))
-		local diffFactor=1
+		local diffFactor=2
 		if [[ "$temperatureDiff" -gt 0 ]] ; then
 			diffFactor=4
 		fi
