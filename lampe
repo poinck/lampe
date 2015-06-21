@@ -277,6 +277,10 @@ setSwitch() {
 		_SWITCH[$_SELECTED_LAMP]="true"
 	else
 		_SWITCH[$_SELECTED_LAMP]="false"
+		
+		# disable sequences that would turn the light on again
+		rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
+		rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
 	fi
 }
 
