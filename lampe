@@ -987,23 +987,25 @@ hbReceiveLightStates() {
 	for (( light=1 ; light<51 ; light=light+1 )) ; do
 		# debug
 		# echo "light = $light"	
-			
-		lightSwi=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"on\"" | cut -f 2)
-		if [[ -n "$lightSwi" ]] ; then
+		
+		local currentPJLightStates=$(echo "$parsedJsonLightStates" | grep "\[\"$light\",")
+		if [[ -n "$currentPJLightStates" ]] ; then	
+			lightSwi=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"on\"" | cut -f 2)
+			# if [[ -n "$lightSwi" ]] ; then
 			_SWITCH[$light]=$lightSwi
 			
 			# it is assumed that for every light that has a switch the 
 			# following params are availabe in the json output
-			lightBri=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"bri\"" | cut -f 2)
+			lightBri=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"bri\"" | cut -f 2)
 			_BRIGHTNESS[$light]=$lightBri
 		
-			lightHue=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"hue\"" | cut -f 2)
+			lightHue=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"hue\"" | cut -f 2)
 			_COLOR[$light]=$lightHue
 			
-			lightSat=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"sat\"" | cut -f 2)
+			lightSat=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"sat\"" | cut -f 2)
 			_SAT[$light]=$lightSat
-			lightReachable=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"reachable\"" | cut -f 2)
-			lightName=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"name\"" | cut -f 2)
+			lightReachable=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"reachable\"" | cut -f 2)
+			lightName=$(echo "$currentPJLightStates" | grep "\"$light\",\"name\"" | cut -f 2)
 			
 			# output for state of all lights
 			if [ "$light" -lt 10 ] ; then
