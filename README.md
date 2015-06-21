@@ -62,7 +62,8 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
  y, n - switch on, off
     z - open zenity-dialog to pick RGB-color 
  i, I - info: receive current or all light state(s)
- S, L - save and load user configuration
+ S, l - save and load user configuration
+    F - find new lights
     r - start or stop random color sequence
     b - start or stop blinking sequence
     A - alert
