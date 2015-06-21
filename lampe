@@ -89,7 +89,7 @@ checkKey() {
 			# save current light-setting as new user default
 			_S=1
 		;;
-		"L")
+		"l")
 			# load light-setting from saved user default
 			_L=1
 		;;
@@ -363,18 +363,21 @@ getColorByValue() {
 	echo -en "$(lColor $colorEscape)"
 }
 
-# get color by color of selected lamp
-getColor() {
-	# debug
-	# echo " getColor._SELECTED_LAMP = $_SELECTED_LAMP"
+# get pint-color of selected or given light number
+getColorOfLight() {
+	if [[ -n "$1" ]] ; then
+		local light=$1
+	else
+		local light=$_SELECTED_LAMP
+	fi
 
-	hue=${_COLOR[$_SELECTED_LAMP]}
+	hue=${_COLOR[$light]}
 	
 	# debug
 	# echo " getColor.hue = '$hue'"
 
 	bold=""
-	if [[ ${_SWITCH[$_SELECTED_LAMP]} == "true" ]] ; then
+	if [[ ${_SWITCH[$light]} == "true" ]] ; then
 		bold="lt"
 	fi
 	if [ $hue -lt 9001 ] ; then
@@ -404,6 +407,11 @@ getColor() {
 
 printMainScreen() {
 	local firstNumer=$1
+	
+	# FIXME is this workarround still needed?
+	if [[ "${_SAT[$_SELECTED_LAMP]}" -lt 1 ]] ; then
+		_SAT[$_SELECTED_LAMP]=1
+	fi
 
 	if [[ "$L_BLIND" == 0 ]] ; then
 		currentBrightness=$((_BRIGHTNESS[_SELECTED_LAMP]/5))
@@ -424,7 +432,7 @@ printMainScreen() {
 			if [ "$_SELECTED_LAMP" -lt 10 ] ; then
 				echo -n " "
 			fi
-			echo -en "$(getColor)$_SELECTED_LAMP $(lColor ltwhite)"
+			echo -en "$(getColorOfLight)$_SELECTED_LAMP $(lColor ltwhite)"
 		fi
 		
 		echo -en "[$(lColor off)"
@@ -434,13 +442,13 @@ printMainScreen() {
 
 			if [ $ii == $colorPosition ] ; then
 				if [[ -f "/tmp/lampeSequenceR$_SELECTED_LAMP" ]] ; then
-					echo -en "$(getColor)R$(lColor off)"
+					echo -en "$(getColorOfLight)R$(lColor off)"
 				elif [[ -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; then
-					echo -en "$(getColor)B$(lColor off)"
+					echo -en "$(getColorOfLight)B$(lColor off)"
 				elif [[ -f "/tmp/lampeSequenceM$_SELECTED_LAMP" ]] ; then
-					echo -en "$(getColor)M$(lColor off)"
+					echo -en "$(getColorOfLight)M$(lColor off)"
 				else
-					echo -en "$(getColor)C$(lColor off)"
+					echo -en "$(getColorOfLight)C$(lColor off)"
 				fi
 			else
 				if [ $ii -lt $currentSat ] ; then
@@ -498,7 +506,8 @@ printHelpScreen() {
 	echo "    y, n     SWITCH        on, off"
 	echo "    z        ZENITY        choose RGB-color"
 	echo "    i, I     INFO          receive (all) light state/s"
-	echo "    S, L     SETTINGS      save, load user defaults"
+	echo "    S, l     SETTINGS      save, load user defaults"
+	echo "    F        FIND          find new lights (TODO)"
 	echo "    r        RANDOM        R: random color sequence"
 	echo "    b        BLINK         B: blinking sequence"
 	echo "    A        ALERT"
@@ -601,20 +610,15 @@ lampeMain() {
 			toggleSequence "B"
 		elif [[ "$_M" == 1 ]] ; then
 			toggleSequence "M"
-		fi
-
-		# FIXME is this workarround still needed?
-		if [[ "${_SAT[$_SELECTED_LAMP]}" -lt 1 ]] ; then
-			_SAT[$_SELECTED_LAMP]=1
-		fi
-
-		if [[ "$_I" == 1 ]] ; then
+		elif [[ "$_I" == 1 ]] ; then
 			# receive current light state
 			hbReceiveLightState "$_SELECTED_LAMP"
 		elif [[ "$_II" == 1 ]] ; then
 			# receive all light states
+			echo ""
 			hbReceiveLightStates
 		fi
+		
 		printMainScreen
 	done
 }
@@ -998,6 +1002,27 @@ hbReceiveLightStates() {
 			
 			lightSat=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"sat\"" | cut -f 2)
 			_SAT[$light]=$lightSat
+			lightReachable=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"state\",\"reachable\"" | cut -f 2)
+			lightName=$(echo "$parsedJsonLightStates" | grep "\"$light\",\"name\"" | cut -f 2)
+			
+			# output for state of all lights
+			if [ "$light" -lt 10 ] ; then
+				echo -n " "
+			fi
+			echo -en "$(getColorOfLight $light)$light $(lColor white) "
+			if [[ "$lightReachable" == "true" ]] ; then
+				echo -en "$(lColor ltwhite)"
+			fi
+			if [[ -f "/tmp/lampeSequenceR$light" ]] ; then
+				echo -n "R  "
+			elif [[ -f "/tmp/lampeSequenceB$light" ]] ; then
+				echo -n "B  "
+			elif [[ -f "/tmp/lampeSequenceM$light" ]] ; then
+				echo -n "M  "
+			else
+				echo -n "C  "
+			fi
+			echo "$(lColor white)$lightName"
 		else
 			# defaults
 			_SWITCH[$light]="true"
