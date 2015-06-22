@@ -80,7 +80,7 @@ lampe -z 2 # where 2 is the light number
 
 **blind mode**
 
-if you have a very slow terminal, you can use the blind mode as follows; it won't show up the current light state; everything else is still accessible:
+if you have a very slow terminal, you can use the blind mode as follows; it won't show up the current light state, but everything else is still accessible:
 ```.sh
 lampe -b
 ```
