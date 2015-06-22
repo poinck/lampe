@@ -1011,9 +1011,11 @@ hbReceiveLightStates() {
 			if [ "$light" -lt 10 ] ; then
 				echo -n " "
 			fi
-			echo -en "$(getColorOfLight $light)$light $(lColor white) "
+			echo -en "$(getColorOfLight $light)$light $(lColor off) "
 			if [[ "$lightReachable" == "true" ]] ; then
-				echo -en "$(lColor ltwhite)"
+				echo -en "reachable  $(lColor ltwhite)"
+			else
+				echo -en "           "
 			fi
 			if [[ -f "/tmp/lampeSequenceR$light" ]] ; then
 				echo -n "R  "
@@ -1024,7 +1026,7 @@ hbReceiveLightStates() {
 			else
 				echo -n "C  "
 			fi
-			echo "$(lColor white)$lightName"
+			echo "$(lColor white)$lightName$(lColor off)"
 		else
 			# defaults
 			_SWITCH[$light]="true"
