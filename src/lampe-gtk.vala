@@ -54,8 +54,9 @@ class Lampe : Gtk.Application {
 //		boxingBox.margin_top = 1;
 //		boxingBox.margin_bottom = 1;
 		Gdk.RGBA boxColor = new Gdk.RGBA();
-		boxColor.parse("#a4a4a4");
-		boxingBox.override_background_color(StateFlags.NORMAL, boxColor); // "#a4a4a4"
+		boxColor.parse("#a4a4a4"); // "#a4a4a4"
+		boxingBox.override_background_color(StateFlags.NORMAL, boxColor); 
+			// FIXME overrides are not recommended (a user could have loaded a theme other than Adwaita)
 		
 		var lightsListBox = new ListBox ();
 		lightsListBox.hexpand = true;
