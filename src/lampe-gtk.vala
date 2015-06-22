@@ -1,0 +1,182 @@
+using Gtk;
+
+class Lampe : Gtk.Application {
+	public Lampe () {
+		Object (application_id: "com.lampe.app", flags: ApplicationFlags.FLAGS_NONE);
+	}
+	
+	protected override void activate () {
+		GLib.SimpleAction refreshAction = new GLib.SimpleAction ("refresh", null);
+		refreshAction.activate.connect (() => {
+			// TODO  refresh light states (seperate class, pointer to titled stack)
+			stdout.printf ("[Lampe.activate] START refresh\n");
+		});
+		this.add_action (refreshAction);
+		
+		GLib.SimpleAction registerAction = new GLib.SimpleAction ("register", null);
+		registerAction.activate.connect (() => {
+			// TODO  register at bridge (seperate class)
+			stdout.printf ("[Lampe.activate] START register\n");
+		});
+		this.add_action (registerAction);
+		
+		// debug
+		stdout.printf("[Lampe] activate\n");
+	
+		Gtk.ApplicationWindow lampeWindow = new Gtk.ApplicationWindow (this);
+			
+		var header = new HeaderBar ();
+		header.set_show_close_button (true);
+		header.set_title ("Lampe");
+		header.set_subtitle ("not connected");
+
+		lampeWindow.set_default_size (1000, 800);
+		lampeWindow.set_titlebar (header);
+	
+		// css
+//		CssProvider css = new CssProvider();
+//		var cssFile = File.new_for_path("./src/lampe-gtk.css");
+//		try {
+//			css.load_from_file(cssFile);
+//			Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), css , Gtk.STYLE_PROVIDER_PRIORITY_USER);
+//		}
+//		catch (Error e) {}
+	
+		// list box: lights
+		var mainGrid = new Grid ();
+		// Gtk.Alignment alignment = new Gtk.Alignment (1.0f, 1.0f, 1.0f, 1.0f);
+			// XXX   depricated
+		
+		var boxingBox = new Box (Orientation.HORIZONTAL, 8);
+//		boxingBox.hexpand = true;
+//		boxingBox.margin_start = 1;
+//		boxingBox.margin_end = 1;
+//		boxingBox.margin_top = 1;
+//		boxingBox.margin_bottom = 1;
+		Gdk.RGBA boxColor = new Gdk.RGBA();
+		boxColor.parse("#a4a4a4");
+		boxingBox.override_background_color(StateFlags.NORMAL, boxColor); // "#a4a4a4"
+		
+		var lightsListBox = new ListBox ();
+		lightsListBox.hexpand = true;
+		lightsListBox.vexpand = false;
+		lightsListBox.margin_start = 1;
+		lightsListBox.margin_end = 1;
+		lightsListBox.margin_top = 1;
+		lightsListBox.margin_bottom = 1;
+		lightsListBox.activate_on_single_click = false;
+		lightsListBox.selection_mode = SelectionMode.NONE;
+		lightsListBox.border_width = 1;
+		// lightsListBox.insert (new Label ("Light 1"), 1);
+		
+		var lightBox = new Box (Orientation.HORIZONTAL, 0);
+		// lightBox.homogeneous = true;
+		// lightBox.expand = true;
+		lightBox.spacing = 16;
+		lightBox.margin_top = 8;
+		lightBox.margin_bottom = 8;
+		lightBox.border_width = 1;
+		lightBox.valign = Align.END;
+		Label lightName = new Label ("Light 2");
+		lightName.valign = Align.BASELINE;
+		lightBox.pack_start (lightName, true, false, 8);
+		Scale scaleSat = new Scale.with_range (Gtk.Orientation.HORIZONTAL, 1, 254, 1);
+		scaleSat.draw_value = false;
+		scaleSat.width_request = 254;
+		scaleSat.valign = Align.END;
+		lightBox.pack_start (scaleSat, false, false, 0);
+		Scale scaleBri = new Scale.with_range (Gtk.Orientation.HORIZONTAL, 1, 254, 1);
+		scaleBri.draw_value = false;
+		scaleBri.width_request = 254;
+		scaleBri.valign = Align.END;
+		lightBox.pack_start (scaleBri, false, false, 0);
+		Switch lightSwitch = new Switch();
+		lightSwitch.valign = Align.END;
+		lightBox.pack_start (lightSwitch, false, false, 8);
+		lightsListBox.insert(lightBox, 1);
+		
+//		StyleContext style = new StyleContext();
+//		style.add_class("lightBox");
+	
+		// list box: groups
+		var groupsListBox = new ListBox ();
+		// groupsListBox.style = style;
+		groupsListBox.insert (new Label ("Group A"), 1);
+//		var vBox = new Box (Orientation.HORIZONTAL, 0);
+//		vBox.add (new Label ("blubber"));
+//		vBox.add (new Label ("blubb"));
+//		groupsListBox.insert (vBox, 2);
+
+		boxingBox.add(lightsListBox);
+			// FIXME all this boxing of boxed boxes must me cleaned up. swap out the creation of "lightsListBox"
+	
+		// stack
+		var stack = new Stack ();
+		stack.add_titled (boxingBox , "lights", "Lights");
+		stack.add_titled (groupsListBox , "groups", "Groups");
+		stack.set_visible_child_name ("lights");
+		stack.homogeneous = false;
+		// stack.vexpand = false;
+		// stack.expand = true;
+		// stack.border_width = 1;
+		stack.margin_start = 64;
+		stack.margin_end = 64;
+		stack.margin_top = 24;
+		// lampeWindow.add (stack);
+	
+		// switcher
+		var buttons = new StackSwitcher ();
+		buttons.set_stack (stack);
+		buttons.show ();
+		header.pack_start (buttons);
+		// header.set_custom_title (buttons);
+		
+		
+		
+//		mainGrid.column_homogeneous = false;
+//		mainGrid.column_spacing = 8;
+//		mainGrid.row_spacing = 8;
+//		mainGrid.attach(new Label(" "), 0, 0, 3, 1);
+//		mainGrid.attach(new Label(" "), 0, 1, 1, 1);
+		mainGrid.attach(stack, 0, 0, 1, 1);
+		mainGrid.attach(new Label(" "), 0, 1, 1, 1);
+		lampeWindow.add (mainGrid);
+		// lampeWindow.add (stack);
+	
+		// button: refresh
+		var refreshButton = new Gtk.Button.from_icon_name ("view-refresh-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
+	
+		// button: settings
+		var settingsButton = new Gtk.Button.from_icon_name ("view-list-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
+			// preferences-other, document-properties, applications-utilities, preferences-system, start-here, applications-utilities, view-list
+		GLib.Menu settingsMenu = new GLib.Menu ();
+		settingsMenu.append ("Find new lights", "find");
+		settingsMenu.append ("Register at bridge", "register");
+	
+		Gtk.Popover settingsPopover = new Gtk.Popover (settingsButton);
+		settingsPopover.bind_model (settingsMenu, "app");
+		
+		settingsButton.clicked.connect (() => {
+			settingsPopover.set_visible (true);
+		});
+	
+		// var popoverMenu = new Gtk.PopoverMenu ();
+		// settingsButton.set_popover (popoverMenu);
+			// XXX   there is no "Gtk.PopoverMenu" in 3.14?
+	
+		header.pack_end (settingsButton);
+		header.pack_end (refreshButton);
+		
+		
+		
+		lampeWindow.show_all ();
+	}
+}
+
+public static int main(string[] args) {
+	// debug
+	stdout.printf("[main] start\n");
+	
+	Lampe lampe = new Lampe ();	
+	return lampe.run (args);
+}
