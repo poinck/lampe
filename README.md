@@ -84,17 +84,3 @@ if you have a very slow terminal, you can use the blind mode as follows; it won'
 ```.sh
 lampe -b
 ```
-
-## TODOs
-- [x] add support for hue to set color with "q" and "e"
-- [x] help option
-- [x] depricate use of "color", use native shell-escapes for colors in bash
-- [x] special oneshot-mode to pick color with a GTK color selection dialog powered by "zenity" just for the @nylki
-- [x] enable oneshot-mode while running in interactive-mode with "z"
-
-**following** TODOs are set up as Github-issues:
-- hue-bridge discovery (without using meethue.com/api/nupnp if possible) and user-configuration (~/.lamperc)
-- write Makefile to install the script system-wide
-- for the first major release: write ebuild for a Gentoo-overlay (which I need to provide anyway)
-- on start get current light-settings from hue-bridge
-- option "v" or (SHIFT)"S" to save current setting as new default for selected lamp and option "r" or (SHIFT)"R" to restore this default (needs user-configuration: store in bridge or in ~/.lamperc?)
