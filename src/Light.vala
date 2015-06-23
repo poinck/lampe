@@ -67,13 +67,18 @@ public class Light : Box {
 	
 	public void toggleSwitch() {
 		if (this.lightSwitch.active) {
+			// debug
+			stdout.printf("[Light] switch '%i' on\n", this.number);
+		
 			this.bridge.putState(this.number, "{\"on\":true}");
 		} 
 		else {
+			// debug
+			stdout.printf("[Light] switch '%i' off\n", this.number);
+		
 			this.bridge.putState(this.number, "{\"on\":false}");
 		}
 		
-		// debug
-		stdout.printf("[Light] switch '%i' clicked\n", this.number);
+		
 	}
 }
