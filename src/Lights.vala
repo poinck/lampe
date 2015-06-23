@@ -1,6 +1,7 @@
 using Gtk;
 
 public class Lights : ListBox {
+	private int light_count = 0;
 
 	// initialize a ListBox for lights
 	public Lights() {
@@ -15,10 +16,11 @@ public class Lights : ListBox {
 		this.border_width = 1;
 	}
 	
-	public void addLight(string name) {
-		var lightBox = new Light(name);
+	public void addLight(string name, int hue = 12000, int sat = 192, int bri = 32, bool lswitch = false) {
+		light_count++;
+		Light light = new Light(light_count, name, hue, sat, bri, lswitch);
+			// FIXME number needs to be the actual light-id in the bridge
 		
-		// this.insert(lightBox, 1);
-		this.prepend(lightBox);
+		this.insert(light, light_count);
 	}
 }

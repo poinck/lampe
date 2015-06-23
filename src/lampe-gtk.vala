@@ -1,11 +1,11 @@
 using Gtk;
 
 class Lampe : Gtk.Application {
-	public Lampe () {
-		Object (application_id: "com.lampe.app", flags: ApplicationFlags.FLAGS_NONE);
+	public Lampe() {
+		Object(application_id: "com.lampe.app", flags: ApplicationFlags.FLAGS_NONE);
 	}
 	
-	protected override void activate () {
+	protected override void activate() {
 		GLib.SimpleAction refreshAction = new GLib.SimpleAction ("refresh", null);
 		refreshAction.activate.connect (() => {
 			// TODO  refresh light states (seperate class, pointer to titled stack)
@@ -30,7 +30,7 @@ class Lampe : Gtk.Application {
 		header.set_title ("Lampe");
 		header.set_subtitle ("not connected");
 
-		lampeWindow.set_default_size (1000, 800);
+		lampeWindow.set_default_size (1000, 700);
 		lampeWindow.set_titlebar (header);
 	
 		// css
@@ -47,7 +47,7 @@ class Lampe : Gtk.Application {
 		// Gtk.Alignment alignment = new Gtk.Alignment (1.0f, 1.0f, 1.0f, 1.0f);
 			// XXX   depricated
 		
-		var boxingBox = new Box (Orientation.HORIZONTAL, 8);
+		var boxingBox = new Box(Orientation.HORIZONTAL, 8);
 //		boxingBox.hexpand = true;
 //		boxingBox.margin_start = 1;
 //		boxingBox.margin_end = 1;
@@ -59,11 +59,15 @@ class Lampe : Gtk.Application {
 			// FIXME overrides are not recommended (a user could have loaded a 
 			// theme other than Adwaita)
 		
-		var lightsListBox = new Lights();
-		lightsListBox.addLight("Sofa");
-		lightsListBox.addLight("Stube");
-		lightsListBox.addLight("Schlafzimmer");
-		lightsListBox.addLight("Bad");
+		Lights lights = new Lights();
+		lights.addLight("Sofa");
+		lights.addLight("Stube");
+		lights.addLight("Schlafzimmer");
+		lights.addLight("Bad");
+			// TODO  add lights as found on bridge
+			
+		boxingBox.add(lights);
+			// FIXME all this boxing of boxed boxes must me cleaned up. swap out the creation of "lightsListBox"
 		
 //		StyleContext style = new StyleContext();
 //		style.add_class("lightBox");
@@ -77,9 +81,6 @@ class Lampe : Gtk.Application {
 //		vBox.add (new Label ("blubb"));
 //		groupsListBox.insert (vBox, 2);
 
-		boxingBox.add(lightsListBox);
-			// FIXME all this boxing of boxed boxes must me cleaned up. swap out the creation of "lightsListBox"
-	
 		// stack
 		var stack = new Stack ();
 		stack.add_titled (boxingBox , "lights", "Lights");
@@ -95,10 +96,10 @@ class Lampe : Gtk.Application {
 		// lampeWindow.add (stack);
 	
 		// switcher
-		var buttons = new StackSwitcher ();
-		buttons.set_stack (stack);
-		buttons.show ();
-		header.pack_start (buttons);
+		var buttons = new StackSwitcher();
+		buttons.set_stack(stack);
+		buttons.show();
+		header.pack_start(buttons);
 		// header.set_custom_title (buttons);
 		
 //		mainGrid.column_homogeneous = false;
