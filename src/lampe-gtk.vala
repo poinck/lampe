@@ -56,45 +56,14 @@ class Lampe : Gtk.Application {
 		Gdk.RGBA boxColor = Gdk.RGBA();
 		boxColor.parse("#a4a4a4"); // "#a4a4a4"
 		boxingBox.override_background_color(StateFlags.NORMAL, boxColor); 
-			// FIXME overrides are not recommended (a user could have loaded a theme other than Adwaita)
+			// FIXME overrides are not recommended (a user could have loaded a 
+			// theme other than Adwaita)
 		
-		var lightsListBox = new ListBox ();
-		lightsListBox.hexpand = true;
-		lightsListBox.vexpand = false;
-		lightsListBox.margin_start = 1;
-		lightsListBox.margin_end = 1;
-		lightsListBox.margin_top = 1;
-		lightsListBox.margin_bottom = 1;
-		lightsListBox.activate_on_single_click = false;
-		lightsListBox.selection_mode = SelectionMode.NONE;
-		lightsListBox.border_width = 1;
-		// lightsListBox.insert (new Label ("Light 1"), 1);
-		
-		var lightBox = new Box (Orientation.HORIZONTAL, 0);
-		// lightBox.homogeneous = true;
-		// lightBox.expand = true;
-		lightBox.spacing = 16;
-		lightBox.margin_top = 8;
-		lightBox.margin_bottom = 8;
-		lightBox.border_width = 1;
-		lightBox.valign = Align.END;
-		Label lightName = new Label ("Light 2");
-		lightName.valign = Align.BASELINE;
-		lightBox.pack_start (lightName, true, false, 8);
-		Scale scaleSat = new Scale.with_range (Gtk.Orientation.HORIZONTAL, 1, 254, 1);
-		scaleSat.draw_value = false;
-		scaleSat.width_request = 254;
-		scaleSat.valign = Align.END;
-		lightBox.pack_start (scaleSat, false, false, 0);
-		Scale scaleBri = new Scale.with_range (Gtk.Orientation.HORIZONTAL, 1, 254, 1);
-		scaleBri.draw_value = false;
-		scaleBri.width_request = 254;
-		scaleBri.valign = Align.END;
-		lightBox.pack_start (scaleBri, false, false, 0);
-		Switch lightSwitch = new Switch();
-		lightSwitch.valign = Align.END;
-		lightBox.pack_start (lightSwitch, false, false, 8);
-		lightsListBox.insert(lightBox, 1);
+		var lightsListBox = new Lights();
+		lightsListBox.addLight("Sofa");
+		lightsListBox.addLight("Stube");
+		lightsListBox.addLight("Schlafzimmer");
+		lightsListBox.addLight("Bad");
 		
 //		StyleContext style = new StyleContext();
 //		style.add_class("lightBox");
@@ -132,8 +101,6 @@ class Lampe : Gtk.Application {
 		header.pack_start (buttons);
 		// header.set_custom_title (buttons);
 		
-		
-		
 //		mainGrid.column_homogeneous = false;
 //		mainGrid.column_spacing = 8;
 //		mainGrid.row_spacing = 8;
@@ -141,8 +108,13 @@ class Lampe : Gtk.Application {
 //		mainGrid.attach(new Label(" "), 0, 1, 1, 1);
 		mainGrid.attach(stack, 0, 0, 1, 1);
 		mainGrid.attach(new Label(" "), 0, 1, 1, 1);
-		lampeWindow.add (mainGrid);
-		// lampeWindow.add (stack);
+		
+		Viewport view = new Viewport(null, null);
+			// adjustment left unbound, instead of "new Adjustment(1, 1, 1, 1, 10, 10)"
+		view.add(mainGrid);
+		Gtk.ScrolledWindow scrolled = new Gtk.ScrolledWindow(null, null);
+		scrolled.add(view);
+		lampeWindow.add(scrolled);
 	
 		// button: refresh
 		var refreshButton = new Gtk.Button.from_icon_name ("view-refresh-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
@@ -167,8 +139,6 @@ class Lampe : Gtk.Application {
 	
 		header.pack_end (settingsButton);
 		header.pack_end (refreshButton);
-		
-		
 		
 		lampeWindow.show_all ();
 	}
