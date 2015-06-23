@@ -18,10 +18,7 @@ class Lampe : Gtk.Application {
 			// TODO  register at bridge (seperate class)
 			stdout.printf ("[Lampe.activate] START register\n");
 		});
-		this.add_action (registerAction);
-		
-		// debug
-		stdout.printf("[Lampe] activate\n");
+		this.add_action(registerAction);
 	
 		Gtk.ApplicationWindow lampeWindow = new Gtk.ApplicationWindow (this);
 			
@@ -30,8 +27,9 @@ class Lampe : Gtk.Application {
 		header.set_title ("Lampe");
 		header.set_subtitle ("not connected");
 
-		lampeWindow.set_default_size (1000, 700);
-		lampeWindow.set_titlebar (header);
+		lampeWindow.set_default_size(1000, 700);
+		lampeWindow.window_position = Gtk.WindowPosition.CENTER;
+		lampeWindow.set_titlebar(header);
 	
 		// css
 //		CssProvider css = new CssProvider();
@@ -59,7 +57,13 @@ class Lampe : Gtk.Application {
 			// FIXME overrides are not recommended (a user could have loaded a 
 			// theme other than Adwaita)
 		
-		Lights lights = new Lights();
+		// initialize soup session for bridge connection
+		HueBridge bridge = new HueBridge("192.168.2.141");
+			// TODO  remove hardcoded ip: this is early work
+		
+		// initialize lights view
+		Lights lights = new Lights(bridge);
+		
 		lights.addLight("Sofa");
 		lights.addLight("Stube");
 		lights.addLight("Schlafzimmer");
@@ -124,10 +128,10 @@ class Lampe : Gtk.Application {
 		var settingsButton = new Gtk.Button.from_icon_name ("view-list-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
 			// preferences-other, document-properties, applications-utilities, preferences-system, start-here, applications-utilities, view-list
 		GLib.Menu settingsMenu = new GLib.Menu ();
-		settingsMenu.append ("Find new lights", "find");
-		settingsMenu.append ("Register at bridge", "register");
+		settingsMenu.append("Find new lights", "find");
+		settingsMenu.append("Register at bridge", "register");
 	
-		Gtk.Popover settingsPopover = new Gtk.Popover (settingsButton);
+		Gtk.Popover settingsPopover = new Gtk.Popover(settingsButton);
 		settingsPopover.bind_model (settingsMenu, "app");
 		
 		settingsButton.clicked.connect (() => {
@@ -138,10 +142,12 @@ class Lampe : Gtk.Application {
 		// settingsButton.set_popover (popoverMenu);
 			// XXX   there is no "Gtk.PopoverMenu" in 3.14?
 	
-		header.pack_end (settingsButton);
-		header.pack_end (refreshButton);
+		header.pack_end(settingsButton);
+		header.pack_end(refreshButton);
 		
-		lampeWindow.show_all ();
+		lampeWindow.show_all();
+		
+		
 	}
 }
 

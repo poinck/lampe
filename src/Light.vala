@@ -1,14 +1,22 @@
 using Gtk;
+// using Soup;
 
 public class Light : Box {
+	private int number;
+	private HueBridge bridge;
+	
+	private Switch lightSwitch;
 
 	// initialize a Box for a light
-	public Light(int number, string name, int hue, int sat, int bri, bool lswitch) {
+	public Light(int number, string name, int hue, int sat, int bri, bool lswitch, HueBridge bridge) {
 		this.spacing = 16;
 		this.margin_top = 8;
 		this.margin_bottom = 8;
 		this.border_width = 1;
 		this.valign = Align.END;
+		
+		this.number = number;
+		this.bridge = bridge;
 		
 		// number
 		Label lightNumber = new Label("<b>" + number.to_string() + "</b>");
@@ -47,11 +55,25 @@ public class Light : Box {
 		this.pack_start(scaleBri, false, false, 0);
 		
 		// switch: on, off 
-		Switch lightSwitch = new Switch();
+		lightSwitch = new Switch();
 		lightSwitch.active = lswitch;
 		lightSwitch.margin_bottom = 4;
 		lightSwitch.valign = Align.END;
-		
 		this.pack_start(lightSwitch, false, false, 8);
+		lightSwitch.notify["active"].connect(() => {
+			toggleSwitch();
+		});
+	}
+	
+	public void toggleSwitch() {
+		if (this.lightSwitch.active) {
+			this.bridge.putState(this.number, "{\"on\":true}");
+		} 
+		else {
+			this.bridge.putState(this.number, "{\"on\":false}");
+		}
+		
+		// debug
+		stdout.printf("[Light] switch '%i' clicked\n", this.number);
 	}
 }
