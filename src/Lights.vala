@@ -1,7 +1,9 @@
 using Gtk;
+using Json;
 
 public class Lights : ListBox {
 	private int light_count = 0;
+	public static const int MAX_LIGHTS = 50;
 	
 	private HueBridge bridge;
 
@@ -26,5 +28,31 @@ public class Lights : ListBox {
 			// FIXME number needs to be the actual light-id in the bridge
 		
 		this.insert(light, light_count);
+	}
+	
+	public void refreshLights() {
+		this.light_count = 0;
+		
+		string lightStates = this.bridge.getStates();
+		
+		Json.Parser parser = new Json.Parser();
+		try {
+			parser.load_from_data(lightStates);
+			Json.Node node = parser.get_root();
+			
+			Json.Object obj = node.get_object();
+			foreach (string light in obj.get_members()) {
+				
+				// debug
+				stdout.printf("[Lights.addLight] light = '%s'\n", light);
+			}
+			
+//			for (int light = 1; light <= MAX_LIGHTS; light++) {
+//				
+//			}
+		}
+		catch (Error e) {
+			stdout.printf ("[Lights.addLight] unable to parse 'lightStates': %s\n", e.message);
+		}
 	}
 }

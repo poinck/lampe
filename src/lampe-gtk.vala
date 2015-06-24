@@ -6,26 +6,12 @@ class Lampe : Gtk.Application {
 	}
 	
 	protected override void activate() {
-		GLib.SimpleAction refreshAction = new GLib.SimpleAction ("refresh", null);
-		refreshAction.activate.connect (() => {
-			// TODO  refresh light states (seperate class, pointer to titled stack)
-			stdout.printf ("[Lampe.activate] START refresh\n");
-		});
-		this.add_action (refreshAction);
-		
-		GLib.SimpleAction registerAction = new GLib.SimpleAction ("register", null);
-		registerAction.activate.connect (() => {
-			// TODO  register at bridge (seperate class)
-			stdout.printf ("[Lampe.activate] START register\n");
-		});
-		this.add_action(registerAction);
-	
 		Gtk.ApplicationWindow lampeWindow = new Gtk.ApplicationWindow (this);
 			
-		var header = new HeaderBar ();
-		header.set_show_close_button (true);
-		header.set_title ("Lampe");
-		header.set_subtitle ("not connected");
+		var header = new HeaderBar();
+		header.set_show_close_button(true);
+		header.set_title("Lampe");
+		header.set_subtitle("not connected");
 
 		lampeWindow.set_default_size(1000, 700);
 		lampeWindow.window_position = Gtk.WindowPosition.CENTER;
@@ -71,7 +57,6 @@ class Lampe : Gtk.Application {
 			// TODO  add lights as found on bridge
 			
 		boxingBox.add(lights);
-			// FIXME all this boxing of boxed boxes must me cleaned up. swap out the creation of "lightsListBox"
 		
 //		StyleContext style = new StyleContext();
 //		style.add_class("lightBox");
@@ -121,33 +106,46 @@ class Lampe : Gtk.Application {
 		scrolled.add(view);
 		lampeWindow.add(scrolled);
 	
-		// button: refresh
-		var refreshButton = new Gtk.Button.from_icon_name ("view-refresh-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
-	
 		// button: settings
+			// TODO  swap out settings-menu in a different class?
 		var settingsButton = new Gtk.Button.from_icon_name ("view-list-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
 			// preferences-other, document-properties, applications-utilities, preferences-system, start-here, applications-utilities, view-list
 		GLib.Menu settingsMenu = new GLib.Menu ();
 		settingsMenu.append("Find new lights", "find");
 		settingsMenu.append("Register at bridge", "register");
-	
 		Gtk.Popover settingsPopover = new Gtk.Popover(settingsButton);
-		settingsPopover.bind_model (settingsMenu, "app");
-		
-		settingsButton.clicked.connect (() => {
-			settingsPopover.set_visible (true);
+		settingsPopover.bind_model(settingsMenu, "app");
+		settingsButton.clicked.connect(() => {
+			settingsPopover.set_visible(true);
 		});
-	
+		GLib.SimpleAction registerAction = new GLib.SimpleAction("register", null);
+		registerAction.activate.connect(() => {
+			// TODO  register at bridge (seperate class)
+			stdout.printf ("[Lampe.activate] start: register\n");
+		});
+		this.add_action(registerAction);
 		// var popoverMenu = new Gtk.PopoverMenu ();
 		// settingsButton.set_popover (popoverMenu);
-			// XXX   there is no "Gtk.PopoverMenu" in 3.14?
-	
+			// XXX   there is no "Gtk.PopoverMenu" in 3.14?	
 		header.pack_end(settingsButton);
+		
+		// button: refresh
+		var refreshButton = new Gtk.Button.from_icon_name("view-refresh-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
+		refreshButton.clicked.connect(() => {
+			// debug
+			stdout.printf("[Lampe.activate] start: refresh\n");
+			
+			lights.refreshLights();
+		});
+//		GLib.SimpleAction refreshAction = new GLib.SimpleAction("refresh", null);
+//		refreshAction.activate.connect(() => {
+//			// TODO  refresh light states (seperate class, pointer to titled stack)
+//			stdout.printf("[Lampe.activate] START refresh\n");
+//		});
+//		this.add_action(refreshAction);
 		header.pack_end(refreshButton);
 		
 		lampeWindow.show_all();
-		
-		
 	}
 }
 

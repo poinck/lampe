@@ -25,7 +25,10 @@ public class Light : Box {
 		this.pack_start(lightNumber, false, false, 8);
 		
 		// hue
-		Gtk.Button lightHue = new Gtk.Button.from_icon_name("dialog-information-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
+		Gtk.Button lightHue = new Gtk.Button.from_icon_name(
+			"dialog-information-symbolic", 
+			Gtk.IconSize.SMALL_TOOLBAR
+		);
 		this.pack_start(lightHue, false, false, 0);
 		
 		// name
