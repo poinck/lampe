@@ -56,10 +56,6 @@ class Lampe : Gtk.Application {
 //		lights.addLight("Bad");
 		
 		lights.refreshLights();
-		
-		// test
-		// lights.deleteLights();
-			
 		boxingBox.add(lights);
 		
 //		StyleContext style = new StyleContext();

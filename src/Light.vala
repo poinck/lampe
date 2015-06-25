@@ -68,9 +68,6 @@ public class Light : Box {
 		this.pack_start(lightSwitch, false, false, 8);
 		this.lightSwitch.notify["active"].connect(() => {
 			toggleSwitch();
-			
-			// test
-			// deleteLight();
 		});
 	}
 	
@@ -89,7 +86,7 @@ public class Light : Box {
 		}
 	}
 	
-	public void deleteLight() {
+	private void deleteLight() {
 		this.get_parent().destroy();
 	}
 }
