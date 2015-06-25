@@ -68,10 +68,10 @@ public class Light : Box {
 		this.pack_start(lightSwitch, false, false, 8);
 		this.lightSwitch.notify["active"].connect(() => {
 			toggleSwitch();
+			
+			// test
+			// deleteLight();
 		});
-		
-		// test
-		// this.lightSwitch.destroy();
 	}
 	
 	public void toggleSwitch() {
@@ -87,7 +87,9 @@ public class Light : Box {
 		
 			this.bridge.putState(this.number, "{\"on\":false}");
 		}
-		
-		
+	}
+	
+	public void deleteLight() {
+		this.get_parent().destroy();
 	}
 }

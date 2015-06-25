@@ -157,6 +157,6 @@ public static int main(string[] args) {
 	// debug
 	stdout.printf("[main] start\n");
 	
-	Lampe lampe = new Lampe ();	
-	return lampe.run (args);
+	Lampe lampe = new Lampe();	
+	return lampe.run(args);
 }
