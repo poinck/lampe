@@ -31,6 +31,9 @@ public class Light : Box {
 		);
 		this.pack_start(lightHue, false, false, 0);
 		
+		// debug
+		stdout.printf("[Light] name '%s'\n", name);
+		
 		// name
 		Label lightName = new Label(name);
 		lightName.valign = Align.BASELINE;
@@ -58,26 +61,29 @@ public class Light : Box {
 		this.pack_start(scaleBri, false, false, 0);
 		
 		// switch: on, off 
-		lightSwitch = new Switch();
-		lightSwitch.active = lswitch;
-		lightSwitch.margin_bottom = 4;
-		lightSwitch.valign = Align.END;
+		this.lightSwitch = new Switch();
+		this.lightSwitch.active = lswitch;
+		this.lightSwitch.margin_bottom = 4;
+		this.lightSwitch.valign = Align.END;
 		this.pack_start(lightSwitch, false, false, 8);
-		lightSwitch.notify["active"].connect(() => {
+		this.lightSwitch.notify["active"].connect(() => {
 			toggleSwitch();
 		});
+		
+		// test
+		// this.lightSwitch.destroy();
 	}
 	
 	public void toggleSwitch() {
 		if (this.lightSwitch.active) {
 			// debug
-			stdout.printf("[Light] switch '%i' on\n", this.number);
+			stdout.printf("[Light.toggleSwitch] switch '%i' on\n", this.number);
 		
 			this.bridge.putState(this.number, "{\"on\":true}");
 		} 
 		else {
 			// debug
-			stdout.printf("[Light] switch '%i' off\n", this.number);
+			stdout.printf("[Light.toggleSwitch] switch '%i' off\n", this.number);
 		
 			this.bridge.putState(this.number, "{\"on\":false}");
 		}

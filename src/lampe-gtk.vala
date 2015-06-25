@@ -50,11 +50,15 @@ class Lampe : Gtk.Application {
 		// initialize lights view
 		Lights lights = new Lights(bridge);
 		
-		lights.addLight("Sofa");
-		lights.addLight("Stube");
-		lights.addLight("Schlafzimmer");
-		lights.addLight("Bad");
-			// TODO  add lights as found on bridge
+//		lights.addLight("Sofa");
+//		lights.addLight("Stube");
+//		lights.addLight("Schlafzimmer");
+//		lights.addLight("Bad");
+		
+		lights.refreshLights();
+		
+		// test
+		// lights.deleteLights();
 			
 		boxingBox.add(lights);
 		
