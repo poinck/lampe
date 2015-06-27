@@ -20,7 +20,7 @@ public class HueBridge : Soup.Session {
 
 		// debug
 		stdout.printf("[Light.putState] status = %u\n", msg.status_code);
-		stdout.printf("[Light.putState] response = '%s'\n", (string) msg.response_body.data);
+		stdout.printf("[Light.putState] response = '%s'\n", (string) msg.response_body.flatten().data);
 	}
 	
 	// get all states of all lights
@@ -30,7 +30,8 @@ public class HueBridge : Soup.Session {
 			"http://" + this.ip_address + "/api/" + this.bridge_user + "/lights"
 		);
 		this.send_message(msg);
-		string rsp = (string) msg.response_body.flatten().data;;
+		string rsp = (string) msg.response_body.flatten().data;
+			// FIXME "warning: assignment discards 'const' qualifier from pointer target type" (cast from const unit8[] to string)
 		
 		// debug
 		stdout.printf("[Lights.getStates] response = '%s'\n", rsp);

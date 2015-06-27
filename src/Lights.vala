@@ -34,9 +34,10 @@ public class Lights : ListBox {
 		this.show_all();
 	}
 	
-	public void deleteLights() {	
-		this.foreach((w) => {
-			remove(w);
+	public void deleteLights() {
+		// callback: remove() for every child of this (Lights)
+		this.foreach((light) => {
+			remove(light);
 		});
 		
 		this.light_count = 0;

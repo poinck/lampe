@@ -44,7 +44,7 @@ class Lampe : Gtk.Application {
 			// theme other than Adwaita)
 		
 		// initialize soup session for bridge connection
-		HueBridge bridge = new HueBridge("192.168.2.141");
+		HueBridge bridge = new HueBridge("192.168.2.164");
 			// TODO  remove hardcoded ip: this is early work
 		
 		// initialize lights view
