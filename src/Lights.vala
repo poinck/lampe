@@ -23,12 +23,12 @@ public class Lights : ListBox {
 		this.bridge = bridge;
 	}
 	
-	public void addLight(string name, int light_id = 1, int64 hue = 12000, int64 sat = 192, int64 bri = 32, bool lswitch = false) {
+	public void addLight(string name, int light_id = 1, int64 hue = 12000, 
+			int64 sat = 192, int64 bri = 32, bool lswitch = false) {
 		this.light_count++;
 		Light light = new Light(light_id, name, hue, sat, bri, lswitch, bridge);
 		
-		// debug
-		stdout.printf("[Lights.addLight] light_count = '%i'\n", light_count);
+		debug("[Lights.addLight] light_count = " + light_count.to_string());
 		
 		this.insert(light, light_count);
 		this.show_all();
@@ -61,21 +61,16 @@ public class Lights : ListBox {
 			
 			Json.Object lightObj = node.get_object();
 			foreach (string light in lightObj.get_members()) {
-				// debug
-				stdout.printf("[Lights.refreshLights] light = '%s'\n", light);
+				debug("[Lights.refreshLights] light = " + light.to_string());
 				
 				light_id = int.parse(light);
 				
 				Json.Node categoryNode = lightObj.get_member(light);
 				Json.Object categoryObj = categoryNode.get_object();
 				foreach (string category in categoryObj.get_members()) {
-					// debug
-					stdout.printf("[Lights.refreshLights] category ?= '%s'\n", category);
+					debug("[Lights.refreshLights] category ?= '" + category + "'");
 				
 					if (category == "state") {
-						// debug
-						stdout.printf("[Lights.refreshLights] category = '%s'\n", category);
-						
 						Json.Node stateNode = categoryObj.get_member(category);
 						Json.Object stateObj = stateNode.get_object();
 						foreach (string state in stateObj.get_members()) {
@@ -96,18 +91,10 @@ public class Lights : ListBox {
 						}
 					}
 					else if (category == "name") {
-						// debug
-						stdout.printf("[Lights.refreshLights] category = '%s'\n", category);
-						
 						name = categoryObj.get_string_member(category);
-						
-						// degug
-						stdout.printf("[Lights.refreshLights] lightName = '%s'\n", name);
+						debug("[Lights.refreshLights] name = '" + name + "'");
 					}
 				}
-				
-				// degug
-				stdout.printf("[Lights.refreshLights] lightName (addLight) = '%s'\n", name);
 				
 				addLight(name, light_id, hue, sat, bri, lswitch);
 			}

@@ -45,7 +45,7 @@ class Lampe : Gtk.Application {
 		
 		// initialize soup session for bridge connection
 		HueBridge bridge = new HueBridge("192.168.2.164");
-			// TODO  remove hardcoded ip: this is early work
+			// TODO  remove hardcoded ip: this is early work, read "~/.lamperc"
 		
 		// initialize lights view
 		Lights lights = new Lights(bridge);
@@ -121,7 +121,7 @@ class Lampe : Gtk.Application {
 		GLib.SimpleAction registerAction = new GLib.SimpleAction("register", null);
 		registerAction.activate.connect(() => {
 			// TODO  register at bridge (seperate class)
-			stdout.printf ("[Lampe.activate] start: register\n");
+			debug("[Lampe.activate] start: register");
 		});
 		this.add_action(registerAction);
 		// var popoverMenu = new Gtk.PopoverMenu ();
@@ -132,9 +132,7 @@ class Lampe : Gtk.Application {
 		// button: refresh
 		var refreshButton = new Gtk.Button.from_icon_name("view-refresh-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
 		refreshButton.clicked.connect(() => {
-			// debug
-			stdout.printf("[Lampe.activate] start: refresh\n");
-			
+			debug("[Lampe.activate] start: refresh");
 			lights.refreshLights();
 		});
 //		GLib.SimpleAction refreshAction = new GLib.SimpleAction("refresh", null);
@@ -161,8 +159,7 @@ public static void debug(string str) {
 }
 
 public static int main(string[] args) {
-	// debug
-	stdout.printf("[main] start\n");
+	debug("[main] start");
 	
 	Lampe lampe = new Lampe();	
 	return lampe.run(args);
