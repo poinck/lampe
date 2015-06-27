@@ -10,17 +10,20 @@ public class HueBridge : Soup.Session {
 	}
 	
 	// set state of a light
+		// TODO  avoid sending states to bridge in intervals lower than 125 ms
 	public void putState(int light, string request) {
 		Soup.Message msg = new Soup.Message(
 			"PUT", 
-			"http://" + this.ip_address + "/api/" + this.bridge_user + "/lights/" + light.to_string() + "/state"
+			"http://" + this.ip_address + "/api/" + this.bridge_user 
+				+ "/lights/" + light.to_string() + "/state"
 		);
 		msg.set_request("application/json", MemoryUse.COPY, request.data);
 		this.send_message(msg);
 
-		// debug
-		stdout.printf("[Light.putState] status = %u\n", msg.status_code);
-		stdout.printf("[Light.putState] response = '%s'\n", (string) msg.response_body.flatten().data);
+		debug("[HueBridge(Light).putState] status = " 
+			+ msg.status_code.to_string());
+		debug("[HueBridge(Light).putState] response = '" 
+			+ (string) msg.response_body.flatten().data + "'");
 	}
 	
 	// get all states of all lights
@@ -33,8 +36,7 @@ public class HueBridge : Soup.Session {
 		string rsp = (string) msg.response_body.flatten().data;
 			// FIXME "warning: assignment discards 'const' qualifier from pointer target type" (cast from const unit8[] to string)
 		
-		// debug
-		stdout.printf("[Lights.getStates] response = '%s'\n", rsp);
+		debug("[HueBridge(Lights).getStates] response = '" + rsp + "'");
 		
 		return rsp;
 	}

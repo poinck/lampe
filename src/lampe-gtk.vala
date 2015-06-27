@@ -149,6 +149,17 @@ class Lampe : Gtk.Application {
 	}
 }
 
+public static void debug(string str) {
+#if DEBUG
+	if (str != null) {
+		stdout.printf(str + "\n");
+	}
+	else {
+		stdout.printf("== NULL\n");
+	}
+#endif
+}
+
 public static int main(string[] args) {
 	// debug
 	stdout.printf("[main] start\n");
