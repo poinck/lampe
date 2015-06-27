@@ -170,12 +170,21 @@ moodSequence() {
 		tmdInside=$(echo "$tmdLine" | cut -f 1 -d',')
 		tmdOutside=$(echo "$tmdLine" | cut -f 2 -d',')
 		
+		# debug
+		# echo "tmdInside  = '$tmdInside'"
+		# echo "tmdOutside = '$tmdOutside'"
+		
 		local temperatureDiff=$(( tmdOutside-tmdInside ))
 		local diffFactor=2
 		if [[ "$temperatureDiff" -gt 0 ]] ; then
 			diffFactor=4
 		fi
 		local hueDiff=$(( temperatureDiff*diffFactor+25750 ))
+		
+		# debug
+		# echo "temperatureDiff = '$temperatureDiff'"
+		# echo "hueDiff         = '$hueDiff'"
+		
 		local hue="\"hue\":$hueDiff,\"transitiontime\":30"
 		curl -s -d "{$hue}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
