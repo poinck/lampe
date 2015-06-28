@@ -1,8 +1,8 @@
 using Gtk;
-using Posix;
-// using Soup;
 
 public class Light : Box {
+	public static const double MAX_HUE = 65535.0;
+
 	private int number;
 	private HueBridge bridge;
 	
@@ -33,12 +33,36 @@ public class Light : Box {
 			"dialog-information-symbolic", 
 			Gtk.IconSize.SMALL_TOOLBAR
 		);
+		Gdk.RGBA color = Gdk.RGBA();
+		double h = hue / MAX_HUE * 360.0;
+		double s = sat / 255.0;
+		double v = bri / 255.0;
+		v = 0.8; 
+		// v = 1;
+			// drop actual representation of brightness
+		double r, g, b;
+		hsv_to_rgb(h, s, v, out r, out g, out b);
+		color.red = r;
+		color.green = g;
+		color.blue = b;
+		color.alpha = 1;
+		debug("h = " + h.to_string() + ", s = " + s.to_string() + ", v = " + v.to_string());
+		debug("r = " + r.to_string() + ", g = " + g.to_string() + ", b = " + b.to_string());
+		// lightHue.override_symbolic_color("dialog-information-symbolic", color);
+		lightHue.override_color(StateFlags.NORMAL, color);
+		lightHue.relief = ReliefStyle.NONE;
+		lightHue.clicked.connect(() => {
+			Gtk.ColorChooserDialog dialog = new Gtk.ColorChooserDialog(
+				"Select a color", 
+				(Gtk.Window) this.get_toplevel()
+			);
+			dialog.modal = true;
+			dialog.show();
+		});
 		this.pack_start(lightHue, false, false, 0);
 		
-		// debug
-		debug("[Light] name = " + name);
-		
 		// name
+		debug("[Light] name = " + name);
 		Label lightName = new Label(name);
 		lightName.valign = Align.BASELINE;
 		this.pack_start(lightName, false, false, 4);
@@ -69,6 +93,20 @@ public class Light : Box {
 					"{\"sat\": " + getSat().to_string() + "}"
 				);
 			}
+			
+			// update color
+			s = getSat() / 255.0;
+			hsv_to_rgb(h, s, v, out r, out g, out b);
+			color.red = r;
+			color.green = g;
+			color.blue = b;
+			color.alpha = 1;
+			debug("h = " + h.to_string() + ", s = " + s.to_string() + ", v = " + v.to_string());
+			debug("r = " + r.to_string() + ", g = " + g.to_string() + ", b = " + b.to_string());
+			lightHue.override_color(StateFlags.NORMAL, color);
+			
+			// test
+			// this.get_parent().override_background_color(StateFlags.NORMAL, color);
 		});
 		
 		// brightness

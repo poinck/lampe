@@ -72,8 +72,9 @@ class Lampe : Gtk.Application {
 
 		// stack
 		var stack = new Stack ();
-		stack.add_titled (boxingBox , "lights", "Lights");
-		stack.add_titled (groupsListBox , "groups", "Groups");
+		stack.add_titled(boxingBox , "lights", "Lights");
+		// stack.add_titled(groupsListBox , "groups", "Groups");
+			// TODO  add groupsListBox after implementation of it has started
 		stack.set_visible_child_name ("lights");
 		stack.homogeneous = false;
 		// stack.vexpand = false;
@@ -147,6 +148,65 @@ class Lampe : Gtk.Application {
 	}
 }
 
+public void hsv_to_rgb (double h, double s, double v, out double r, out double g, out double b)
+		requires (h >= 0 && h <= 360)
+		requires (s >= 0 && s <= 1)
+		requires (v >= 0 && v <= 1) {
+    // by Robert Dyer, GPLv3 or later
+    // modified by André Klausnitzer
+    r = 0; 
+    g = 0; 
+    b = 0;
+
+    if (s == 0) {
+        r = v;
+        g = v;
+        b = v;
+    } else {
+        var secNum = (int) Math.floor(h / 60);
+        // var secNum = (int) (h / 60);
+        	// removed Math.floor()
+        var fracSec = h / 60.0 - secNum;
+
+        var p = v * (1 - s);
+        var q = v * (1 - s * fracSec);
+        var t = v * (1 - s * (1 - fracSec));
+        
+        switch (secNum) {
+        case 0:
+            r = v;
+            g = t;
+            b = p;
+            break;
+        case 1:
+            r = q;
+            g = v;
+            b = p;
+            break;
+        case 2:
+            r = p;
+            g = v;
+            b = t;
+            break;
+        case 3:
+            r = p;
+            g = q;
+            b = v;
+            break;
+        case 4:
+            r = t;
+            g = p;
+            b = v;
+            break;
+        case 5:
+            r = v;
+            g = p;
+            b = q;
+            break;
+        }
+    }
+}
+
 public static void debug(string str) {
 #if DEBUG
 	if (str != null) {
@@ -160,6 +220,23 @@ public static void debug(string str) {
 
 public static int main(string[] args) {
 	debug("[main] start");
+	
+	// test
+	double h, s, v;
+	double r = 50.0 / 255;
+	double g = 150.0 / 255;
+	double b = 100.0 / 255;
+	rgb_to_hsv(r, g, b, out h, out s, out v);
+	debug("h = " + h.to_string() + ", s = " + s.to_string() + ", v = " + v.to_string());
+	hsv_to_rgb(h * 360, s, v, out r, out g, out b);
+	debug("r = " + r.to_string() + ", g = " + g.to_string() + ", b = " + b.to_string());
+	Gdk.RGBA a_color = Gdk.RGBA();
+	a_color.alpha = 1;
+	a_color.red = r;
+	a_color.green = g;
+	a_color.blue = b;
+	// a_color.parse("rgb(" + r.to_string() + "," + g.to_string() + "," + b.to_string() + ")");
+	debug(a_color.to_string());
 	
 	Lampe lampe = new Lampe();	
 	return lampe.run(args);
