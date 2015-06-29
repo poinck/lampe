@@ -22,11 +22,7 @@ public class Light : Box {
 		this.number = number;
 		this.bridge = bridge;
 		
-		// number
-		Label lightNumber = new Label("<b>" + number.to_string() + "</b>");
-		lightNumber.use_markup = true;
-		lightNumber.valign = Align.BASELINE;
-		this.pack_start(lightNumber, false, false, 8);
+		
 		
 		// hue
 		Gtk.Button lightHue = new Gtk.Button.from_icon_name(
@@ -48,7 +44,7 @@ public class Light : Box {
 		color.alpha = 1;
 		debug("h = " + h.to_string() + ", s = " + s.to_string() + ", v = " + v.to_string());
 		debug("r = " + r.to_string() + ", g = " + g.to_string() + ", b = " + b.to_string());
-		// lightHue.override_symbolic_color("dialog-information-symbolic", color);
+		// lightHue.override_color("dialog-information-symbolic", color);
 		lightHue.override_color(StateFlags.NORMAL, color);
 		lightHue.relief = ReliefStyle.NONE;
 		lightHue.clicked.connect(() => {
@@ -59,7 +55,13 @@ public class Light : Box {
 			dialog.modal = true;
 			dialog.show();
 		});
-		this.pack_start(lightHue, false, false, 0);
+		this.pack_start(lightHue, false, false, 8);
+		
+		// number
+		Label lightNumber = new Label("<b>" + number.to_string() + "</b>");
+		lightNumber.use_markup = true;
+		lightNumber.valign = Align.BASELINE;
+		this.pack_start(lightNumber, false, false, 1);
 		
 		// name
 		debug("[Light] name = " + name);
@@ -82,7 +84,8 @@ public class Light : Box {
 		scaleSat.draw_value = false;
 		scaleSat.width_request = 127;
 		scaleSat.round_digits = 0;
-		scaleSat.opacity = 0.25 + (0.75 * sat / 254);
+		// scaleSat.opacity = 0.25 + (0.75 * sat / 254);
+		scaleSat.override_background_color(StateFlags.NORMAL, color);
 		scaleSat.margin_bottom = 4;
 		scaleSat.valign = Align.END;
 		this.pack_start(scaleSat, false, false, 0);
@@ -107,7 +110,9 @@ public class Light : Box {
 			debug("r = " + r.to_string() + ", g = " + g.to_string() + ", b = " + b.to_string());
 			lightHue.override_color(StateFlags.NORMAL, color);
 			
-			scaleSat.opacity = 0.25 + (0.75 * scaleSat.get_value() / 254);
+			// scaleSat.opacity = 0.25 + (0.75 * scaleSat.get_value() / 254);
+			scaleSat.override_background_color(StateFlags.NORMAL, color);
+			scaleSat.override_color(StateFlags.NORMAL, color);
 		});
 		
 		// brightness
@@ -115,6 +120,8 @@ public class Light : Box {
 		scaleBri.set_value((double) bri);
 		scaleBri.draw_value = false;
 		scaleBri.width_request = 127; // 254
+		scaleBri.round_digits = 0;
+		scaleBri.opacity = 0.25 + (0.75 * scaleBri.get_value() / 254);
 		scaleBri.margin_bottom = 4;
 		scaleBri.valign = Align.END;
 		this.pack_start(scaleBri, false, false, 0);
@@ -127,6 +134,8 @@ public class Light : Box {
 					"{\"bri\": " + getBri().to_string() + "}"
 				);
 			}
+			
+			scaleBri.opacity = 0.25 + (0.75 * scaleBri.get_value() / 254);
 		});
 		
 		// switch: on, off
