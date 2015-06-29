@@ -80,7 +80,9 @@ public class Light : Box {
 		scaleSat = new Scale.with_range(Gtk.Orientation.HORIZONTAL, 1, 254, 1);
 		scaleSat.set_value((double) sat);
 		scaleSat.draw_value = false;
-		scaleSat.width_request = 128;
+		scaleSat.width_request = 127;
+		scaleSat.round_digits = 0;
+		scaleSat.opacity = 0.25 + (0.75 * sat / 254);
 		scaleSat.margin_bottom = 4;
 		scaleSat.valign = Align.END;
 		this.pack_start(scaleSat, false, false, 0);
@@ -105,15 +107,14 @@ public class Light : Box {
 			debug("r = " + r.to_string() + ", g = " + g.to_string() + ", b = " + b.to_string());
 			lightHue.override_color(StateFlags.NORMAL, color);
 			
-			// test
-			// this.get_parent().override_background_color(StateFlags.NORMAL, color);
+			scaleSat.opacity = 0.25 + (0.75 * scaleSat.get_value() / 254);
 		});
 		
 		// brightness
 		scaleBri = new Scale.with_range(Gtk.Orientation.HORIZONTAL, 1, 254, 1);
 		scaleBri.set_value((double) bri);
 		scaleBri.draw_value = false;
-		scaleBri.width_request = 254;
+		scaleBri.width_request = 127; // 254
 		scaleBri.margin_bottom = 4;
 		scaleBri.valign = Align.END;
 		this.pack_start(scaleBri, false, false, 0);
