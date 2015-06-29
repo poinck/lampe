@@ -12,7 +12,7 @@ public class Light : Box {
 
 	// initialize a Box for a light
 	public Light(int number, string name, int64 hue, int64 sat, int64 bri, 
-			bool lswitch, HueBridge bridge) {
+			bool lswitch, bool reachable, HueBridge bridge) {
 		this.spacing = 16;
 		this.margin_top = 8;
 		this.margin_bottom = 8;
@@ -21,8 +21,6 @@ public class Light : Box {
 		
 		this.number = number;
 		this.bridge = bridge;
-		
-		
 		
 		// hue
 		Gtk.Button lightHue = new Gtk.Button.from_icon_name(
@@ -72,9 +70,13 @@ public class Light : Box {
 		Label emptyLabel = new Label(" ");
 		this.pack_start(emptyLabel, true, false, 0);
 		
-		// switch: on, off 
+		// switch: on, off
 		lightSwitch = new Switch();
 		lightSwitch.active = lswitch;
+		if (reachable == false) {
+			lightSwitch.opacity = 0.4;
+			lightSwitch.tooltip_text = "not reachable";
+		}
 		lightSwitch.margin_bottom = 4;
 		lightSwitch.valign = Align.END;
 		

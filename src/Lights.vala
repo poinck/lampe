@@ -24,9 +24,10 @@ public class Lights : ListBox {
 	}
 	
 	public void addLight(string name, int light_id = 1, int64 hue = 12000, 
-			int64 sat = 192, int64 bri = 32, bool lswitch = false) {
+			int64 sat = 192, int64 bri = 32, bool lswitch = false, 
+			bool reachable = false) {
 		this.light_count++;
-		Light light = new Light(light_id, name, hue, sat, bri, lswitch, bridge);
+		Light light = new Light(light_id, name, hue, sat, bri, lswitch, reachable, bridge);
 		
 		debug("[Lights.addLight] light_count = " + light_count.to_string());
 		
@@ -52,6 +53,7 @@ public class Lights : ListBox {
 		int64 sat = 192;
 		int64 bri = 32;
 		bool lswitch = false;
+		bool reachable = false;
 		
 		string lightStates = this.bridge.getStates();
 		Json.Parser parser = new Json.Parser();
@@ -82,11 +84,21 @@ public class Lights : ListBox {
 							} 
 							else if (state == "hue") {
 								hue = stateObj.get_int_member(state);
-								debug("[Lights.refreshLights] hue = " + hue.to_string());
+								debug("[Lights.refreshLights] hue = " 
+									+ hue.to_string()
+								);
 							} 
 							else if (state == "sat") {
 								sat = stateObj.get_int_member(state);
-								debug("[Lights.refreshLights] sat = " + sat.to_string());
+								debug("[Lights.refreshLights] sat = " 
+									+ sat.to_string()
+								);
+							}
+							else if (state == "reachable") {
+								reachable = stateObj.get_boolean_member(state);
+								debug("[Lights.refreshLights] reachable = " 
+									+ reachable.to_string()
+								);
 							}
 						}
 					}
@@ -96,7 +108,7 @@ public class Lights : ListBox {
 					}
 				}
 				
-				addLight(name, light_id, hue, sat, bri, lswitch);
+				addLight(name, light_id, hue, sat, bri, lswitch, reachable);
 			}
 		}
 		catch (Error e) {
