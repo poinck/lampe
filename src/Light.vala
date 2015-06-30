@@ -5,6 +5,8 @@ public class Light : Box {
 
 	private int number;
 	private double hue; // range 1..360
+	private bool dont_change_bri = false;
+	private bool dont_change_sat = false;
 	private HueBridge bridge;
 	
 	private Switch lightSwitch;
@@ -71,14 +73,21 @@ public class Light : Box {
 					+ "] selected color: h = " + h.to_string() + ", s = " 
 					+ s.to_string() + ", v = " + v.to_string());
 				this.hue = h; // this.hue needs to have a range of 1..360
+				int tmpBri = (int) (v * 255);
+				int tmpSat = (int) (s * 255);
 				bridge.putState(
 					this.number, 
-					"{\"hue\": " + getHue().to_string() + "}"
+					"{\"bri\":" + tmpBri.to_string() + ",\"sat\": " 
+						+ tmpSat.to_string() + ",\"hue\": " + getHue().to_string() 
+						+ "}"
 				);
 				
 				// update widgets
 				debug("[Light." + this.number.to_string() 
 					+ "(hue)] this.hue = " + this.hue.to_string());
+				dont_change_sat = true;
+				dont_change_bri = true;
+					// avoid sending brightness and saturation again 
 				scaleBri.set_value(v * 255);
 				scaleSat.set_value(s * 255);
 				v = 0.8; 
@@ -130,10 +139,16 @@ public class Light : Box {
 			if (lightSwitch.active) {
 				debug("[Light." + this.number.to_string() + "] sat = " 
 					+ getSat().to_string());
-				bridge.putState(
-					this.number, 
-					"{\"sat\": " + getSat().to_string() + "}"
-				);
+				if (dont_change_sat == false) {
+					// avoid sending same saturation again
+					bridge.putState(
+						this.number, 
+						"{\"sat\": " + getSat().to_string() + "}"
+					);
+				}
+				else {
+					dont_change_sat = false; 
+				}
 			}
 			
 			// update widgets
@@ -148,11 +163,11 @@ public class Light : Box {
 			color.blue = b;
 			color.alpha = 1;
 			debug("[Light." + this.number.to_string() 
-					+ "] changed saturation: h = " + h.to_string() 
-					+ ", s = " + s.to_string() + ", v = " + v.to_string());
+				+ "] changed saturation: h = " + h.to_string() 
+				+ ", s = " + s.to_string() + ", v = " + v.to_string());
 			debug("[Light." + this.number.to_string() 
-					+ "] changed saturation: r = " + r.to_string() 
-					+ ", g = " + g.to_string() + ", b = " + b.to_string());
+				+ "] changed saturation: r = " + r.to_string() 
+				+ ", g = " + g.to_string() + ", b = " + b.to_string());
 			lightHue.override_color(StateFlags.NORMAL, color);
 			scaleSat.override_background_color(StateFlags.NORMAL, color);
 		});
@@ -170,10 +185,16 @@ public class Light : Box {
 			if (lightSwitch.active) {
 				debug("[Light." + this.number.to_string() + "] bri = " 
 					+ getBri().to_string());
-				bridge.putState(
-					this.number, 
-					"{\"bri\": " + getBri().to_string() + "}"
-				);
+				if (dont_change_bri == false) {
+					// avoid sending same brightness again
+					bridge.putState(
+						this.number, 
+						"{\"bri\": " + getBri().to_string() + "}"
+					);
+				}
+				else {
+					dont_change_bri = false; 
+				}
 			}
 			
 			// update widgets
@@ -182,7 +203,7 @@ public class Light : Box {
 		});
 		
 		// switch: on, off
-		this.pack_start(lightSwitch, false, false, 8);
+		this.pack_start(lightSwitch, false, false, 10);
 		lightSwitch.notify["active"].connect(() => {
 			toggleSwitch();
 		});

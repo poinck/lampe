@@ -3,10 +3,29 @@ using Soup;
 public class HueBridge : Soup.Session {
 	private string ip_address;
 	private string bridge_user = "lampe-bash";
-		// TODO  choose user name other than "lampe-bash"
+		// TODO  choose user name other than "lampe-bash", use "lampe"; the bash-version should then use the same user
+		
+	private Array<Soup.Message> msgs; 
+	private const int MAX_MSGS = 3;
+	private const int DEFAULT_DELAY = 125; // milliseconds
+	private DateTime lastTime = new DateTime.now_local();
 	
 	public HueBridge(string ip_address) {
 		this.ip_address = ip_address;
+		
+		// sendMsgs.begin();
+	}
+	
+	private void sendMsgs() {
+		
+		
+	}
+	
+	private void addMsg(Soup.Message msg) {
+		if (msgs.length > MAX_MSGS) {
+			msgs.remove_index(0);
+		}
+		msgs.append_val(msg);
 	}
 	
 	// set state of a light
