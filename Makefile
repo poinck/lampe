@@ -2,7 +2,7 @@ BINDIR = $(DESTDIR)/usr/bin
 
 # VALA_OPTS=-v --pkg gio-2.0 --target-glib 2.32 --pkg glib-2.0 --pkg posix
 # --target-glib=2.42
-VALA_OPTS=-v --pkg gtk+-3.0 --pkg libsoup-2.4 --pkg json-glib-1.0
+VALA_OPTS=-v --pkg gtk+-3.0 --pkg libsoup-2.4 --pkg json-glib-1.0 --pkg posix --target-glib=2.42 --pkg glib-2.0
 CC_OPTS=-X -lm
 SRC_FILES := $(wildcard src/*.vala) 
 
