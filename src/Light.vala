@@ -208,7 +208,8 @@ public class Light : Box {
 			bridge.putState(
 				this.number, 
 				"{\"on\":true,\"bri\":" + getBri().to_string() + ",\"sat\": " 
-					+ getSat().to_string() + "}"
+					+ getSat().to_string() + ",\"hue\": " + getHue().to_string() 
+					+ "}"
 			);
 		} 
 		else {
