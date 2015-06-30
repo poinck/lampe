@@ -34,6 +34,7 @@ public class HueBridge : Soup.Session {
 		);
 		s_msg.set_request("application/json", MemoryUse.COPY, request.data);		
 		
+		// delay msg and always send last msg in that delay-timeframe
 		if (timer_is_running == false) {
 			Timeout.add(DEFAULT_DELAY, () => {
 				sendMsg();
