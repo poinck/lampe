@@ -4,6 +4,7 @@ public class Light : Box {
 	public static const double MAX_HUE = 65535.0;
 
 	private int number;
+	private double hue; // range 1..360
 	private HueBridge bridge;
 	
 	private Switch lightSwitch;
@@ -22,6 +23,12 @@ public class Light : Box {
 		this.number = number;
 		this.bridge = bridge;
 		
+		// saturation
+		scaleSat = new Scale.with_range(Gtk.Orientation.HORIZONTAL, 1, 254, 1);
+		
+		// brightness
+		scaleBri = new Scale.with_range(Gtk.Orientation.HORIZONTAL, 1, 254, 1);
+		
 		// hue
 		Gtk.Button lightHue = new Gtk.Button.from_icon_name(
 			"dialog-information-symbolic", 
@@ -29,11 +36,9 @@ public class Light : Box {
 		);
 		Gdk.RGBA color = Gdk.RGBA();
 		double h = hue / MAX_HUE * 360.0;
+		this.hue = h;
 		double s = sat / 255.0;
-		double v = bri / 255.0;
-		v = 0.8; 
-		// v = 1;
-			// drop actual representation of brightness
+		double v = 0.8; // drop actual representation of brightness
 		double r, g, b;
 		hsv_to_rgb(h, s, v, out r, out g, out b);
 		color.red = r;
@@ -42,7 +47,6 @@ public class Light : Box {
 		color.alpha = 1;
 		debug("h = " + h.to_string() + ", s = " + s.to_string() + ", v = " + v.to_string());
 		debug("r = " + r.to_string() + ", g = " + g.to_string() + ", b = " + b.to_string());
-		// lightHue.override_color("dialog-information-symbolic", color);
 		lightHue.override_color(StateFlags.NORMAL, color);
 		lightHue.relief = ReliefStyle.NONE;
 		lightHue.clicked.connect(() => {
@@ -51,7 +55,40 @@ public class Light : Box {
 				(Gtk.Window) this.get_toplevel()
 			);
 			dialog.modal = true;
+			dialog.use_alpha = false;
 			dialog.show();
+			
+			if (dialog.run() == Gtk.ResponseType.OK) {
+				r = dialog.rgba.red;
+				g = dialog.rgba.green;
+				b = dialog.rgba.blue;
+				rgb_to_hsv(r, g, b, out h, out s, out v);
+				h = h * 360.0; // range of h is 0..1
+				debug("[Light." + this.number.to_string() 
+					+ "] selected color: r = " + r.to_string() + ", g = " 
+					+ g.to_string() + ", b = " + b.to_string());
+				debug("[Light." + this.number.to_string() 
+					+ "] selected color: h = " + h.to_string() + ", s = " 
+					+ s.to_string() + ", v = " + v.to_string());
+				this.hue = h; // this.hue needs to have a range of 1..360
+				bridge.putState(
+					this.number, 
+					"{\"hue\": " + getHue().to_string() + "}"
+				);
+				
+				// update widgets
+				debug("[Light." + this.number.to_string() 
+					+ "(hue)] this.hue = " + this.hue.to_string());
+				scaleBri.set_value(v * 255);
+				scaleSat.set_value(s * 255);
+				v = 0.8; 
+				hsv_to_rgb(h, s, v, out r, out g, out b);
+				color.red = r;
+				color.green = g;
+				color.blue = b;
+				lightHue.override_color(StateFlags.NORMAL, color);
+			}
+			dialog.close();
 		});
 		this.pack_start(lightHue, false, false, 8);
 		
@@ -59,7 +96,7 @@ public class Light : Box {
 		Label lightNumber = new Label("<b>" + number.to_string() + "</b>");
 		lightNumber.use_markup = true;
 		lightNumber.valign = Align.BASELINE;
-		this.pack_start(lightNumber, false, false, 1);
+		this.pack_start(lightNumber, false, false, 0);
 		
 		// name
 		debug("[Light] name = " + name);
@@ -81,12 +118,10 @@ public class Light : Box {
 		lightSwitch.valign = Align.END;
 		
 		// saturation
-		scaleSat = new Scale.with_range(Gtk.Orientation.HORIZONTAL, 1, 254, 1);
 		scaleSat.set_value((double) sat);
 		scaleSat.draw_value = false;
 		scaleSat.width_request = 127;
 		scaleSat.round_digits = 0;
-		// scaleSat.opacity = 0.25 + (0.75 * sat / 254);
 		scaleSat.override_background_color(StateFlags.NORMAL, color);
 		scaleSat.margin_bottom = 4;
 		scaleSat.valign = Align.END;
@@ -101,24 +136,28 @@ public class Light : Box {
 				);
 			}
 			
-			// update color
+			// update widgets
+			debug("[Light." + this.number.to_string() 
+				+ "(saturation)] this.hue = " + this.hue.to_string());
+			h = this.hue;
 			s = getSat() / 255.0;
+			v = 0.8;
 			hsv_to_rgb(h, s, v, out r, out g, out b);
 			color.red = r;
 			color.green = g;
 			color.blue = b;
 			color.alpha = 1;
-			debug("h = " + h.to_string() + ", s = " + s.to_string() + ", v = " + v.to_string());
-			debug("r = " + r.to_string() + ", g = " + g.to_string() + ", b = " + b.to_string());
+			debug("[Light." + this.number.to_string() 
+					+ "] changed saturation: h = " + h.to_string() 
+					+ ", s = " + s.to_string() + ", v = " + v.to_string());
+			debug("[Light." + this.number.to_string() 
+					+ "] changed saturation: r = " + r.to_string() 
+					+ ", g = " + g.to_string() + ", b = " + b.to_string());
 			lightHue.override_color(StateFlags.NORMAL, color);
-			
-			// scaleSat.opacity = 0.25 + (0.75 * scaleSat.get_value() / 254);
 			scaleSat.override_background_color(StateFlags.NORMAL, color);
-			scaleSat.override_color(StateFlags.NORMAL, color);
 		});
 		
 		// brightness
-		scaleBri = new Scale.with_range(Gtk.Orientation.HORIZONTAL, 1, 254, 1);
 		scaleBri.set_value((double) bri);
 		scaleBri.draw_value = false;
 		scaleBri.width_request = 127; // 254
@@ -137,6 +176,8 @@ public class Light : Box {
 				);
 			}
 			
+			// update widgets
+			debug("[Light." + this.number.to_string() + "] changed brightness");
 			scaleBri.opacity = 0.25 + (0.75 * scaleBri.get_value() / 254);
 		});
 		
@@ -153,6 +194,10 @@ public class Light : Box {
 	
 	private int getSat() {
 		return (int) scaleSat.get_value();
+	}
+
+	private int getHue() {
+		return (int) (this.hue / 360.0 * MAX_HUE);
 	}
 	
 	private void toggleSwitch() {
