@@ -60,4 +60,49 @@ public class HueBridge : Soup.Session {
 		
 		return rsp;
 	}
+	
+	// register at Hue bridge
+	public void register(Gtk.Window window) {
+		if (ip_address == "") {
+			// the bridge needs to be found
+				// TODO
+			Gtk.MessageDialog dialog = new Gtk.MessageDialog(
+				window, 
+				Gtk.DialogFlags.MODAL, 
+				Gtk.MessageType.WARNING, 
+				Gtk.ButtonsType.OK, 
+				"Not implemented yet. Please use 'lampe' in a Terminal to detected the Hue bridge in your network and register."
+			);
+			dialog.response.connect((response_id) => {
+				switch (response_id) {
+					case Gtk.ResponseType.OK:
+						debug("Ok");
+						break;
+				}
+
+				dialog.destroy();
+			});
+			dialog.show();
+		}
+		else {
+			// bridge was already detected
+			Gtk.MessageDialog dialog = new Gtk.MessageDialog(
+				window, 
+				Gtk.DialogFlags.MODAL, 
+				Gtk.MessageType.WARNING, 
+				Gtk.ButtonsType.OK, 
+				"The Hue bridge was already detected at '" + ip_address + "'."
+			);
+			dialog.response.connect((response_id) => {
+				switch (response_id) {
+					case Gtk.ResponseType.OK:
+						debug("Ok");
+						break;
+				}
+
+				dialog.destroy();
+			});
+			dialog.show();
+		}
+	}
 }

@@ -117,5 +117,22 @@ public class Lights : ListBox {
 				e.message
 			);
 		}
+		
+		// show placeholder if no lights could be found
+		if (light_count == 0) {
+			Label label = new Label("<span size='16000'><b>no lights</b></span>");
+			label.use_markup = true;
+			label.margin = 12;
+			Gdk.RGBA label_color = Gdk.RGBA();
+			label_color.parse("#a4a4a4"); // grey
+			label.override_color(StateFlags.NORMAL, label_color);
+			
+			this.add(label);
+			this.show_all();
+		}
+	}
+	
+	public int get_light_count() {
+		return light_count;
 	}
 }

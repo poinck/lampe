@@ -11,8 +11,7 @@ class Lampe : Gtk.Application {
 		var header = new HeaderBar();
 		header.set_show_close_button(true);
 		header.set_title("Lampe");
-		header.set_subtitle("not connected");
-
+		
 		lampeWindow.set_default_size(1000, 700);
 		lampeWindow.window_position = Gtk.WindowPosition.CENTER;
 		lampeWindow.set_titlebar(header);
@@ -31,24 +30,32 @@ class Lampe : Gtk.Application {
 		// Gtk.Alignment alignment = new Gtk.Alignment (1.0f, 1.0f, 1.0f, 1.0f);
 			// XXX   depricated
 		
-		var boxingBox = new Box(Orientation.HORIZONTAL, 8);
+		Box lights_box = new Box(Orientation.HORIZONTAL, 8);
 //		boxingBox.hexpand = true;
 //		boxingBox.margin_start = 1;
 //		boxingBox.margin_end = 1;
 //		boxingBox.margin_top = 1;
 //		boxingBox.margin_bottom = 1;
 		Gdk.RGBA boxColor = Gdk.RGBA();
-		boxColor.parse("#a4a4a4"); // "#a4a4a4"
-		boxingBox.override_background_color(StateFlags.NORMAL, boxColor); 
+		boxColor.parse("#a4a4a4"); // grey
+		lights_box.override_background_color(StateFlags.NORMAL, boxColor); 
 		
 		// initialize soup session for bridge connection
-		HueBridge bridge = new HueBridge("192.168.2.164");
+		LampeRc rc = new LampeRc();
+		string ip = rc.getBridgeIp();
+		if (ip == "") {
+			header.set_subtitle("no bridge");
+		}
+		else {
+			header.set_subtitle("using bridge at " + ip);
+		}
+		HueBridge bridge = new HueBridge(ip);
 			// TODO  remove hardcoded ip: this is early work, read "~/.lamperc"
 		
 		// initialize lights view
 		Lights lights = new Lights(bridge);
 		lights.refreshLights();
-		boxingBox.add(lights);
+		lights_box.add(lights);
 		
 //		StyleContext style = new StyleContext();
 //		style.add_class("lightBox");
@@ -63,11 +70,11 @@ class Lampe : Gtk.Application {
 //		groupsListBox.insert (vBox, 2);
 
 		// stack
-		var stack = new Stack ();
-		stack.add_titled(boxingBox , "lights", "Lights");
+		var stack = new Stack();
+		stack.add_titled(lights_box , "lights", "Lights");
 		// stack.add_titled(groupsListBox , "groups", "Groups");
 			// TODO  add groupsListBox after implementation of it has started
-		stack.set_visible_child_name ("lights");
+		stack.set_visible_child_name("lights");
 		stack.homogeneous = false;
 		// stack.vexpand = false;
 		// stack.expand = true;
@@ -101,7 +108,7 @@ class Lampe : Gtk.Application {
 	
 		// button: settings
 			// TODO  swap out settings-menu in a different class?
-		var settingsButton = new Gtk.Button.from_icon_name (
+		var settingsButton = new Gtk.Button.from_icon_name(
 			"view-list-symbolic", 
 			Gtk.IconSize.SMALL_TOOLBAR
 		);
@@ -116,8 +123,9 @@ class Lampe : Gtk.Application {
 		});
 		GLib.SimpleAction registerAction = new GLib.SimpleAction("register", null);
 		registerAction.activate.connect(() => {
-			// TODO  register at bridge (seperate class)
+			// TODO  register at bridge
 			debug("[Lampe.activate] start: register");
+			bridge.register(lampeWindow);
 		});
 		this.add_action(registerAction);
 		// var popoverMenu = new Gtk.PopoverMenu ();
