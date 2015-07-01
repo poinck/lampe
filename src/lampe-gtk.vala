@@ -6,7 +6,7 @@ class Lampe : Gtk.Application {
 	}
 	
 	protected override void activate() {
-		Gtk.ApplicationWindow lampeWindow = new Gtk.ApplicationWindow (this);
+		Gtk.ApplicationWindow lampeWindow = new Gtk.ApplicationWindow(this);
 			
 		var header = new HeaderBar();
 		header.set_show_close_button(true);
@@ -40,8 +40,6 @@ class Lampe : Gtk.Application {
 		Gdk.RGBA boxColor = Gdk.RGBA();
 		boxColor.parse("#a4a4a4"); // "#a4a4a4"
 		boxingBox.override_background_color(StateFlags.NORMAL, boxColor); 
-			// FIXME overrides are not recommended (a user could have loaded a 
-			// theme other than Adwaita)
 		
 		// initialize soup session for bridge connection
 		HueBridge bridge = new HueBridge("192.168.2.164");
@@ -49,12 +47,6 @@ class Lampe : Gtk.Application {
 		
 		// initialize lights view
 		Lights lights = new Lights(bridge);
-		
-//		lights.addLight("Sofa");
-//		lights.addLight("Stube");
-//		lights.addLight("Schlafzimmer");
-//		lights.addLight("Bad");
-		
 		lights.refreshLights();
 		boxingBox.add(lights);
 		
@@ -109,9 +101,12 @@ class Lampe : Gtk.Application {
 	
 		// button: settings
 			// TODO  swap out settings-menu in a different class?
-		var settingsButton = new Gtk.Button.from_icon_name ("view-list-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
-			// preferences-other, document-properties, applications-utilities, preferences-system, start-here, applications-utilities, view-list
-		GLib.Menu settingsMenu = new GLib.Menu ();
+		var settingsButton = new Gtk.Button.from_icon_name (
+			"view-list-symbolic", 
+			Gtk.IconSize.SMALL_TOOLBAR
+		);
+			// icons: preferences-other, document-properties, applications-utilities, preferences-system, start-here, applications-utilities, view-list
+		GLib.Menu settingsMenu = new GLib.Menu();
 		settingsMenu.append("Find new lights", "find");
 		settingsMenu.append("Register at bridge", "register");
 		Gtk.Popover settingsPopover = new Gtk.Popover(settingsButton);
@@ -131,7 +126,10 @@ class Lampe : Gtk.Application {
 		header.pack_end(settingsButton);
 		
 		// button: refresh
-		var refreshButton = new Gtk.Button.from_icon_name("view-refresh-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
+		var refreshButton = new Gtk.Button.from_icon_name(
+			"view-refresh-symbolic", 
+			Gtk.IconSize.SMALL_TOOLBAR
+		);
 		refreshButton.clicked.connect(() => {
 			debug("[Lampe.activate] start: refresh");
 			lights.refreshLights();
@@ -148,12 +146,12 @@ class Lampe : Gtk.Application {
 	}
 }
 
+// TODO  swap out to seperate utility class
 public void hsv_to_rgb (double h, double s, double v, out double r, out double g, out double b)
 		requires (h >= 0 && h <= 360)
 		requires (s >= 0 && s <= 1)
 		requires (v >= 0 && v <= 1) {
     // by Robert Dyer, GPLv3 or later
-    // modified by André Klausnitzer
     r = 0; 
     g = 0; 
     b = 0;
@@ -220,23 +218,6 @@ public static void debug(string str) {
 
 public static int main(string[] args) {
 	debug("[main] start");
-	
-	// test
-	double h, s, v;
-	double r = 50.0 / 255;
-	double g = 150.0 / 255;
-	double b = 100.0 / 255;
-	rgb_to_hsv(r, g, b, out h, out s, out v);
-	debug("h = " + h.to_string() + ", s = " + s.to_string() + ", v = " + v.to_string());
-	hsv_to_rgb(h * 360, s, v, out r, out g, out b);
-	debug("r = " + r.to_string() + ", g = " + g.to_string() + ", b = " + b.to_string());
-	Gdk.RGBA a_color = Gdk.RGBA();
-	a_color.alpha = 1;
-	a_color.red = r;
-	a_color.green = g;
-	a_color.blue = b;
-	// a_color.parse("rgb(" + r.to_string() + "," + g.to_string() + "," + b.to_string() + ")");
-	debug(a_color.to_string());
 	
 	Lampe lampe = new Lampe();	
 	return lampe.run(args);
