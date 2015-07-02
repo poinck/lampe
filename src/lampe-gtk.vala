@@ -23,35 +23,6 @@ class Lampe : Gtk.Application {
 		this.app_menu = global_menu;
 	}
 	
-	private Box get_lights_header_box() {
-		Box box = new Box(Orientation.HORIZONTAL, 8);
-		box.spacing = 16;
-		
-		Label placeholder_hue = new Label(" ");
-		placeholder_hue.width_request = 24;
-		box.pack_start(placeholder_hue, false, false, 8);
-		
-		Label placeholder_number_name = new Label("  ");
-		box.pack_start(placeholder_number_name, true, false, 0);
-		
-		Label sat_label = new Label("<b>Saturation</b>");
-		sat_label.use_markup = true;
-		sat_label.width_request = 127;
-		box.pack_start(sat_label, false, false, 0);
-		
-		Label bri_label = new Label("<b>Brightness</b>");
-		bri_label.use_markup = true;
-		bri_label.width_request = 127;
-		box.pack_start(bri_label, false, false, 0);
-		
-		Label placeholder_swi = new Label(" ");
-		placeholder_swi.valign = Align.END;
-		placeholder_swi.width_request = 94;
-		box.pack_start(placeholder_swi, false, false, 10);
-		
-		return box;
-	}
-	
 	protected override void activate() {
 		Gtk.ApplicationWindow lampeWindow = new Gtk.ApplicationWindow(this);
 		
@@ -105,8 +76,8 @@ class Lampe : Gtk.Application {
 		// initialize lights view
 		Lights lights = new Lights(bridge);
 		lights.refreshLights();
+		lights_box.add(lights.get_lights_header_box());
 		lights_border_box.add(lights);
-		lights_box.add(get_lights_header_box());
 		lights_box.add(lights_border_box);
 		
 		// list box: groups
