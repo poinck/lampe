@@ -1,3 +1,5 @@
+// lampe-gtk by André Klausnitzer, CC0
+
 using Gtk;
 using Json;
 

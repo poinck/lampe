@@ -1,3 +1,5 @@
+// lampe-gtk by André Klausnitzer, CC0
+
 public class LampeRc {
 	public const string RC_FILE = "/.lamperc";
 	

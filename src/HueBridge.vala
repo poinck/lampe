@@ -1,3 +1,5 @@
+// lampe-gtk by André Klausnitzer, CC0
+
 using Soup;
 using Posix;
 
@@ -6,7 +8,7 @@ public class HueBridge : Soup.Session {
 	private string bridge_user = "lampe-bash";
 		// TODO  choose user name other than "lampe-bash", use "lampe"; the bash-version should then use the same user
 		
-	private const int DEFAULT_DELAY = 125; // 125 milliseconds	
+	private const int DEFAULT_DELAY = 100; // 100 milliseconds
 	private bool timer_is_running = false;
 	private Soup.Message s_msg;
 	

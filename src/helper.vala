@@ -1,3 +1,5 @@
+// lampe-gtk by André Klausnitzer, CC0
+
 public void hsv_to_rgb (double h, double s, double v, out double r, 
 		out double g, out double b)
 		requires (h >= 0 && h <= 360)

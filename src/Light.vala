@@ -1,3 +1,5 @@
+// lampe-gtk by André Klausnitzer, CC0
+
 using Gtk;
 
 public class Light : Box {
@@ -47,11 +49,14 @@ public class Light : Box {
 		color.green = g;
 		color.blue = b;
 		color.alpha = 1;
-		debug("h = " + h.to_string() + ", s = " + s.to_string() + ", v = " + v.to_string());
-		debug("r = " + r.to_string() + ", g = " + g.to_string() + ", b = " + b.to_string());
+		debug("h = " + h.to_string() + ", s = " + s.to_string() + ", v = " 
+			+ v.to_string());
+		debug("r = " + r.to_string() + ", g = " + g.to_string() + ", b = " 
+			+ b.to_string());
 		lightHue.override_color(StateFlags.NORMAL, color);
 		lightHue.relief = ReliefStyle.NONE;
 		lightHue.clicked.connect(() => {
+			// open color chooser dialog
 			Gtk.ColorChooserDialog dialog = new Gtk.ColorChooserDialog(
 				"Select a color", 
 				(Gtk.Window) this.get_toplevel()
@@ -78,8 +83,8 @@ public class Light : Box {
 				bridge.putState(
 					this.number, 
 					"{\"bri\":" + tmpBri.to_string() + ",\"sat\": " 
-						+ tmpSat.to_string() + ",\"hue\": " + getHue().to_string() 
-						+ "}"
+						+ tmpSat.to_string() + ",\"hue\": " 
+						+ getHue().to_string() + "}"
 				);
 				
 				// update widgets
@@ -101,7 +106,7 @@ public class Light : Box {
 		});
 		this.pack_start(lightHue, false, false, 8);
 		
-		// number
+		// number (light id)
 		Label lightNumber = new Label("<b>" + number.to_string() + "</b>");
 		lightNumber.use_markup = true;
 		lightNumber.valign = Align.BASELINE;
@@ -112,7 +117,7 @@ public class Light : Box {
 		Label lightName = new Label(name);
 		lightName.valign = Align.BASELINE;
 		this.pack_start(lightName, false, false, 4);
-		
+			
 		Label emptyLabel = new Label(" ");
 		this.pack_start(emptyLabel, true, false, 0);
 		
