@@ -37,7 +37,7 @@ public class Lights : ListBox {
 		this.show_all();
 	}
 	
-	public void deleteLights() {
+	private void deleteLights() {
 		// callback: remove() for every child of this (Lights)
 		this.foreach((light) => {
 			remove(light);
@@ -134,7 +134,9 @@ public class Lights : ListBox {
 		}
 	}
 	
-	public Box get_lights_header_box() {
+	// creates a Box with captions and the global light switch with correct 
+	// alignment to the ListBox
+	public Box get_header() {
 		Box box = new Box(Orientation.HORIZONTAL, 8);
 		box.spacing = 16;
 		

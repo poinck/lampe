@@ -24,8 +24,13 @@ class Lampe : Gtk.Application {
 	}
 	
 	protected override void activate() {
+		// main window
 		Gtk.ApplicationWindow lampeWindow = new Gtk.ApplicationWindow(this);
-		
+		lampeWindow.set_default_size(1000, 700);
+		lampeWindow.window_position = Gtk.WindowPosition.CENTER;
+		lampeWindow.title = "Lampe";
+		// set_global_menu(lampeWindow);
+			// FIXME set_global_menu(..): menu entries are disabled, not sure why.
 		try {
 			lampeWindow.icon = new Gdk.Pixbuf.from_file("/usr/share/pixmaps/lampe-icon.png");
 		}
@@ -33,16 +38,22 @@ class Lampe : Gtk.Application {
 			debug("[Lampe] ERROR: could not load icon");
 		}
 			
+		// header bar: add to main window
 		var header = new HeaderBar();
 		header.set_show_close_button(true);
 		header.set_title("Lampe");
-		
-		lampeWindow.set_default_size(1000, 700);
-		lampeWindow.window_position = Gtk.WindowPosition.CENTER;
-		lampeWindow.title = "Lampe";
-		// set_global_menu(lampeWindow);
-			// FIXME set_global_menu(..): menu entries are disabled, not sure why.
 		lampeWindow.set_titlebar(header);
+		
+		// initialize soup session for bridge connection
+		LampeRc rc = new LampeRc();
+		string ip = rc.getBridgeIp();
+		if (ip == "") {
+			header.set_subtitle("no bridge");
+		}
+		else {
+			header.set_subtitle("using bridge at " + ip);
+		}
+		HueBridge bridge = new HueBridge(ip);
 	
 		// css
 //		CssProvider css = new CssProvider();
@@ -55,32 +66,21 @@ class Lampe : Gtk.Application {
 	
 		Grid mainGrid = new Grid();
 	
-		// list box: lights
+		// box: lights
+			// TODO  maybe: move everything related to the stack to a seperate method?
 		Box lights_box = new Box(Orientation.VERTICAL, 8);
 		Box lights_border_box = new Box(Orientation.HORIZONTAL, 8);
 		Gdk.RGBA boxColor = Gdk.RGBA();
 		boxColor.parse("#a4a4a4"); // grey
 		lights_border_box.override_background_color(StateFlags.NORMAL, boxColor); 
 		
-		// initialize soup session for bridge connection
-		LampeRc rc = new LampeRc();
-		string ip = rc.getBridgeIp();
-		if (ip == "") {
-			header.set_subtitle("no bridge");
-		}
-		else {
-			header.set_subtitle("using bridge at " + ip);
-		}
-		HueBridge bridge = new HueBridge(ip);
-		
-		// initialize lights view
-		Lights lights = new Lights(bridge);
+		Lights lights = new Lights(bridge); // ListBox
 		lights.refreshLights();
-		lights_box.add(lights.get_lights_header_box());
+		lights_box.add(lights.get_header()); // Box
 		lights_border_box.add(lights);
 		lights_box.add(lights_border_box);
 		
-		// list box: groups
+		// box: groups
 		ListBox groupsListBox = new ListBox();
 		groupsListBox.insert(new Label("Group A"), 1);
 
@@ -94,29 +94,27 @@ class Lampe : Gtk.Application {
 		stack.margin_start = 64;
 		stack.margin_end = 64;
 		stack.margin_top = 24;
-		// lampeWindow.add(stack);
 	
-		// switcher
+		// switcher buttons for stack: add to header bar
 		StackSwitcher buttons = new StackSwitcher();
 		buttons.set_stack(stack);
 		buttons.show();
 		header.pack_start(buttons);
-		// header.set_custom_title(buttons);
 		
-		// mainGrid.attach(new Label("*blubb*"), 0, 0, 1, 1);
+		// stack: add to main grid
 		mainGrid.attach(stack, 0, 0, 1, 1); // first row
 		mainGrid.attach(new Label(" "), 0, 1, 1, 1); // second row
 		
-		// viewport for scrolled window
+		// add main grid to viewport, add viewport to scrolled window, add 
+		// scrolled window to main window
 		Viewport view = new Viewport(null, null);
-			// adjustment left unbound, instead of "new Adjustment(1, 1, 1, 1, 10, 10)"
 		view.add(mainGrid);
 		Gtk.ScrolledWindow scrolled = new Gtk.ScrolledWindow(null, null);
 		scrolled.add(view);
 		lampeWindow.add(scrolled);
 	
 		// button: settings
-			// TODO  swap out settings-menu in a different class?
+			// TODO  maybe: swap out settings-menu in a different class?
 		Gtk.Button settingsButton = new Gtk.Button.from_icon_name(
 			"view-list-symbolic", 
 			Gtk.IconSize.SMALL_TOOLBAR
