@@ -38,8 +38,8 @@ public class Lights : ListBox {
 		this.show_all();
 	}
 	
-	private void deleteLights() {
-		// callback: remove() for every child of this (Lights)
+	// remove every Light or placeholder in Lights
+	private void delete_lights() {
 		this.foreach((light) => {
 			remove(light);
 		});
@@ -47,9 +47,42 @@ public class Lights : ListBox {
 		this.light_count = 0;
 	}
 	
-	public void refreshLights() {
-		deleteLights();
+	// add "searching lights"-placeholder to ListBox with spinner and refresh
+	public void refresh_lights() {
+		delete_lights();
 		
+		Box box = new Box(Orientation.HORIZONTAL, 8);
+		
+		Label empty = new Label("");
+		box.pack_start(empty, true, false, 0);
+		
+		Gtk.Spinner spinner = new Gtk.Spinner();
+		spinner.active = true;
+		spinner.opacity = 0.5;
+		box.add(spinner);
+	
+		Label label = new Label("<span size='16000'><b>searching lights ...</b></span>");
+		label.use_markup = true;
+		label.margin = 12;
+		Gdk.RGBA label_color = Gdk.RGBA();
+		label_color.parse("#a4a4a4"); // grey
+		label.override_color(StateFlags.NORMAL, label_color);
+		box.add(label);
+		
+		Label empty2 = new Label("");
+		box.pack_start(empty2, true, false, 0);
+		
+		this.add(box);
+		this.show_all();
+		
+		this.bridge.get_states(this);
+	}
+	
+	// callback from bridge.get_states(): parses received light states and adds 
+	// lights as found or "no lights"-placeholder
+	public void states_received(string states) {
+		delete_lights();
+	
 		string name = "";
 		int light_id = 0;
 		int64 hue = 12000;
@@ -57,11 +90,10 @@ public class Lights : ListBox {
 		int64 bri = 32;
 		bool lswitch = false;
 		bool reachable = false;
-		
-		string lightStates = this.bridge.getStates();
+	
 		Json.Parser parser = new Json.Parser();
 		try {
-			parser.load_from_data(lightStates);
+			parser.load_from_data(states);
 			Json.Node node = parser.get_root();
 			
 			Json.Object lightObj = node.get_object();
@@ -116,7 +148,7 @@ public class Lights : ListBox {
 		}
 		catch (Error e) {
 			stdout.printf(
-				"[Lights.refreshLights] unable to parse 'lightStates': %s\n", 
+				"[Lights.refreshLights] unable to parse 'states': %s\n", 
 				e.message
 			);
 		}
@@ -160,6 +192,7 @@ public class Lights : ListBox {
 		
 		// switch: on, off
 		group_switch = new Switch();
+		group_switch.tooltip_text = "all lights";
 		group_switch.active = true;
 		group_switch.margin_bottom = 4;
 		group_switch.margin_end = 4;

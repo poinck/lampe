@@ -75,7 +75,7 @@ class Lampe : Gtk.Application {
 		lights_border_box.override_background_color(StateFlags.NORMAL, boxColor); 
 		
 		Lights lights = new Lights(bridge); // ListBox
-		lights.refreshLights();
+		lights.refresh_lights();
 		lights_box.add(lights.get_header()); // Box
 		lights_border_box.add(lights);
 		lights_box.add(lights_border_box);
@@ -147,7 +147,7 @@ class Lampe : Gtk.Application {
 		);
 		refreshButton.clicked.connect(() => {
 			debug("[Lampe.activate] start: refresh");
-			lights.refreshLights();
+			lights.refresh_lights();
 		});
 		header.pack_end(refreshButton);
 		

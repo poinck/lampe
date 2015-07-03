@@ -17,13 +17,16 @@ public class HueBridge : Soup.Session {
 		
 	}
 	
+	// send message async without callback 
 	private void send_msg() {
 		if (s_msg != null) {
-			debug("[HueBridge(Light).sendMsg] request = '" 
+			debug("[HueBridge.send_msg] request = '" 
 				+ (string) s_msg.request_body.flatten().data + "'");
-			this.send_message(s_msg);
-			debug("[HueBridge(Light).sendMsg] response = '" 
-				+ (string) s_msg.response_body.flatten().data + "'");
+			
+			this.queue_message(s_msg, (s, m) => {
+				debug("[HueBridge.send_msg] response = '" 
+					+ (string) m.response_body.flatten().data + "'");
+			});
 		}
 	}
 	
@@ -70,18 +73,19 @@ public class HueBridge : Soup.Session {
 	}
 	
 	// get all states of all lights
-	public string getStates() {
+	public void get_states(Lights lights) {
 		Soup.Message msg = new Soup.Message(
 			"GET", 
 			"http://" + this.ip_address + "/api/" + this.bridge_user + "/lights"
 		);
-		this.send_message(msg);
-		string rsp = (string) msg.response_body.flatten().data;
-			// FIXME "warning: assignment discards 'const' qualifier from pointer target type" (cast from const unit8[] to string)
 		
-		debug("[HueBridge(Lights).getStates] response = '" + rsp + "'");
-		
-		return rsp;
+		this.queue_message(msg, (s, m) => {
+			string rsp = (string) msg.response_body.flatten().data;
+			debug("[HueBridge.get_states] response = '" + rsp + "'");
+			
+			// callback to where we came
+			lights.states_received(rsp);
+		});
 	}
 	
 	// register at Hue bridge
