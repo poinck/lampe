@@ -17,7 +17,7 @@ public class HueBridge : Soup.Session {
 		
 	}
 	
-	private void sendMsg() {
+	private void send_msg() {
 		if (s_msg != null) {
 			debug("[HueBridge(Light).sendMsg] request = '" 
 				+ (string) s_msg.request_body.flatten().data + "'");
@@ -28,7 +28,7 @@ public class HueBridge : Soup.Session {
 	}
 	
 	// set state of a light
-	public void putState(int light, string request) {
+	public void put_light_state(int light, string request) {
 		s_msg = new Soup.Message(
 			"PUT", 
 			"http://" + this.ip_address + "/api/" + this.bridge_user 
@@ -39,7 +39,28 @@ public class HueBridge : Soup.Session {
 		// delay msg and always send last msg in that delay-timeframe
 		if (timer_is_running == false) {
 			Timeout.add(DEFAULT_DELAY, () => {
-				sendMsg();
+				send_msg();
+				timer_is_running = false;
+				
+				return false;
+			});
+			timer_is_running = true;
+		}
+	}
+	
+	// set state of a group
+	public void put_group_state(int group, string request) {
+		s_msg = new Soup.Message(
+			"PUT", 
+			"http://" + this.ip_address + "/api/" + this.bridge_user 
+				+ "/groups/" + group.to_string() + "/action"
+		);
+		s_msg.set_request("application/json", MemoryUse.COPY, request.data);		
+		
+		// delay msg and always send last msg in that delay-timeframe
+		if (timer_is_running == false) {
+			Timeout.add(DEFAULT_DELAY, () => {
+				send_msg();
 				timer_is_running = false;
 				
 				return false;

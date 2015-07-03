@@ -80,7 +80,7 @@ public class Light : Box {
 				this.hue = h; // this.hue needs to have a range of 1..360
 				int tmpBri = (int) (v * 255);
 				int tmpSat = (int) (s * 255);
-				bridge.putState(
+				bridge.put_light_state(
 					this.number, 
 					"{\"bri\":" + tmpBri.to_string() + ",\"sat\": " 
 						+ tmpSat.to_string() + ",\"hue\": " 
@@ -146,7 +146,7 @@ public class Light : Box {
 					+ getSat().to_string());
 				if (dont_change_sat == false) {
 					// avoid sending same saturation again
-					bridge.putState(
+					bridge.put_light_state(
 						this.number, 
 						"{\"sat\": " + getSat().to_string() + "}"
 					);
@@ -192,7 +192,7 @@ public class Light : Box {
 					+ getBri().to_string());
 				if (dont_change_bri == false) {
 					// avoid sending same brightness again
-					bridge.putState(
+					bridge.put_light_state(
 						this.number, 
 						"{\"bri\": " + getBri().to_string() + "}"
 					);
@@ -210,7 +210,7 @@ public class Light : Box {
 		// switch: on, off
 		this.pack_start(lightSwitch, false, false, 10);
 		lightSwitch.notify["active"].connect(() => {
-			toggleSwitch();
+			toggle_switch();
 		});
 	}
 	
@@ -226,12 +226,12 @@ public class Light : Box {
 		return (int) (this.hue / 360.0 * MAX_HUE);
 	}
 	
-	private void toggleSwitch() {
+	private void toggle_switch() {
 		if (lightSwitch.active) {
 			// send all light attributes to bridge
 			debug("[Light.toggleSwitch] switch " + this.number.to_string() 
 				+ " on");
-			bridge.putState(
+			bridge.put_light_state(
 				this.number, 
 				"{\"on\":true,\"bri\":" + getBri().to_string() + ",\"sat\": " 
 					+ getSat().to_string() + ",\"hue\": " + getHue().to_string() 
@@ -241,11 +241,8 @@ public class Light : Box {
 		else {
 			debug("[Light.toggleSwitch] switch " + this.number.to_string() 
 				+ " off");
-			bridge.putState(this.number, "{\"on\":false}");
+			bridge.put_light_state(this.number, "{\"on\":false}");
 		}
 	}
 	
-//	private void deleteLight() {
-//		this.get_parent().destroy();
-//	}
 }

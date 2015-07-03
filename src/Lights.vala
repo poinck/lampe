@@ -9,6 +9,7 @@ public class Lights : ListBox {
 	private int light_count = 0;	
 
 	private HueBridge bridge;
+	private Switch group_switch;
 
 	// initialize a ListBox for lights
 	public Lights(HueBridge bridge) {
@@ -157,14 +158,31 @@ public class Lights : ListBox {
 		bri_label.width_request = 127;
 		box.pack_start(bri_label, false, false, 0);
 		
-		Label placeholder_swi = new Label(" ");
-		placeholder_swi.valign = Align.END;
-		placeholder_swi.width_request = 94;
-		box.pack_start(placeholder_swi, false, false, 10);
-			// TODO  instead of placeholder, add global switch: groups/0/action {"on":?}
-			// "0" is special group, meaning all lights known to th Hue bridge
+		// switch: on, off
+		group_switch = new Switch();
+		group_switch.active = true;
+		group_switch.margin_bottom = 4;
+		group_switch.margin_end = 4;
+		group_switch.valign = Align.END;
+		group_switch.notify["active"].connect(() => {
+			toggle_group_switch();
+		});
+		box.pack_start(group_switch, false, false, 10);
 		
 		return box;
+	}
+	
+	private void toggle_group_switch() {
+		if (group_switch.active) {
+			debug("[Lights.toggle_group_switch] switch on");
+			
+			// "0" is special group, meaning all lights known to th Hue bridge
+			bridge.put_group_state(0, "{\"on\":true}");
+		} 
+		else {
+			debug("[Lights.toggle_group_switch] switch off");
+			bridge.put_group_state(0, "{\"on\":false}");
+		}
 	}
 	
 	public int get_light_count() {
