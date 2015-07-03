@@ -170,7 +170,6 @@ http://creativecommons.org/publicdomain/zero/1.0";
 		lampeWindow.window_position = Gtk.WindowPosition.CENTER;
 		lampeWindow.title = "Lampe";
 		set_global_menu(lampeWindow);
-			// FIXME set_global_menu(..): menu entries are disabled, not sure why.
 		try {
 			lampeWindow.icon = new Gdk.Pixbuf.from_file("/usr/share/pixmaps/lampe-icon.png");
 		}
