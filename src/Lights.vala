@@ -6,7 +6,10 @@ using Json;
 public class Lights : ListBox {
 	public static const int MAX_LIGHTS = 50;
 
-	private int light_count = 0;	
+	private int light_count = 0;
+	private bool all_lights_are_on = true; 
+		// "all_lights_are_on": false assumption to determine initial light 
+		// switch position of global switch
 
 	private HueBridge bridge;
 	private Switch group_switch;
@@ -113,6 +116,9 @@ public class Lights : ListBox {
 						foreach (string state in stateObj.get_members()) {
 							if (state == "on") {
 								lswitch = stateObj.get_boolean_member(state);
+								if (lswitch == false) {
+									all_lights_are_on = false;
+								}
 							}
 							else if (state == "bri") {
 								bri = stateObj.get_int_member(state);
@@ -165,10 +171,17 @@ public class Lights : ListBox {
 			this.add(label);
 			this.show_all();
 		}
+		
+		debug("[Lights.states_received()] all_lights_are_on = " + all_lights_are_on.to_string());
+		if (all_lights_are_on) {
+			group_switch.active = true;
+		}
+		else {
+			group_switch.active = false;
+		}
 	}
 	
-	// creates a Box with captions and the global light switch with correct 
-	// alignment to the ListBox
+	// creates a Box with captions with correct alignment to the ListBox
 	public Box get_header() {
 		Box box = new Box(Orientation.HORIZONTAL, 8);
 		box.spacing = 16;
@@ -197,6 +210,8 @@ public class Lights : ListBox {
 		return box;
 	}
 	
+	// initalizes global switch. do not call this method before first call of
+	// refresh_lights()
 	public Box get_global_switch() {
 		Box box = new Box(Orientation.HORIZONTAL, 0);
 	
@@ -204,8 +219,8 @@ public class Lights : ListBox {
 		box.pack_start(label, false, false, 0);
 		
 		group_switch = new Switch();
-		group_switch.tooltip_text = "all lights";
-		group_switch.active = true;
+		// group_switch.tooltip_text = "all lights";
+		
 		group_switch.margin_bottom = 4;
 		group_switch.margin_end = 4;
 		group_switch.valign = Align.END;
@@ -224,15 +239,7 @@ public class Lights : ListBox {
 			// "0" is special group, meaning all lights known to th Hue bridge
 			bridge.put_group_state(0, "{\"on\":true}");
 			
-			/*
-			List<Light> lights = (List<Light>) this.get_children();
-			foreach(Light light in lights) {
-				debug("a light?");
-				light.set_switch(true);
-			}
-			*/
-				// FIXME find a way to toggle all individual light switches
-			
+			// change light switch state of individual lights
 			this.foreach((w) => {
 				try {
 					ListBoxRow r = (ListBoxRow) w;
@@ -247,13 +254,6 @@ public class Lights : ListBox {
 		else {
 			debug("[Lights.toggle_group_switch] switch off");
 			bridge.put_group_state(0, "{\"on\":false}");
-			
-			/*
-			List<Light> lights = (List<Light>) this.get_children();
-			foreach(Light light in lights) {
-				light.set_switch(false);
-			}
-			*/
 			
 			this.foreach((w) => {
 				try {
