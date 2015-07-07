@@ -245,4 +245,8 @@ public class Light : Box {
 		}
 	}
 	
+	public void set_switch(bool active) {
+		lightSwitch.active = active;
+	}
+	
 }

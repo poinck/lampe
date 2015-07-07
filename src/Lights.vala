@@ -190,7 +190,19 @@ public class Lights : ListBox {
 		bri_label.width_request = 127;
 		box.pack_start(bri_label, false, false, 0);
 		
-		// switch: on, off
+		Label placeholder_swi = new Label(" ");
+		placeholder_swi.width_request = 94;
+		box.pack_start(placeholder_swi, false, false, 10);
+		
+		return box;
+	}
+	
+	public Box get_global_switch() {
+		Box box = new Box(Orientation.HORIZONTAL, 0);
+	
+		Label label = new Label("All lights");
+		box.pack_start(label, false, false, 0);
+		
 		group_switch = new Switch();
 		group_switch.tooltip_text = "all lights";
 		group_switch.active = true;
@@ -200,21 +212,60 @@ public class Lights : ListBox {
 		group_switch.notify["active"].connect(() => {
 			toggle_group_switch();
 		});
-		box.pack_start(group_switch, false, false, 10);
+		box.pack_start(group_switch, false, false, 8);
 		
 		return box;
 	}
 	
-	private void toggle_group_switch() {
+	public void toggle_group_switch() {
 		if (group_switch.active) {
 			debug("[Lights.toggle_group_switch] switch on");
 			
 			// "0" is special group, meaning all lights known to th Hue bridge
 			bridge.put_group_state(0, "{\"on\":true}");
+			
+			/*
+			List<Light> lights = (List<Light>) this.get_children();
+			foreach(Light light in lights) {
+				light.set_switch(true);
+			}
+			*/
+				// FIXME find a way to toggle all individual light switches
+			
+			/*
+			this.foreach((w) => {
+				try {
+					Light light = (Light) w.get_child();
+					light.set_switch(true);
+				}
+				catch (Error e) {
+					debug("header ignored");
+				}
+			});
+			*/
 		} 
 		else {
 			debug("[Lights.toggle_group_switch] switch off");
 			bridge.put_group_state(0, "{\"on\":false}");
+			
+			/*
+			List<Light> lights = (List<Light>) this.get_children();
+			foreach(Light light in lights) {
+				light.set_switch(false);
+			}
+			*/
+			
+			/*
+			this.foreach((w) => {
+				try {
+					Light light = (Light) w.get_child();
+					light.set_switch(false);
+				}
+				catch (Error e) {
+					debug("header ignored");
+				}
+			});
+			*/
 		}
 	}
 	

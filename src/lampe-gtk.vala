@@ -215,6 +215,7 @@ http://creativecommons.org/publicdomain/zero/1.0";
 		
 		Lights lights = new Lights(bridge); // ListBox
 		lights.refresh_lights();
+		// header.pack_end(lights.get_global_switch());
 		lights_box.add(lights.get_header()); // Box
 		lights_border_box.add(lights);
 		lights_box.add(lights_border_box);
@@ -289,6 +290,8 @@ http://creativecommons.org/publicdomain/zero/1.0";
 			lights.refresh_lights();
 		});
 		header.pack_end(refreshButton);
+		
+		header.pack_end(lights.get_global_switch());
 		
 		lampeWindow.show_all();
 	}
