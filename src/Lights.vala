@@ -227,22 +227,22 @@ public class Lights : ListBox {
 			/*
 			List<Light> lights = (List<Light>) this.get_children();
 			foreach(Light light in lights) {
+				debug("a light?");
 				light.set_switch(true);
 			}
 			*/
 				// FIXME find a way to toggle all individual light switches
 			
-			/*
 			this.foreach((w) => {
 				try {
-					Light light = (Light) w.get_child();
+					ListBoxRow r = (ListBoxRow) w;
+					Light light = (Light) r.get_child();
 					light.set_switch(true);
 				}
 				catch (Error e) {
 					debug("header ignored");
 				}
 			});
-			*/
 		} 
 		else {
 			debug("[Lights.toggle_group_switch] switch off");
@@ -255,17 +255,16 @@ public class Lights : ListBox {
 			}
 			*/
 			
-			/*
 			this.foreach((w) => {
 				try {
-					Light light = (Light) w.get_child();
+					ListBoxRow r = (ListBoxRow) w;
+					Light light = (Light) r.get_child();
 					light.set_switch(false);
 				}
 				catch (Error e) {
 					debug("header ignored");
 				}
 			});
-			*/
 		}
 	}
 	

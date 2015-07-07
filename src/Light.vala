@@ -9,6 +9,7 @@ public class Light : Box {
 	private double hue; // range 1..360
 	private bool dont_change_bri = false;
 	private bool dont_change_sat = false;
+	private bool dont_change_switch = false;
 	private HueBridge bridge;
 	
 	private Switch lightSwitch;
@@ -227,26 +228,35 @@ public class Light : Box {
 	}
 	
 	private void toggle_switch() {
-		if (lightSwitch.active) {
-			// send all light attributes to bridge
-			debug("[Light.toggleSwitch] switch " + this.number.to_string() 
-				+ " on");
-			bridge.put_light_state(
-				this.number, 
-				"{\"on\":true,\"bri\":" + getBri().to_string() + ",\"sat\": " 
-					+ getSat().to_string() + ",\"hue\": " + getHue().to_string() 
-					+ "}"
-			);
-		} 
+		if (dont_change_switch == false) {
+			// do not send new individual light switch states if global switch 
+			// was used
+			if (lightSwitch.active) {
+				// send all light attributes to bridge
+				debug("[Light.toggleSwitch] switch " + this.number.to_string() 
+					+ " on");
+				bridge.put_light_state(
+					this.number, 
+					"{\"on\":true,\"bri\":" + getBri().to_string() + ",\"sat\": " 
+						+ getSat().to_string() + ",\"hue\": " + getHue().to_string() 
+						+ "}"
+				);
+			} 
+			else {
+				debug("[Light.toggleSwitch] switch " + this.number.to_string() 
+					+ " off");
+				bridge.put_light_state(this.number, "{\"on\":false}");
+			}
+		}
 		else {
-			debug("[Light.toggleSwitch] switch " + this.number.to_string() 
-				+ " off");
-			bridge.put_light_state(this.number, "{\"on\":false}");
+			dont_change_switch = false;
 		}
 	}
 	
 	public void set_switch(bool active) {
+		dont_change_switch = true;
 		lightSwitch.active = active;
+		debug("tried to switch this light");
 	}
 	
 }
