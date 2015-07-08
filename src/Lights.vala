@@ -10,6 +10,7 @@ public class Lights : ListBox {
 	private bool all_lights_are_on = true; 
 		// "all_lights_are_on": false assumption to determine initial light 
 		// switch position of global switch
+	private bool refreshed = false;
 
 	private HueBridge bridge;
 	private Switch group_switch;
@@ -173,6 +174,7 @@ public class Lights : ListBox {
 		}
 		
 		debug("[Lights.states_received()] all_lights_are_on = " + all_lights_are_on.to_string());
+		refreshed = true;
 		if (all_lights_are_on) {
 			group_switch.active = true;
 		}
@@ -225,7 +227,13 @@ public class Lights : ListBox {
 		group_switch.margin_end = 4;
 		group_switch.valign = Align.END;
 		group_switch.notify["active"].connect(() => {
-			toggle_group_switch();
+			if (refreshed == false) {
+				toggle_group_switch();
+			}
+			else {
+				refreshed = false;
+			}
+				
 		});
 		box.pack_start(group_switch, false, false, 8);
 		
