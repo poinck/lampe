@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Lampe
+Comment=Control your Hue lights
+Exec=lampe-gtk
+Icon=/usr/share/pixmaps/lampe-icon.png
+Terminal=false

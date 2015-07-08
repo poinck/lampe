@@ -1,5 +1,6 @@
 BINDIR = $(DESTDIR)/usr/bin
 PIXDIR = $(DESTDIR)/usr/share/pixmaps
+MENDIR = $(DESTDIR)/usr/share/applications
 
 # VALA_OPTS=-v --pkg gio-2.0 
 VALA_OPTS=-v --pkg gtk+-3.0 --pkg libsoup-2.4 --pkg json-glib-1.0 --pkg posix --target-glib=2.42 --pkg glib-2.0
@@ -22,9 +23,11 @@ install:
 	install --mode=755 lampe $(BINDIR)/
 	install --mode=755 lampe-gtk $(BINDIR)/
 	
-	# /usr/share/pixmaps/lampe-icon.png
 	install --mode=755 -d $(PIXDIR)/
-	install --mode=555 lampe-icon.png $(PIXDIR)/
+	install --mode=655 lampe-icon.png $(PIXDIR)/
+	
+	install --mode=755 -d $(MENDIR)/
+	install --mode=655 lampe.desktop $(MENDIR)/
 	
 clean:
 	rm lampe-gtk
