@@ -57,10 +57,6 @@ checkKey() {
 			# help
 			_H=1
 		;;
-		"z")
-			# color-selection with zenity
-			_Z=1
-		;;
 		"i")
 			# info: do not send new, but receive light state
 			_I=1
@@ -513,7 +509,6 @@ printHelpScreen() {
 	echo "    a, d     SATURATION    ="
 	echo "    q, e     COLOR         C"
 	echo "    y, n     SWITCH        on, off"
-	echo "    z        ZENITY        choose RGB-color"
 	echo "    i, I     INFO          receive (all) light state/s"
 	echo "    S, l     SETTINGS      save, load user defaults"
 	echo "    F        FIND          find new lights (TODO)"
@@ -557,7 +552,6 @@ lampeMain() {
 		_Y=0
 		_N=0
 		_H=0
-		_Z=0
 		_I=0
 		_II=0
 		_A=0
@@ -600,9 +594,6 @@ lampeMain() {
 			hbSendLightSwitch
 		elif [[ "$_H" == 1 ]] ; then
 			printHelpScreen
-		elif [[ "$_Z" == 1 ]] ; then
-			lampeZenityColor "$_SELECTED_LAMP"
-			hbSendLightsState
 		elif [[ "$_A" == 1 ]] ; then
 			selectAlert
 		elif [[ "$_QQ" == 1 ]] ; then
@@ -695,6 +686,7 @@ hbSendLightsState() {
 	fi
 }
 
+# XXX   not used
 # evaluate floating-point expression
 # taken from http://www.linuxjournal.com/content/floating-point-math-bash, 
 # by Mitch Frazier
@@ -711,6 +703,7 @@ fEval() {
     return $stat
 }
 
+# XXX   not used
 # check floating-point condition
 # taken from http://www.linuxjournal.com/content/floating-point-math-bash
 # by Mitch Frazier
@@ -724,121 +717,6 @@ fCond() {
     local stat=$((cond == 0))
     
     return $stat
-}
-
-# convert RGB color to HSB/HSV color
-# implementation ported from python2.7 colorsys.rgb_to_hsv()
-rgbToHSB() {
-	fScale="scale=5;"
-	r=$(fEval "$1 / 255")
-	g=$(fEval "$2 / 255")
-	b=$(fEval "$3 / 255")
-
-	# debug
-	# echo "r = $r"
-	# echo "g = $g"
-	# echo "b = $b"
-
-	minc=$b
-	if fCond "$r < $g" ; then
-		if fCond "$r < $b" ; then
-			minc=$r
-		fi
-	else
-		if fCond "$g < $b" ; then
-			minc=$g
-		fi
-	fi
-
-	# debug
-	# echo "minc = $minc"
-
-	maxc=$b
-	if fCond "$r > $g" ; then
-		if fCond "$r > $b" ; then
-			maxc=$r
-		fi
-	else
-		if fCond "$g > $b" ; then
-			maxc=$g
-		fi
-	fi
-
-	# debug
-	# echo "maxc = $maxc"
-
-	_bri=$maxc
-	if [[ "$minc" == "$maxc" ]] ; then
-		_hue=0
-		_sat=0
-	else
-		_sat=$(fEval "($maxc - $minc) / $maxc")
-		rrrc=$(fEval "($maxc - $r) / ($maxc - $minc)")
-		gggc=$(fEval "($maxc - $g) / ($maxc - $minc)")
-		bbbc=$(fEval "($maxc - $b) / ($maxc - $minc)")
-		if [ "$r" = "$maxc" ] ; then
-			_hue=$(fEval "$bbbc - $gggc")
-
-			# debug
-			# echo "_hue = $_hue"
-		elif [ "$g" = "$maxc" ] ; then
-			_hue=$(fEval "2.0 + $rrrc - $bbbc")
-
-			# debug
-			# echo "_hue = $_hue"
-		else
-			_hue=$(fEval "4.0 + $gggc - $rrrc")
-
-			# debug
-			# echo "_hue = $_hue"
-		fi
-		_hue=$(fEval "$_hue / 6.0")
-
-		# debug
-		# echo "_hue = $_hue"
-	fi
-
-	set -f # turn off pathname expansion: *
-	fScale="scale=0;"
-	_hue=$(fEval "$_hue * 65535")
-	_hue=$(echo "$_hue" | cut -f 1 -d.)
-	_bri=$(fEval "$_bri * 255")
-	_bri=$(echo "$_bri" | cut -f 1 -d.)
-	_sat=$(fEval "$_sat * 255")
-	_sat=$(echo "$_sat" | cut -f 1 -d.)
-	set +f
-}
-
-lampeZenityColor() {
-	zColor=$(zenity --color-selection --show-palette 2> /dev/null)
-	rr=$(echo "$zColor" | cut -b 2-3)
-	gg=$(echo "$zColor" | cut -b 6-7)
-	bb=$(echo "$zColor" | cut -b 10-11)
-
-	# convert from hex to dec
-	rr=$((16#$rr))
-	gg=$((16#$gg))
-	bb=$((16#$bb))
-	rgbToHSB $rr $gg $bb
-	
-	# debug
-	# echo $zColor
-	# echo "rr = $rr"
-	# echo "gg = $gg"
-	# echo "bb = $bb"
-	# echo "hue = $_hue"
-	# echo "bri = $_bri"
-	# echo "sat = $_sat"
-
-	if [ "$_hue" -lt 0 ] ; then
-		_hue=$((_hue+65535)) # rotate hue
-	fi
-	_COLOR[$1]=$_hue
-	if [ "$_bri" -gt 254 ] ; then
-		_bri=254
-	fi
-	_BRIGHTNESS[$1]=$_bri
-	_SAT[$1]=$_sat
 }
 
 # checks wether there is a hue bridge at given IP
@@ -912,12 +790,7 @@ hbEnterIP() {
 # this function will be called, if the configuration is valid
 startLampe() {
 	L_BLIND=0
-	if [[ "$1" == "-z" ]] || [[ "$1" == "--zenity" ]] ; then
-		# open zenity dialog to select color and quit
-		_SELECTED_LAMP=$2
-		lampeZenityColor "$2"
-		hbSendLightsState
-	elif [[ "$1" == "-b" ]] || [[ "$1" == "--blind" ]] ; then
+	if [[ "$1" == "-b" ]] || [[ "$1" == "--blind" ]] ; then
 		# blind modus: do not print main screen
 		L_BLIND=1
 		lampeMain
@@ -954,8 +827,6 @@ showHelp() {
 	echo "    blind-mode (interactive)"
 	echo " -h, --help"
 	echo "    show this help"
-	echo " -z, --zenity [LIGHT-ID]"
-	echo "    pick a RGB-color with zenity color selection (non-interactive)"
 }
 
 # receive just one light state.
@@ -1058,7 +929,6 @@ checkDependency() {
 
 # check for dependencies
 checkDependency "JSON.sh"
-checkDependency "zenity"
 
 loadLightSetting() {
 	if [[ -n "${SAVED_SWITCH[$_SELECTED_LAMP]}" ]] ; then

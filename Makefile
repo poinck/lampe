@@ -35,3 +35,5 @@ clean:
 uninstall:
 	rm $(BINDIR)/lampe
 	rm $(BINDIR)/lampe-gtk
+	rm $(PIXDIR)/lampe-icon.png
+	rm $(MENDIR)/lampe.desktop
