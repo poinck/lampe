@@ -1,5 +1,12 @@
 # Readme: lampe
-interactive bash-script to control your Philips hue lights.
+
+**lampe-gtk**
+Control your Philips Hue lights from the Gnome-Desktop
+
+![lampe-gtk](/lampe-gtk.png)
+
+**lampe(-bash)**
+interactive bash-script to control your Philips Hue lights.
 
 ![lampe](/lampe.png)
 
@@ -13,12 +20,12 @@ Following cli-tools need to be installed on your system in order to use "lampe"
 - grep 
 - JSON.sh
 - bc (optional)
-- zenity (optinal)
 
 ## Installation
 If you want to use "lampe" system-wide, you can install it this way:
 ```.sh
-make install # as root or use sudo, DESTDIR="/usr/bin"
+make
+make install # as root or use sudo
 ```
 
 **on Arch Linux:**
@@ -50,7 +57,7 @@ To reset the per user configuration, remove '.lamperc' from your home-directory:
 rm ~/.lamperc
 ```
 
-## Usage
+## Usage: lampe(-bash)
 Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
 ```
 1..99 - select light 
@@ -60,7 +67,6 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
     d - increase saturation
  q, e - change hue-color
  y, n - switch on, off
-    z - open zenity-dialog to pick RGB-color 
  i, I - info: receive current or all light state(s)
  S, l - save and load user configuration
     F - find new lights
@@ -69,13 +75,6 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
     A - alert
     m - start or stop temperature difference based color sequence
     Q - quit
-```
-
-**oneshot mode**
-
-"lampe" does support a graphical way to set a RGB color like this. The color will be choosen by the GTK color selection dialog powered by "zenity" (optional dependencies have to be installed on your system)
-```.sh
-lampe -z 2 # where 2 is the light number
 ```
 
 **blind mode**
