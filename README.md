@@ -1,12 +1,12 @@
 # Readme: lampe
 
-**lampe-gtk**
+**lampe-gtk:**
 Control your Philips Hue lights from the Gnome-Desktop
 
 ![lampe-gtk](/lampe-gtk.png)
 
-**lampe(-bash)**
-interactive bash-script to control your Philips Hue lights.
+**lampe(-bash):**
+Interactive bash-script to control your Philips Hue lights.
 
 ![lampe](/lampe.png)
 
