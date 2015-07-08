@@ -23,6 +23,7 @@ install:
 	install --mode=755 lampe-gtk $(BINDIR)/
 	
 	# /usr/share/pixmaps/lampe-icon.png
+	install --mode=755 -d $(PIXDIR)/
 	install --mode=555 lampe-icon.png $(PIXDIR)/
 	
 clean:
