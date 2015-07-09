@@ -5,7 +5,7 @@ using Posix;
 
 public class HueBridge : Soup.Session {
 	private string ip_address;
-	private string bridge_user = "lampe-bash";
+	public static const string BRIDGE_USER = "lampe-bash";
 		// TODO  choose user name other than "lampe-bash", use "lampe"; the bash-version should then use the same user
 		
 	private const int DEFAULT_DELAY = 100; // 100 milliseconds
@@ -34,7 +34,7 @@ public class HueBridge : Soup.Session {
 	public void put_light_state(int light, string request) {
 		s_msg = new Soup.Message(
 			"PUT", 
-			"http://" + this.ip_address + "/api/" + this.bridge_user 
+			"http://" + this.ip_address + "/api/" + BRIDGE_USER 
 				+ "/lights/" + light.to_string() + "/state"
 		);
 		s_msg.set_request("application/json", MemoryUse.COPY, request.data);		
@@ -55,7 +55,7 @@ public class HueBridge : Soup.Session {
 	public void put_group_state(int group, string request) {
 		s_msg = new Soup.Message(
 			"PUT", 
-			"http://" + this.ip_address + "/api/" + this.bridge_user 
+			"http://" + this.ip_address + "/api/" + BRIDGE_USER 
 				+ "/groups/" + group.to_string() + "/action"
 		);
 		s_msg.set_request("application/json", MemoryUse.COPY, request.data);		
@@ -76,7 +76,7 @@ public class HueBridge : Soup.Session {
 	public void get_states(Lights lights) {
 		Soup.Message msg = new Soup.Message(
 			"GET", 
-			"http://" + this.ip_address + "/api/" + this.bridge_user + "/lights"
+			"http://" + this.ip_address + "/api/" + BRIDGE_USER + "/lights"
 		);
 		
 		this.queue_message(msg, (s, m) => {
@@ -85,6 +85,22 @@ public class HueBridge : Soup.Session {
 			
 			// callback to where we came
 			lights.states_received(rsp);
+		});
+	}
+	
+	// get all schedules
+	public void get_schedules(Lights lights) {
+		Soup.Message msg = new Soup.Message(
+			"GET", 
+			"http://" + this.ip_address + "/api/" + BRIDGE_USER + "/schedules"
+		);
+		
+		this.queue_message(msg, (s, m) => {
+			string rsp = (string) msg.response_body.flatten().data;
+			debug("[HueBridge.get_schedules] response = '" + rsp + "'");
+			
+			// callback to where we came
+			lights.schedules_received(rsp);
 		});
 	}
 	

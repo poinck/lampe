@@ -14,6 +14,7 @@ public class Lights : ListBox {
 
 	private HueBridge bridge;
 	private Switch group_switch;
+	private List<Light> lights = new List<Light>();
 
 	// initialize a ListBox for lights
 	public Lights(HueBridge bridge) {
@@ -30,6 +31,7 @@ public class Lights : ListBox {
 		this.bridge = bridge;
 	}
 	
+	// depricated
 	public void addLight(string name, int light_id = 1, int64 hue = 12000, 
 			int64 sat = 192, int64 bri = 32, bool lswitch = false, 
 			bool reachable = false) {
@@ -42,12 +44,20 @@ public class Lights : ListBox {
 		this.show_all();
 	}
 	
+	public void add_light(Light light) {
+		this.light_count++;
+		debug("[Lights.addLight] light_count = " + light_count.to_string());
+		this.insert(light, light_count);
+		this.show_all();
+	}
+	
 	// remove every Light or placeholder in Lights
 	private void delete_lights() {
 		this.foreach((light) => {
 			remove(light);
 		});
 		
+		lights = new List<Light>();
 		this.light_count = 0;
 	}
 	
@@ -150,14 +160,128 @@ public class Lights : ListBox {
 					}
 				}
 				
-				addLight(name, light_id, hue, sat, bri, lswitch, reachable);
+				// addLight(name, light_id, hue, sat, bri, lswitch, reachable);
+					// TODO  add lights after schedules are received, define Schedules-object as parameter
+				Light found_light = new Light(
+					light_id, name, hue, sat, bri, lswitch, reachable, bridge
+				);
+				lights.append(found_light);
 			}
 		}
 		catch (Error e) {
-			stdout.printf(
-				"[Lights.refreshLights] unable to parse 'states': %s\n", 
-				e.message
-			);
+			debug("[Lights.states_received] unable to parse 'states': "
+				+ e.message);
+		}
+		
+		debug("[Lights.states_received()] all_lights_are_on = " 
+			+ all_lights_are_on.to_string());
+		refreshed = true;
+		if (all_lights_are_on) {
+			group_switch.active = true;
+		}
+		else {
+			group_switch.active = false;
+		}
+		
+		// TODO  refresh schedules
+		this.bridge.get_schedules(this);
+	}
+	
+	// callback from bridge.get_schedules(): parses received schedules
+	public void schedules_received(string schedules) {
+		List<Schedule> schedule_list = new List<Schedule>();
+	
+		int schedule_id = 0;
+		int light_id = 0;
+		string name = "Alarm";
+		int64 bri = 192;
+		int64 sat = 254;
+		string localtime = "W127/T";
+		string time = "";
+		string address = "/api/" + HueBridge.BRIDGE_USER + "/lights/";
+		string[] parts_of_address;
+		
+		Json.Parser parser = new Json.Parser();
+		try {
+			/*
+			{"1":{"name":"Alarm","description":"",
+				"command":{
+					"address":"/api/lampe-bash/lights/3/state",
+					"body":{"on":true,"bri":192,"sat":254,"transitiontime":12000},
+					"method":"PUT"
+				},
+				"localtime":"W127/T09:10:00",
+				"time":"W127/T07:10:00",
+				"created":"2015-07-09T19:34:48",
+				"status":"enabled"
+				},
+			"2":{"name":"Alarm 1","description":"","command":{"address":"/api/lampe-bash/lights/1/state","body":{"on":true,"bri":192,"sat":254,"transitiontime":12000},"method":"PUT"},"localtime":"W127/T21:37:00","time":"W127/T19:37:00","created":"2015-07-09T19:35:25","status":"enabled"}}
+			*/
+			parser.load_from_data(schedules);
+			Json.Node node = parser.get_root();
+			
+			Json.Object schedule_obj = node.get_object();
+			foreach (string schedule in schedule_obj.get_members()) {
+				schedule_id = int.parse(schedule);
+				
+				Json.Node category_node = schedule_obj.get_member(schedule);
+				Json.Object category_obj = category_node.get_object();
+				foreach (string category in category_obj.get_members()) {
+					if (category == "name") {
+						name = category_obj.get_string_member(category);
+						debug("[Lights.schedules_received] name = '" + name 
+							+ "'");
+					}
+					else if (category == "command") {
+						Json.Node command_node = category_obj.get_member(category);
+						Json.Object command_obj = command_node.get_object();
+						foreach (string command in command_obj.get_members()) {
+							if (command == "address") {
+								address = command_obj.get_string_member(command);
+								debug("[Lights.schedules_received] address = '" 
+									+ address + "'");
+								parts_of_address = address.split("/");
+								if (parts_of_address[3] == "lights") {
+									light_id = int.parse(parts_of_address[4]);
+								}
+								debug("[Lights.schedules_received] light_id = '" 
+									+ light_id.to_string() + "'");
+							}
+							else if (command == "body") {
+								// TODO  parse bri and sat
+							}
+						}
+					}
+					else if (category == "localtime") {
+						localtime = category_obj.get_string_member(category);
+						debug("[Lights.schedules_received] localtime = '" 
+							+ localtime + "'");
+						time = localtime.split("/T")[1];
+						time = time.split(":00")[0];
+					}
+				}
+				
+				// insert found schedules
+				Schedule s = new Schedule(schedule_id, light_id, time, bri, sat);
+				schedule_list.append(s);
+			}
+		}
+		catch (Error e) {
+			debug("[Lights.schedules_received] unable to parse 'schedules': " 
+				+ e.message);
+		}
+		
+		// TODO  add schedules to lights
+		foreach (Light light in lights) {
+			List<Schedule> light_schedules = new List<Schedule>();
+			foreach (Schedule a_schedule in schedule_list) {
+				if (light.get_light_id() == a_schedule.get_light_id()) {
+					// light_schedules.append(a_schedule);
+					light.add_schedule(a_schedule);
+				}
+			}
+			// light.add_schedules(light_schedules);
+			add_light(light);
 		}
 		
 		// show placeholder if no lights could be found
@@ -171,15 +295,6 @@ public class Lights : ListBox {
 			
 			this.add(label);
 			this.show_all();
-		}
-		
-		debug("[Lights.states_received()] all_lights_are_on = " + all_lights_are_on.to_string());
-		refreshed = true;
-		if (all_lights_are_on) {
-			group_switch.active = true;
-		}
-		else {
-			group_switch.active = false;
 		}
 	}
 	

@@ -15,6 +15,7 @@ public class Light : Box {
 	private Switch lightSwitch;
 	private Scale scaleBri;
 	private Scale scaleSat;
+	private List<Schedule> schedules = new List<Schedule>();
 
 	// initialize a Box for a light
 	public Light(int number, string name, int64 hue, int64 sat, int64 bri, 
@@ -259,4 +260,11 @@ public class Light : Box {
 		debug("tried to switch this light");
 	}
 	
+	public int get_light_id() {
+		return this.number;
+	}
+	
+	public void add_schedule(Schedule schedule) {
+		schedules.append(schedule);
+	}
 }
