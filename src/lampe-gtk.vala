@@ -166,7 +166,7 @@ http://creativecommons.org/publicdomain/zero/1.0";
 	protected override void activate() {
 		// main window
 		Gtk.ApplicationWindow lampeWindow = new Gtk.ApplicationWindow(this);
-		lampeWindow.set_default_size(1000, 700);
+		lampeWindow.set_default_size(900, 600);
 		lampeWindow.window_position = Gtk.WindowPosition.CENTER;
 		lampeWindow.title = "Lampe";
 		set_global_menu(lampeWindow);
