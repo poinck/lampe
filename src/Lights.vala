@@ -31,19 +31,7 @@ public class Lights : ListBox {
 		this.bridge = bridge;
 	}
 	
-	// depricated
-	public void addLight(string name, int light_id = 1, int64 hue = 12000, 
-			int64 sat = 192, int64 bri = 32, bool lswitch = false, 
-			bool reachable = false) {
-		this.light_count++;
-		Light light = new Light(light_id, name, hue, sat, bri, lswitch, reachable, bridge);
-		
-		debug("[Lights.addLight] light_count = " + light_count.to_string());
-		
-		this.insert(light, light_count);
-		this.show_all();
-	}
-	
+	// add a Light-box to Lights-listbox
 	public void add_light(Light light) {
 		this.light_count++;
 		debug("[Lights.addLight] light_count = " + light_count.to_string());
@@ -160,8 +148,7 @@ public class Lights : ListBox {
 					}
 				}
 				
-				// addLight(name, light_id, hue, sat, bri, lswitch, reachable);
-					// TODO  add lights after schedules are received, define Schedules-object as parameter
+				// append found lights in json-response to internal list of lights
 				Light found_light = new Light(
 					light_id, name, hue, sat, bri, lswitch, reachable, bridge
 				);
@@ -173,6 +160,7 @@ public class Lights : ListBox {
 				+ e.message);
 		}
 		
+		// determine global switch state
 		debug("[Lights.states_received()] all_lights_are_on = " 
 			+ all_lights_are_on.to_string());
 		refreshed = true;
@@ -183,7 +171,7 @@ public class Lights : ListBox {
 			group_switch.active = false;
 		}
 		
-		// TODO  refresh schedules
+		// refresh schedules
 		this.bridge.get_schedules(this);
 	}
 	
@@ -203,8 +191,9 @@ public class Lights : ListBox {
 		
 		Json.Parser parser = new Json.Parser();
 		try {
-			/*
-			{"1":{"name":"Alarm","description":"",
+			/* schedules example listing:
+			{
+			"1":{"name":"Alarm","description":"",
 				"command":{
 					"address":"/api/lampe-bash/lights/3/state",
 					"body":{"on":true,"bri":192,"sat":254,"transitiontime":12000},
@@ -215,7 +204,8 @@ public class Lights : ListBox {
 				"created":"2015-07-09T19:34:48",
 				"status":"enabled"
 				},
-			"2":{"name":"Alarm 1","description":"","command":{"address":"/api/lampe-bash/lights/1/state","body":{"on":true,"bri":192,"sat":254,"transitiontime":12000},"method":"PUT"},"localtime":"W127/T21:37:00","time":"W127/T19:37:00","created":"2015-07-09T19:35:25","status":"enabled"}}
+			"2": [..]
+			}
 			*/
 			parser.load_from_data(schedules);
 			Json.Node node = parser.get_root();
@@ -261,7 +251,7 @@ public class Lights : ListBox {
 					}
 				}
 				
-				// insert found schedules
+				// insert found schedules to temporary schedules list
 				Schedule s = new Schedule(schedule_id, light_id, time, bri, sat);
 				schedule_list.append(s);
 			}
@@ -271,20 +261,19 @@ public class Lights : ListBox {
 				+ e.message);
 		}
 		
-		// TODO  add schedules to lights
+		// add schedules to lights from internal lights list and add lights 
+		// from internal lights list to Lights-listbox
 		foreach (Light light in lights) {
 			List<Schedule> light_schedules = new List<Schedule>();
 			foreach (Schedule a_schedule in schedule_list) {
 				if (light.get_light_id() == a_schedule.get_light_id()) {
-					// light_schedules.append(a_schedule);
 					light.add_schedule(a_schedule);
 				}
 			}
-			// light.add_schedules(light_schedules);
 			add_light(light);
 		}
 		
-		// show placeholder if no lights could be found
+		// show placeholder if no lights were found
 		if (light_count == 0) {
 			Label label = new Label("<span size='16000'><b>no lights</b></span>");
 			label.use_markup = true;
