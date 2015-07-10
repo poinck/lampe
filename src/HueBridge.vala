@@ -51,6 +51,24 @@ public class HueBridge : Soup.Session {
 		}
 	}
 	
+	// set state of a schedule
+	public void put_schedule_state(Schedule schedule, string request) {
+		Soup.Message msg = new Soup.Message(
+			"PUT", 
+			"http://" + this.ip_address + "/api/" + BRIDGE_USER 
+				+ "/schedules/" + schedule.get_schedule_id().to_string()
+		);
+		msg.set_request("application/json", MemoryUse.COPY, request.data);		
+		
+		this.queue_message(msg, (s, m) => {
+			string rsp = (string) msg.response_body.flatten().data;
+			debug("[HueBridge.put_schedule_state] response = '" + rsp + "'");
+			
+			// callback to where we came
+			schedule.schedule_state_changed(rsp);
+		});
+	}
+	
 	// set state of a group
 	public void put_group_state(int group, string request) {
 		s_msg = new Soup.Message(

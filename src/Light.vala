@@ -15,6 +15,8 @@ public class Light : Box {
 	private Switch lightSwitch;
 	private Scale scaleBri;
 	private Scale scaleSat;
+	// private Box schedule_box = new Box(Orientation.VERTICAL, 2);
+	
 	private List<Schedule> schedules = new List<Schedule>();
 
 	// initialize a Box for a light
@@ -72,7 +74,7 @@ public class Light : Box {
 				g = dialog.rgba.green;
 				b = dialog.rgba.blue;
 				rgb_to_hsv(r, g, b, out h, out s, out v);
-				h = h * 360.0; // range of h is 0..1
+				h = h * 360.0; // range of h was 0..1
 				debug("[Light." + this.number.to_string() 
 					+ "] selected color: r = " + r.to_string() + ", g = " 
 					+ g.to_string() + ", b = " + b.to_string());
@@ -117,7 +119,9 @@ public class Light : Box {
 		// name
 		debug("[Light] name = " + name);
 		Label lightName = new Label(name);
+		// lightName.margin_top = 8;
 		lightName.valign = Align.BASELINE;
+		// schedule_box.add(lightName);
 		this.pack_start(lightName, false, false, 4);
 			
 		Label emptyLabel = new Label(" ");
@@ -266,5 +270,6 @@ public class Light : Box {
 	
 	public void add_schedule(Schedule schedule) {
 		schedules.append(schedule);
+		// schedule_box.add(schedule);
 	}
 }

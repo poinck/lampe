@@ -6,47 +6,64 @@ using Json;
 public class Lights : ListBox {
 	public static const int MAX_LIGHTS = 50;
 
-	private int light_count = 0;
+	private int widget_count = 0;
 	private bool all_lights_are_on = true; 
 		// "all_lights_are_on": false assumption to determine initial light 
 		// switch position of global switch
 	private bool refreshed = false;
 
 	private HueBridge bridge;
+	private Gtk.Application app;
 	private Switch group_switch;
 	private List<Light> lights = new List<Light>();
 
 	// initialize a ListBox for lights
-	public Lights(HueBridge bridge) {
+	public Lights(HueBridge bridge, Gtk.Application app) {
 		this.hexpand = true;
 		this.vexpand = false;
 		this.margin_start = 1;
 		this.margin_end = 1;
 		this.margin_top = 1;
 		this.margin_bottom = 1;
-		this.activate_on_single_click = false;
+		this.activate_on_single_click = true;
 		this.selection_mode = SelectionMode.NONE;
 		this.border_width = 1;
 		
 		this.bridge = bridge;
+		this.app = app;
+		
+		this.row_activated.connect((r) => {
+			debug("[Lights] row_selected, r.get_child().name = " + r.get_child().name);
+			if (r.get_child().name == "Schedule") {
+				Schedule s = (Schedule) r.get_child();
+				s.show_schedule_menu();
+			}
+		});
 	}
 	
 	// add a Light-box to Lights-listbox
 	public void add_light(Light light) {
-		this.light_count++;
-		debug("[Lights.addLight] light_count = " + light_count.to_string());
-		this.insert(light, light_count);
+		this.widget_count++;
+		debug("[Lights.add_light] widget_count = " + widget_count.to_string());
+		this.insert(light, widget_count);
 		this.show_all();
 	}
 	
-	// remove every Light or placeholder in Lights
+	public void add_schedule(Schedule schedule) {
+		this.widget_count++;
+		debug("[Lights.add_schedule] widget_count = " + widget_count.to_string());
+		this.insert(schedule, widget_count);
+		this.show_all();
+	}
+	
+	// remove every Light, Schedule or placeholder in Lights
 	private void delete_lights() {
-		this.foreach((light) => {
-			remove(light);
+		this.foreach((w) => {
+			remove(w);
 		});
 		
 		lights = new List<Light>();
-		this.light_count = 0;
+		this.widget_count = 0;
 	}
 	
 	// add "searching lights"-placeholder to ListBox with spinner and refresh
@@ -188,6 +205,7 @@ public class Lights : ListBox {
 		string time = "";
 		string address = "/api/" + HueBridge.BRIDGE_USER + "/lights/";
 		string[] parts_of_address;
+		string status = "enabled";
 		
 		Json.Parser parser = new Json.Parser();
 		try {
@@ -213,6 +231,8 @@ public class Lights : ListBox {
 			Json.Object schedule_obj = node.get_object();
 			foreach (string schedule in schedule_obj.get_members()) {
 				schedule_id = int.parse(schedule);
+				debug("[Lights.schedules_received] schedule_id = '" 
+					+ schedule_id.to_string() + "'");
 				
 				Json.Node category_node = schedule_obj.get_member(schedule);
 				Json.Object category_obj = category_node.get_object();
@@ -248,11 +268,18 @@ public class Lights : ListBox {
 							+ localtime + "'");
 						time = localtime.split("/T")[1];
 						time = time.split(":00")[0];
+					} 
+					else if (category == "status") {
+						status = category_obj.get_string_member(category);
+						debug("[Lights.schedules_received] status = '" + status 
+							+ "'");
 					}
 				}
 				
 				// insert found schedules to temporary schedules list
-				Schedule s = new Schedule(schedule_id, light_id, time, bri, sat);
+				Schedule s = new Schedule(schedule_id, name, light_id, time, 
+					bri, sat, status, app, bridge
+				);
 				schedule_list.append(s);
 			}
 		}
@@ -264,17 +291,22 @@ public class Lights : ListBox {
 		// add schedules to lights from internal lights list and add lights 
 		// from internal lights list to Lights-listbox
 		foreach (Light light in lights) {
-			List<Schedule> light_schedules = new List<Schedule>();
+			add_light(light);
 			foreach (Schedule a_schedule in schedule_list) {
 				if (light.get_light_id() == a_schedule.get_light_id()) {
 					light.add_schedule(a_schedule);
+					add_schedule(a_schedule);
+					debug("[Lights.schedules_received] added schedule '" 
+						+ a_schedule.get_schedule_id().to_string() 
+						+ "' to light '" + light.get_light_id().to_string() 
+						+ "'");
 				}
 			}
-			add_light(light);
+			
 		}
 		
 		// show placeholder if no lights were found
-		if (light_count == 0) {
+		if (widget_count == 0) {
 			Label label = new Label("<span size='16000'><b>no lights</b></span>");
 			label.use_markup = true;
 			label.margin = 12;
@@ -380,7 +412,7 @@ public class Lights : ListBox {
 		}
 	}
 	
-	public int get_light_count() {
-		return light_count;
+	public int get_widget_count() {
+		return widget_count;
 	}
 }

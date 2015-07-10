@@ -213,7 +213,7 @@ http://creativecommons.org/publicdomain/zero/1.0";
 		boxColor.parse("#a4a4a4"); // grey
 		lights_border_box.override_background_color(StateFlags.NORMAL, boxColor); 
 		
-		Lights lights = new Lights(bridge); // ListBox
+		Lights lights = new Lights(bridge, this); // ListBox
 		lights.refresh_lights();
 		// header.pack_end(lights.get_global_switch());
 		lights_box.add(lights.get_header()); // Box
