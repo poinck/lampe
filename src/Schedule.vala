@@ -18,6 +18,7 @@ public class Schedule : Box {
 	private GLib.Menu schedule_menu;
 	private Label name_label;
 	private Label time_label;
+	private Image menu_img;
 	
 	public Schedule(int schedule_id, string name, int light_id, string time, 
 			int64 bri = 192, int64 sat = 254, string status = "enabled", 
@@ -47,18 +48,10 @@ public class Schedule : Box {
 		this.add(time_label);
 		
 		// popover: schedule_menu
-		Image menu_img = new Image.from_icon_name("pan-down-symbolic", IconSize.MENU);
+		menu_img = new Image.from_icon_name("pan-down-symbolic", IconSize.MENU);
 		this.add(menu_img);
 		schedule_menu = new GLib.Menu();
-		update_widgets();
-		/*
-		if (this.status == "enabled") {
-			schedule_menu.append("Disable", "enable_disable_" + schedule_id.to_string());
-		}
-		else {
-			schedule_menu.append("Enable", "enable_disable_" + schedule_id.to_string());
-		}
-		*/
+		update_widgets(); // adds "Enable" or "Disable" menu entry
 		GLib.SimpleAction enable_disable_action = new GLib.SimpleAction(
 			"enable_disable_" + schedule_id.to_string(), 
 			null
@@ -79,22 +72,33 @@ public class Schedule : Box {
 	
 	// updates Schedule's widgets and it's popover based on "status"
 	private void update_widgets() {
-		schedule_menu.remove(0);
+		if (schedule_menu.get_n_items() > 0) {
+			schedule_menu.remove(0);
+		}
 		if (status == "disabled") {
 			name_label.opacity = 0.4;
 			time_label.opacity = 0.4;
-			schedule_menu.prepend("Enable", "enable_disable_" + schedule_id.to_string());
+			menu_img.opacity = 0.4;
+			schedule_menu.prepend(
+				"Enable", 
+				"enable_disable_" + schedule_id.to_string()
+			);
 		}
 		else {
 			name_label.opacity = 1;
 			time_label.opacity = 1;
-			schedule_menu.prepend("Disable", "enable_disable_" + schedule_id.to_string());
+			menu_img.opacity = 1;
+			schedule_menu.prepend(
+				"Disable", 
+				"enable_disable_" + schedule_id.to_string()
+			);
 		}
 		debug("[Schedule.update_widgets] status = " + status);
 	}
 	
 	// callback from HueBridge after put_schedule_state()
 	public void schedule_state_changed(string rsp) {
+			// TODO  check wether rsp is "success", "error" or nothing
 		update_widgets();
 	}
 	
