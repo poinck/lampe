@@ -11,7 +11,7 @@ public class Schedule : Box {
 	private int64 sat = 254;
 	private string status = "enabled";
 	
-	private Gtk.Application app;
+	// private Gtk.Application app;
 	private HueBridge bridge;
 	
 	private Gtk.Popover schedule_popover;
@@ -33,9 +33,15 @@ public class Schedule : Box {
 		
 		this.orientation = Orientation.HORIZONTAL;
 		this.spacing = 8;
-		this.margin_start = 67;
+		this.margin_start = 95;
 		
 		this.bridge = bridge;
+		
+		/*
+		Image clock_img = new Image.from_icon_name("alarm-symbolic", IconSize.MENU);
+			// IconSize.INVALID
+		this.add(clock_img);
+		*/
 		
 		// name
 		name_label = new Label("<b>" + schedule_name + "</b>");
@@ -63,6 +69,7 @@ public class Schedule : Box {
 		});
 		app.add_action(enable_disable_action);
 		
+		schedule_menu.append("Edit", "edit");
 		schedule_menu.append("Delete", "delete");
 		
 		schedule_popover = new Gtk.Popover(menu_img);

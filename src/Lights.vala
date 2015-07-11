@@ -27,7 +27,9 @@ public class Lights : ListBox {
 		this.margin_bottom = 1;
 		this.activate_on_single_click = true;
 		this.selection_mode = SelectionMode.NONE;
-		this.border_width = 1;
+		
+		this.border_width = 0;
+		// this.sensitive = false;
 		
 		this.bridge = bridge;
 		this.app = app;
@@ -39,6 +41,18 @@ public class Lights : ListBox {
 				s.show_schedule_menu();
 			}
 		});
+		
+		
+		this.set_header_func((r) => {
+			if (r.get_child().name == "Light") {
+				// Separator header_sep = new Separator(Orientation.HORIZONTAL);
+				// header_sep.margin_top = 16;
+				// r.set_header(header_sep);
+				// r.set_selectable(false);
+				r.set_activatable(false);
+			}
+		});
+		
 	}
 	
 	// add a Light-box to Lights-listbox
@@ -294,7 +308,8 @@ public class Lights : ListBox {
 			add_light(light);
 			foreach (Schedule a_schedule in schedule_list) {
 				if (light.get_light_id() == a_schedule.get_light_id()) {
-					light.add_schedule(a_schedule);
+					// light.add_schedule(a_schedule);
+					light.has_more(true);
 					add_schedule(a_schedule);
 					debug("[Lights.schedules_received] added schedule '" 
 						+ a_schedule.get_schedule_id().to_string() 

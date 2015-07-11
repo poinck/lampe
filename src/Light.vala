@@ -17,7 +17,8 @@ public class Light : Box {
 	private Scale scaleSat;
 	// private Box schedule_box = new Box(Orientation.VERTICAL, 2);
 	
-	private List<Schedule> schedules = new List<Schedule>();
+	// private List<Schedule> schedules = new List<Schedule>();
+		// depricated
 
 	// initialize a Box for a light
 	public Light(int number, string name, int64 hue, int64 sat, int64 bri, 
@@ -25,7 +26,7 @@ public class Light : Box {
 		this.spacing = 16;
 		this.margin_top = 8;
 		this.margin_bottom = 8;
-		this.border_width = 1;
+		this.border_width = 0;
 		this.valign = Align.END;
 		
 		this.number = number;
@@ -268,8 +269,17 @@ public class Light : Box {
 		return this.number;
 	}
 	
+	// depricated
+	/*
 	public void add_schedule(Schedule schedule) {
 		schedules.append(schedule);
 		// schedule_box.add(schedule);
+	}
+	*/
+	
+	public void has_more(bool more) {
+		if (more) {
+			this.margin_bottom = 0;
+		}
 	}
 }
