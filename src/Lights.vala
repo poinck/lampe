@@ -293,8 +293,9 @@ public class Lights : ListBox {
 						localtime = category_obj.get_string_member(category);
 						debug("[Lights.schedules_received] localtime = '" 
 							+ localtime + "'");
-						time = localtime.split("/T")[1];
-						time = time.split(":00")[0];
+						string time_tmp = localtime.split("/T")[1];
+						string[] time_tmp2 = time_tmp.split(":");
+						time = time_tmp2[0] + ":" + time_tmp2[1];
 					} 
 					else if (category == "status") {
 						status = category_obj.get_string_member(category);

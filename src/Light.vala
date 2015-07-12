@@ -295,7 +295,7 @@ public class Light : Box {
 		int r255 = (int) (r * 255);
 		int g255 = (int) (g * 255);
 		int b255 = (int) (b * 255);
-		debug("rgb = " + r255.to_string() + "," + g255.to_string() + "," 
+		debug("[Light.update_css] rgb = " + r255.to_string() + "," + g255.to_string() + "," 
 			+ b255.to_string());
 		
 		string css_data = "";
