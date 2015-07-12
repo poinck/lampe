@@ -120,18 +120,6 @@ public class Light : Box {
 				
 				// update css
 				update_css(r, g, b);
-				/*
-				int r255 = (int) (r * 255);
-				int g255 = (int) (g * 255);
-				int b255 = (int) (b * 255);
-				debug("rgb = " + r255.to_string() + "," + g255.to_string() + "," + b255.to_string());
-				*/
-				/*
-				string css_data = ".light" + this.number.to_string() + " { background-image: -gtk-gradient (linear,
-                                 0.994 0.99, 1 0.01,
-                                 from (rgba(255, 255, 255, 1.0)), to (rgba(" + r255.to_string() + ", " + g255.to_string() + ", " + b255.to_string() + ", 0.1))); }";
-				css.load_from_data(css_data, css_data.length);
-				*/
 			}
 			dialog.close();
 		});
@@ -157,7 +145,6 @@ public class Light : Box {
 		// switch: on, off
 		lightSwitch = new Switch();
 		lightSwitch.get_style_context().add_class("switch" + this.number.to_string());
-		// update_switch_css(r, g, b);
 		lightSwitch.active = lswitch;
 		if (reachable == false) {
 			lightSwitch.opacity = 0.4;
@@ -210,7 +197,6 @@ public class Light : Box {
 				+ "] changed saturation: r = " + r.to_string() 
 				+ ", g = " + g.to_string() + ", b = " + b.to_string());
 			lightHue.override_color(StateFlags.NORMAL, color);
-			// scaleSat.override_background_color(StateFlags.NORMAL, color);
 			
 			// update css
 			update_css(r, g, b);
@@ -255,8 +241,6 @@ public class Light : Box {
 		
 		// initial update of css
 		update_css(r, g, b);
-		
-		// this.get_style_context().add_class("light");
 	}
 	
 	private int getBri() {
@@ -307,44 +291,36 @@ public class Light : Box {
 		return this.number;
 	}
 	
-	// depricated
-	/*
-	public void add_schedule(Schedule schedule) {
-		schedules.append(schedule);
-		// schedule_box.add(schedule);
-	}
-	*/
-	
-	// depricated
-	/*
-	private void update_sat_css(double r, double g, double b) {
-		int r255 = (int) (r * 255);
-		int g255 = (int) (g * 255);
-		int b255 = (int) (b * 255);
-		debug("rgb = " + r255.to_string() + "," + g255.to_string() + "," + b255.to_string());
-		string css_data = ".scale" + this.number.to_string() + ".trough.highlight { background-image:none; background-clip: content-box; background-color: rgb(" + r255.to_string() + ", " + g255.to_string() + ", " + b255.to_string() + "); }";
-		css.load_from_data(css_data, css_data.length);
-		
-		// update_switch_css(r, g, b);
-	}
-	*/
-	
 	private void update_css(double r, double g, double b) {
 		int r255 = (int) (r * 255);
 		int g255 = (int) (g * 255);
 		int b255 = (int) (b * 255);
-		debug("rgb = " + r255.to_string() + "," + g255.to_string() + "," + b255.to_string());
+		debug("rgb = " + r255.to_string() + "," + g255.to_string() + "," 
+			+ b255.to_string());
+		
 		string css_data = "";
 		if (lightSwitch.active) {
-			css_data += ".switch" + this.number.to_string() + ".trough { background-image:none; background-color: rgb(" + r255.to_string() + ", " + g255.to_string() + ", " + b255.to_string() + "); } ";
+			css_data += ".switch" + this.number.to_string() 
+				+ ".trough { background-image:none; background-color: rgb(" 
+				+ r255.to_string() + ", " + g255.to_string() + ", " 
+				+ b255.to_string() + "); } ";
 		}
 		else {
-			css_data += ".switch" + this.number.to_string() + ".trough { background-image:none; background-color: #d3d7cf; } ";
+			// default Adwaita grey for switch that is off
+			css_data += ".switch" + this.number.to_string() 
+				+ ".trough { background-image:none; background-color: #d3d7cf; } ";
 		}
-		css_data += ".scale" + this.number.to_string() + ".trough.highlight { background-image:none; background-clip: content-box; background-color: rgb(" + r255.to_string() + ", " + g255.to_string() + ", " + b255.to_string() + "); }";
-		css.load_from_data(css_data, css_data.length);
-		
-		this.show_all();
+		css_data += ".scale" + this.number.to_string() 
+			+ ".trough.highlight { background-image:none; background-clip: content-box; background-color: rgb(" 
+			+ r255.to_string() + ", " + g255.to_string() + ", " 
+			+ b255.to_string() + "); } ";
+		try {
+			css.load_from_data(css_data, css_data.length);
+		}
+		catch (Error e) {
+			debug("[Light.update_css] error: " + e.message);
+		}
+		// this.show_all();
 	}
 	
 	public void has_more(bool more) {

@@ -194,15 +194,6 @@ http://creativecommons.org/publicdomain/zero/1.0";
 		}
 		HueBridge bridge = new HueBridge(ip);
 	
-		// css
-//		CssProvider css = new CssProvider();
-//		var cssFile = File.new_for_path("./src/lampe-gtk.css");
-//		try {
-//			css.load_from_file(cssFile);
-//			Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), css , Gtk.STYLE_PROVIDER_PRIORITY_USER);
-//		}
-//		catch (Error e) {}
-	
 		Grid mainGrid = new Grid();
 	
 		// box: lights

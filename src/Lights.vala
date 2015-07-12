@@ -42,9 +42,8 @@ public class Lights : ListBox {
 			}
 		});
 		
-		int light_id = 0;
+		// int light_id = 0;
 		this.set_header_func((r) => {
-			/*
 			if (r.get_child().name == "Light") {
 				// Separator header_sep = new Separator(Orientation.HORIZONTAL);
 				// header_sep.margin_top = 16;
@@ -52,7 +51,7 @@ public class Lights : ListBox {
 				// r.set_selectable(false);
 				r.set_activatable(false);
 			}
-			*/
+			/*
 			if (r.get_child().name == "Schedule") {
 				Schedule s = (Schedule) r.get_child();
 				light_id = s.get_light_id();
@@ -63,7 +62,7 @@ public class Lights : ListBox {
 				r.set_activatable(false);
 				r.get_style_context().add_class("light" + light_id.to_string());
 			}
-			// r.get_style_context().add_class("light" + light_id.to_string());
+			*/
 		});
 		
 	}
@@ -214,6 +213,7 @@ public class Lights : ListBox {
 		else {
 			group_switch.active = false;
 		}
+		refreshed = false;
 		
 		// refresh schedules
 		this.bridge.get_schedules(this);
@@ -321,7 +321,6 @@ public class Lights : ListBox {
 			add_light(light);
 			foreach (Schedule a_schedule in schedule_list) {
 				if (light.get_light_id() == a_schedule.get_light_id()) {
-					// light.add_schedule(a_schedule);
 					light.has_more(true);
 					add_schedule(a_schedule);
 					debug("[Lights.schedules_received] added schedule '" 
@@ -415,8 +414,10 @@ public class Lights : ListBox {
 			this.foreach((w) => {
 				try {
 					ListBoxRow r = (ListBoxRow) w;
-					Light light = (Light) r.get_child();
-					light.set_switch(true);
+					if (r.get_child().name == "Light") {
+						Light light = (Light) r.get_child();
+						light.set_switch(true);
+					}
 				}
 				catch (Error e) {
 					debug("header ignored");
@@ -430,8 +431,10 @@ public class Lights : ListBox {
 			this.foreach((w) => {
 				try {
 					ListBoxRow r = (ListBoxRow) w;
-					Light light = (Light) r.get_child();
-					light.set_switch(false);
+					if (r.get_child().name == "Light") {
+						Light light = (Light) r.get_child();
+						light.set_switch(false);
+					}
 				}
 				catch (Error e) {
 					debug("header ignored");
