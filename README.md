@@ -21,6 +21,12 @@ Following cli-tools need to be installed on your system in order to use "lampe"
 - JSON.sh
 - bc (optional)
 
+"lampe-gtk" has the following dependencies:
+- libsoup
+- gtk3
+- json-glib
+- vala
+
 ## Installation
 If you want to use "lampe" system-wide, you can install it this way:
 ```.sh
