@@ -42,8 +42,9 @@ public class Lights : ListBox {
 			}
 		});
 		
-		
+		int light_id = 0;
 		this.set_header_func((r) => {
+			/*
 			if (r.get_child().name == "Light") {
 				// Separator header_sep = new Separator(Orientation.HORIZONTAL);
 				// header_sep.margin_top = 16;
@@ -51,6 +52,18 @@ public class Lights : ListBox {
 				// r.set_selectable(false);
 				r.set_activatable(false);
 			}
+			*/
+			if (r.get_child().name == "Schedule") {
+				Schedule s = (Schedule) r.get_child();
+				light_id = s.get_light_id();
+			} else if (r.get_child().name == "Light") {
+				Light l = (Light) r.get_child();
+				light_id = l.get_light_id();
+				
+				r.set_activatable(false);
+				r.get_style_context().add_class("light" + light_id.to_string());
+			}
+			// r.get_style_context().add_class("light" + light_id.to_string());
 		});
 		
 	}

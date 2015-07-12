@@ -17,6 +17,8 @@ public class Light : Box {
 	private Scale scaleSat;
 	// private Box schedule_box = new Box(Orientation.VERTICAL, 2);
 	
+	private CssProvider css;
+	
 	// private List<Schedule> schedules = new List<Schedule>();
 		// depricated
 
@@ -32,8 +34,17 @@ public class Light : Box {
 		this.number = number;
 		this.bridge = bridge;
 		
+		// css
+		css = new CssProvider();
+		Gtk.StyleContext.add_provider_for_screen(
+			(!)Gdk.Screen.get_default(),
+			css,
+			Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+		);
+		
 		// saturation
 		scaleSat = new Scale.with_range(Gtk.Orientation.HORIZONTAL, 1, 254, 1);
+		scaleSat.get_style_context().add_class("scale" + this.number.to_string());
 		
 		// brightness
 		scaleBri = new Scale.with_range(Gtk.Orientation.HORIZONTAL, 1, 254, 1);
@@ -106,6 +117,21 @@ public class Light : Box {
 				color.green = g;
 				color.blue = b;
 				lightHue.override_color(StateFlags.NORMAL, color);
+				
+				// update css
+				update_css(r, g, b);
+				/*
+				int r255 = (int) (r * 255);
+				int g255 = (int) (g * 255);
+				int b255 = (int) (b * 255);
+				debug("rgb = " + r255.to_string() + "," + g255.to_string() + "," + b255.to_string());
+				*/
+				/*
+				string css_data = ".light" + this.number.to_string() + " { background-image: -gtk-gradient (linear,
+                                 0.994 0.99, 1 0.01,
+                                 from (rgba(255, 255, 255, 1.0)), to (rgba(" + r255.to_string() + ", " + g255.to_string() + ", " + b255.to_string() + ", 0.1))); }";
+				css.load_from_data(css_data, css_data.length);
+				*/
 			}
 			dialog.close();
 		});
@@ -130,6 +156,8 @@ public class Light : Box {
 		
 		// switch: on, off
 		lightSwitch = new Switch();
+		lightSwitch.get_style_context().add_class("switch" + this.number.to_string());
+		// update_switch_css(r, g, b);
 		lightSwitch.active = lswitch;
 		if (reachable == false) {
 			lightSwitch.opacity = 0.4;
@@ -143,7 +171,8 @@ public class Light : Box {
 		scaleSat.draw_value = false;
 		scaleSat.width_request = 127;
 		scaleSat.round_digits = 0;
-		scaleSat.override_background_color(StateFlags.NORMAL, color);
+		// scaleSat.override_background_color(StateFlags.NORMAL, color);
+		// update_sat_css(r, g, b);
 		scaleSat.margin_bottom = 4;
 		scaleSat.valign = Align.END;
 		this.pack_start(scaleSat, false, false, 0);
@@ -181,7 +210,10 @@ public class Light : Box {
 				+ "] changed saturation: r = " + r.to_string() 
 				+ ", g = " + g.to_string() + ", b = " + b.to_string());
 			lightHue.override_color(StateFlags.NORMAL, color);
-			scaleSat.override_background_color(StateFlags.NORMAL, color);
+			// scaleSat.override_background_color(StateFlags.NORMAL, color);
+			
+			// update css
+			update_css(r, g, b);
 		});
 		
 		// brightness
@@ -218,7 +250,13 @@ public class Light : Box {
 		this.pack_start(lightSwitch, false, false, 10);
 		lightSwitch.notify["active"].connect(() => {
 			toggle_switch();
+			update_css(r, g, b);
 		});
+		
+		// initial update of css
+		update_css(r, g, b);
+		
+		// this.get_style_context().add_class("light");
 	}
 	
 	private int getBri() {
@@ -276,6 +314,38 @@ public class Light : Box {
 		// schedule_box.add(schedule);
 	}
 	*/
+	
+	// depricated
+	/*
+	private void update_sat_css(double r, double g, double b) {
+		int r255 = (int) (r * 255);
+		int g255 = (int) (g * 255);
+		int b255 = (int) (b * 255);
+		debug("rgb = " + r255.to_string() + "," + g255.to_string() + "," + b255.to_string());
+		string css_data = ".scale" + this.number.to_string() + ".trough.highlight { background-image:none; background-clip: content-box; background-color: rgb(" + r255.to_string() + ", " + g255.to_string() + ", " + b255.to_string() + "); }";
+		css.load_from_data(css_data, css_data.length);
+		
+		// update_switch_css(r, g, b);
+	}
+	*/
+	
+	private void update_css(double r, double g, double b) {
+		int r255 = (int) (r * 255);
+		int g255 = (int) (g * 255);
+		int b255 = (int) (b * 255);
+		debug("rgb = " + r255.to_string() + "," + g255.to_string() + "," + b255.to_string());
+		string css_data = "";
+		if (lightSwitch.active) {
+			css_data += ".switch" + this.number.to_string() + ".trough { background-image:none; background-color: rgb(" + r255.to_string() + ", " + g255.to_string() + ", " + b255.to_string() + "); } ";
+		}
+		else {
+			css_data += ".switch" + this.number.to_string() + ".trough { background-image:none; background-color: #d3d7cf; } ";
+		}
+		css_data += ".scale" + this.number.to_string() + ".trough.highlight { background-image:none; background-clip: content-box; background-color: rgb(" + r255.to_string() + ", " + g255.to_string() + ", " + b255.to_string() + "); }";
+		css.load_from_data(css_data, css_data.length);
+		
+		this.show_all();
+	}
 	
 	public void has_more(bool more) {
 		if (more) {

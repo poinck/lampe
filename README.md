@@ -11,7 +11,7 @@ Interactive bash-script to control your Philips Hue lights.
 ![lampe](/lampe.png)
 
 ## Requirements
-Following cli-tools need to be installed on your system in order to use "lampe"
+Following cli-tools need to be installed on your system in order to use **lampe(-bash)**:
 - curl
 - ping
 - ip
@@ -21,7 +21,7 @@ Following cli-tools need to be installed on your system in order to use "lampe"
 - JSON.sh
 - bc (optional)
 
-"lampe-gtk" has the following dependencies:
+**lampe-gtk** has the following dependencies:
 - libsoup
 - gtk3
 - json-glib

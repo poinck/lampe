@@ -33,7 +33,7 @@ public class Schedule : Box {
 		
 		this.orientation = Orientation.HORIZONTAL;
 		this.spacing = 8;
-		this.margin_start = 95;
+		this.margin_start = 94;
 		
 		this.bridge = bridge;
 		
