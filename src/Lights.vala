@@ -413,15 +413,10 @@ public class Lights : ListBox {
 			
 			// change light switch state of individual lights
 			this.foreach((w) => {
-				try {
-					ListBoxRow r = (ListBoxRow) w;
-					if (r.get_child().name == "Light") {
-						Light light = (Light) r.get_child();
-						light.set_switch(true);
-					}
-				}
-				catch (Error e) {
-					debug("header ignored");
+				ListBoxRow r = (ListBoxRow) w;
+				if (r.get_child().name == "Light") {
+					Light light = (Light) r.get_child();
+					light.set_switch(true);
 				}
 			});
 		} 
@@ -430,15 +425,10 @@ public class Lights : ListBox {
 			bridge.put_group_state(0, "{\"on\":false}");
 			
 			this.foreach((w) => {
-				try {
-					ListBoxRow r = (ListBoxRow) w;
-					if (r.get_child().name == "Light") {
-						Light light = (Light) r.get_child();
-						light.set_switch(false);
-					}
-				}
-				catch (Error e) {
-					debug("header ignored");
+				ListBoxRow r = (ListBoxRow) w;
+				if (r.get_child().name == "Light") {
+					Light light = (Light) r.get_child();
+					light.set_switch(false);
 				}
 			});
 		}
