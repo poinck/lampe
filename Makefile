@@ -16,7 +16,7 @@ compile:
 	valac $(VALA_OPTS) $(CC_OPTS) -X -O3 $(SRC_FILES) -o lampe-gtk 
 	
 compile_debug:
-	valac -g -D DEBUG $(VALA_OPTS) $(CC_OPTS) -X -g $(SRC_FILES) -o lampe-gtk
+	valac -g -D DEBUG -D TEST $(VALA_OPTS) $(CC_OPTS) -X -g $(SRC_FILES) -o lampe-gtk
 
 install:
 	install --mode=755 -d $(BINDIR)/

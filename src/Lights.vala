@@ -316,6 +316,13 @@ public class Lights : ListBox {
 				+ e.message);
 		}
 		
+#if TEST
+		Schedule s = new Schedule(1, "Fakealarm 0", 4, "09:12", 
+			192, 254, "disabled", app, bridge
+		);
+		schedule_list.append(s);
+#endif
+		
 		// add schedules to lights from internal lights list and add lights 
 		// from internal lights list to Lights-listbox
 		foreach (Light light in lights) {
