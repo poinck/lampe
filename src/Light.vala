@@ -11,6 +11,7 @@ public class Light : Box {
 	private bool dont_change_sat = false;
 	private bool dont_change_switch = false;
 	private HueBridge bridge;
+	private Lights lights;
 	
 	private Switch lightSwitch;
 	private Scale scaleBri;
@@ -24,7 +25,7 @@ public class Light : Box {
 
 	// initialize a Box for a light
 	public Light(int number, string name, int64 hue, int64 sat, int64 bri, 
-			bool lswitch, bool reachable, HueBridge bridge) {
+			bool lswitch, bool reachable, HueBridge bridge, Lights lights) {
 		this.spacing = 16;
 		this.margin_top = 8;
 		this.margin_bottom = 8;
@@ -33,6 +34,7 @@ public class Light : Box {
 		
 		this.number = number;
 		this.bridge = bridge;
+		this.lights = lights;
 		
 		// css
 		css = new CssProvider();
@@ -134,9 +136,7 @@ public class Light : Box {
 		// name
 		debug("[Light] name = " + name);
 		Label lightName = new Label(name);
-		// lightName.margin_top = 8;
 		lightName.valign = Align.BASELINE;
-		// schedule_box.add(lightName);
 		this.pack_start(lightName, false, false, 4);
 			
 		Label emptyLabel = new Label(" ");
@@ -158,8 +158,6 @@ public class Light : Box {
 		scaleSat.draw_value = false;
 		scaleSat.width_request = 127;
 		scaleSat.round_digits = 0;
-		// scaleSat.override_background_color(StateFlags.NORMAL, color);
-		// update_sat_css(r, g, b);
 		scaleSat.margin_bottom = 4;
 		scaleSat.valign = Align.END;
 		this.pack_start(scaleSat, false, false, 0);
@@ -233,10 +231,27 @@ public class Light : Box {
 		});
 		
 		// switch: on, off
-		this.pack_start(lightSwitch, false, false, 10);
+		lightSwitch.margin_start = 10;
+		this.pack_start(lightSwitch, false, false, 0);
 		lightSwitch.notify["active"].connect(() => {
 			toggle_switch();
 			update_css(r, g, b);
+		});
+		
+		// button: plus (add new schedules/alarms and ..)
+			// TODO  find suitable symbolic icon for "plus"-button; names "new"
+			// and "plus" don't exist
+		Gtk.Button plus_button = new Gtk.Button.from_icon_name(
+			"new-symbolic", 
+			Gtk.IconSize.SMALL_TOOLBAR
+		);
+		plus_button.relief = ReliefStyle.NONE;
+		plus_button.margin_start = 0;
+		plus_button.margin_end = 8;
+		this.pack_start(plus_button, false, false, 0);
+		plus_button.clicked.connect(() => {
+			debug("[Light] plus_button clicked");
+				// TODO  open "plus"-popover
 		});
 		
 		// initial update of css
@@ -289,6 +304,16 @@ public class Light : Box {
 	
 	public int get_light_id() {
 		return this.number;
+	}
+	
+	// callback from HueBridge after post_schedule()
+	public void schedule_posted(Schedule s, string rsp) {
+		// TODO  add Schedule to Lights below this Light
+		// TODO  check wether rsp is "success", "error" or nothing
+		// TODO  get schedule_id from Hue bridge
+		
+		has_more(true);
+		lights.add_schedule_to_light(s, this.number);
 	}
 	
 	private void update_css(double r, double g, double b) {

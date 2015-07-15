@@ -105,7 +105,7 @@ public class Schedule : Box {
 	
 	// callback from HueBridge after put_schedule_state()
 	public void schedule_state_changed(string rsp) {
-			// TODO  check wether rsp is "success", "error" or nothing
+		// TODO  check wether rsp is "success", "error" or nothing?
 		update_widgets();
 	}
 	

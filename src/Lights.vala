@@ -82,6 +82,13 @@ public class Lights : ListBox {
 		this.show_all();
 	}
 	
+	public void add_schedule_to_light(Schedule schedule, int light_id) {
+		this.widget_count++;
+		// TODO  find position after Light with light_id
+		
+		this.show_all();
+	}
+	
 	// remove every Light, Schedule or placeholder in Lights
 	private void delete_lights() {
 		this.foreach((w) => {
@@ -193,7 +200,8 @@ public class Lights : ListBox {
 				
 				// append found lights in json-response to internal list of lights
 				Light found_light = new Light(
-					light_id, name, hue, sat, bri, lswitch, reachable, bridge
+					light_id, name, hue, sat, bri, lswitch, reachable, bridge,
+					this
 				);
 				lights.append(found_light);
 			}
@@ -236,7 +244,7 @@ public class Lights : ListBox {
 		
 		Json.Parser parser = new Json.Parser();
 		try {
-			/* schedules example listing:
+			/* schedules example listing, firmware v1.3:
 			{
 			"1":{"name":"Alarm","description":"",
 				"command":{
@@ -317,6 +325,7 @@ public class Lights : ListBox {
 		}
 		
 #if TEST
+		// test: hue-emulator has a schedule with id 1
 		Schedule s = new Schedule(1, "Fakealarm 0", 4, "09:12", 
 			192, 254, "disabled", app, bridge
 		);
