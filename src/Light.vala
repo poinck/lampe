@@ -242,7 +242,7 @@ public class Light : Box {
 			// TODO  find suitable symbolic icon for "plus"-button; names "new"
 			// and "plus" don't exist
 		Gtk.Button plus_button = new Gtk.Button.from_icon_name(
-			"new-symbolic", 
+			"list-add-symbolic", 
 			Gtk.IconSize.SMALL_TOOLBAR
 		);
 		plus_button.relief = ReliefStyle.NONE;
