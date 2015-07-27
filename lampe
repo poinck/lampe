@@ -429,10 +429,14 @@ getColorOfLight() {
 printMainScreen() {
 	local firstNumer=$1
 	
-	# FIXME is this workarround still needed?
-	if [[ "${_SAT[$_SELECTED_LAMP]}" -lt 1 ]] ; then
-		_SAT[$_SELECTED_LAMP]=1
-	fi
+	# if [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"ZLL\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB004\"" ]] ; then
+	# 	_SAT[$_SELECTED_LAMP]=192
+	# else
+	# 	# FIXME is this workarround still needed?
+	# 	if [[ "${_SAT[$_SELECTED_LAMP]}" -lt 1 ]] ; then
+	# 		_SAT[$_SELECTED_LAMP]=1
+	# 	fi
+	# fi
 
 	if [[ "$L_BLIND" == 0 ]] ; then
 		currentBrightness=$((_BRIGHTNESS[_SELECTED_LAMP]/5))
