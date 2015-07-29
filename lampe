@@ -703,7 +703,7 @@ hbSendLightsState() {
 	# debug
 	echo -e "\n    DEBUG hbSendLightsState().modelid = ${_MODEL[$_SELECTED_LAMP]}"
 
-	if [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"ZLL\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB004\"" ]] ; then
+	if [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"ZLL Light\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB004\"" ]] ; then
 		# light models "ZLL" and LWB004 do not support hue and sat
 		local color="\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]}"
 	else
@@ -1035,7 +1035,7 @@ hbReceiveLightStates() {
 			# if modelid is "ZLL" or "LWB004" do not support hue and sat
 			modelid=$(echo "$currentPJLightStates" | grep "\"$light\",\"modelid\"" | cut -f 2)
 			_MODEL[$light]=$modelid
-			if [[ "$modelid" == "\"ZLL\"" ]] || [[ "$modelid" == "\"LWB004\"" ]] ; then
+			if [[ "$modelid" == "\"ZLL Light\"" ]] || [[ "$modelid" == "\"LWB004\"" ]] ; then
 				_COLOR[$light]=12000
 				_SAT[$light]=192
 			else
