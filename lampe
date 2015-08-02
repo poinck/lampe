@@ -428,15 +428,6 @@ getColorOfLight() {
 
 printMainScreen() {
 	local firstNumer=$1
-	
-	# if [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"ZLL\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB004\"" ]] ; then
-	# 	_SAT[$_SELECTED_LAMP]=192
-	# else
-	# 	# FIXME is this workarround still needed?
-	# 	if [[ "${_SAT[$_SELECTED_LAMP]}" -lt 1 ]] ; then
-	# 		_SAT[$_SELECTED_LAMP]=1
-	# 	fi
-	# fi
 
 	if [[ "$L_BLIND" == 0 ]] ; then
 		currentBrightness=$((_BRIGHTNESS[_SELECTED_LAMP]/5))
@@ -701,7 +692,7 @@ hbSendLightSat() {
 # send light state (switch and color) to Hue Bridge
 hbSendLightsState() {
 	# debug
-	echo -e "\n    DEBUG hbSendLightsState().modelid = ${_MODEL[$_SELECTED_LAMP]}"
+	# echo -e "\n    DEBUG hbSendLightsState().modelid = ${_MODEL[$_SELECTED_LAMP]}"
 
 	if [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"ZLL Light\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB004\"" ]] ; then
 		# light models "ZLL" and LWB004 do not support hue and sat
@@ -995,8 +986,14 @@ hbReceiveLightState() {
 		# state of the current light
 		lightSwi=$(echo "$lightState" | sed -r "s/\"on\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 		lightBri=$(echo "$lightState" | sed -r "s/\"bri\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
-		lightHue=$(echo "$lightState" | sed -r "s/\"hue\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
-		lightSat=$(echo "$lightState" | sed -r "s/\"sat\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
+		if [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"ZLL Light\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB004\"" ]] ; then
+			# light models "ZLL" and LWB004 do not support hue and sat
+			lightHue=12000
+			lightSat=192
+		else
+			lightHue=$(echo "$lightState" | sed -r "s/\"hue\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
+			lightSat=$(echo "$lightState" | sed -r "s/\"sat\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
+		fi
 		
 		# debug
 		# echo "lightSwi[$light] = '$lightSwi'" 
