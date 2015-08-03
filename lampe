@@ -159,6 +159,12 @@ for (( s=1 ; s<100 ; s=s+1 )) ; do
 	_COLOR[$s]=12000 # orange
 done
 
+# init model
+declare -a _MODEL 
+for (( s=1 ; s<100 ; s=s+1 )) ; do 
+	_MODEL[$s]="\"LCT001\"" # standard Hue bulb
+done
+
 moodSequence() {
 	while [[ -f "/tmp/lampeSequenceM$_SELECTED_LAMP" ]] ; do
 		# tmdLine=$(cat "$tmdCsvFile" | tail -n 1 | cut -f 2-3 -d',' 2> /dev/null)
@@ -342,6 +348,9 @@ lColor() {
 
 getColorByValue() {
 	hue=$1
+	if [[ ! -n "$hue" ]] ; then
+		hue=12000
+	fi
 
 	if [ "$hue" -lt 9001 ] ; then
 		# red
@@ -368,7 +377,7 @@ getColorByValue() {
 	echo -en "$(lColor $colorEscape)"
 }
 
-# get pint-color of selected or given light number
+# get print-color of selected or given light number
 getColorOfLight() {
 	if [[ -n "$1" ]] ; then
 		local light=$1
@@ -377,6 +386,9 @@ getColorOfLight() {
 	fi
 
 	hue=${_COLOR[$light]}
+	if [[ ! -n "$hue" ]] ; then
+		hue=12000
+	fi
 	
 	# debug
 	# echo " getColor.hue = '$hue'"
@@ -385,25 +397,25 @@ getColorOfLight() {
 	if [[ ${_SWITCH[$light]} == "true" ]] ; then
 		bold="lt"
 	fi
-	if [ $hue -lt 9001 ] ; then
+	if [[ "$hue" -lt 9001 ]] ; then
 		# red
 		colorEscape="red"
-	elif [ $hue -gt 9000 ] && [ $hue -lt 19001 ] ; then
+	elif [[ "$hue" -gt 9000 ]] && [[ "$hue" -lt 19001 ]] ; then
 		# orange, yellow
 		colorEscape="yellow"
-	elif [ $hue -gt 19000 ] && [ $hue -lt 31001 ] ; then
+	elif [[ "$hue" -gt 19000 ]] && [[ "$hue" -lt 31001 ]] ; then
 		# green
 		colorEscape="green"
-	elif [ $hue -gt 31000 ] && [ $hue -lt 35001 ] ; then
+	elif [[ "$hue" -gt 31000 ]] && [[ "$hue" -lt 35001 ]] ; then
 		# white, green-blue, cyan
 		colorEscape="cyan"
-	elif [ $hue -gt 35000 ] && [ $hue -lt 48001 ] ; then
+	elif [[ "$hue" -gt 35000 ]] && [[ "$hue" -lt 48001 ]] ; then
 		# blue
 		colorEscape="blue"
-	elif [ $hue -gt 48000 ] && [ $hue -lt 63279 ] ; then
+	elif [[ "$hue" -gt 48000 ]] && [[ "$hue" -lt 63279 ]] ; then
 		# purple
 		colorEscape="magenta"
-	elif [ $hue -gt 63279 ] ; then
+	elif [[ "$hue" -gt 63279 ]] ; then
 		# red
 		colorEscape="red"
 	fi
@@ -412,11 +424,6 @@ getColorOfLight() {
 
 printMainScreen() {
 	local firstNumer=$1
-	
-	# FIXME is this workarround still needed?
-	if [[ "${_SAT[$_SELECTED_LAMP]}" -lt 1 ]] ; then
-		_SAT[$_SELECTED_LAMP]=1
-	fi
 
 	if [[ "$L_BLIND" == 0 ]] ; then
 		currentBrightness=$((_BRIGHTNESS[_SELECTED_LAMP]/5))
@@ -629,8 +636,8 @@ hbSendLightColor() {
 	
 	local thisTime=$(date +%s%3N)
 	local diffTime=$((thisTime-lastTime))
-	if [ $diffTime -gt 125 ] ; then
-		# only send new state every 125ms
+	if [ $diffTime -gt 100 ] ; then
+		# only send new state every 100ms
 		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
@@ -640,8 +647,8 @@ hbSendLightColor() {
 hbSendLightSwitch() {
 	local thisTime=$(date +%s%3N)
 	local diffTime=$((thisTime-lastTime))
-	if [ $diffTime -gt 125 ] ; then
-		# only send new state every 125ms
+	if [ $diffTime -gt 100 ] ; then
+		# only send new state every 100ms
 		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]}}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
@@ -653,8 +660,8 @@ hbSendLightBri() {
 	
 	local thisTime=$(date +%s%3N)
 	local diffTime=$((thisTime-lastTime))
-	if [ $diffTime -gt 125 ] ; then
-		# only send new state every 125ms
+	if [ $diffTime -gt 100 ] ; then
+		# only send new state every 100ms
 		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
@@ -666,8 +673,8 @@ hbSendLightSat() {
 	
 	local thisTime=$(date +%s%3N)
 	local diffTime=$((thisTime-lastTime))
-	if [ $diffTime -gt 125 ] ; then
-		# only send new state every 125ms
+	if [ $diffTime -gt 100 ] ; then
+		# only send new state every 100ms
 		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
@@ -675,12 +682,20 @@ hbSendLightSat() {
 
 # send light state (switch and color) to Hue Bridge
 hbSendLightsState() {
-	local color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
+	# debug
+	# echo -e "\n    DEBUG hbSendLightsState().modelid = ${_MODEL[$_SELECTED_LAMP]}"
+
+	if [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"ZLL Light\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB004\"" ]] ; then
+		# light models "ZLL" and LWB004 do not support hue and sat
+		local color="\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]}"
+	else
+		local color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
+	fi
 	
 	local thisTime=$(date +%s%3N)
 	local diffTime=$((thisTime-lastTime))
-	if [ $diffTime -gt 125 ] ; then
-		# only send new state every 125ms
+	if [[ "$diffTime" -gt 100 ]] ; then
+		# only send new state every 100ms
 		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
@@ -842,8 +857,14 @@ hbReceiveLightState() {
 		# state of the current light
 		lightSwi=$(echo "$lightState" | sed -r "s/\"on\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 		lightBri=$(echo "$lightState" | sed -r "s/\"bri\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
-		lightHue=$(echo "$lightState" | sed -r "s/\"hue\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
-		lightSat=$(echo "$lightState" | sed -r "s/\"sat\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
+		if [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"ZLL Light\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB004\"" ]] ; then
+			# light models "ZLL" and LWB004 do not support hue and sat
+			lightHue=12000
+			lightSat=192
+		else
+			lightHue=$(echo "$lightState" | sed -r "s/\"hue\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
+			lightSat=$(echo "$lightState" | sed -r "s/\"sat\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
+		fi
 		
 		# debug
 		# echo "lightSwi[$light] = '$lightSwi'" 
@@ -878,12 +899,20 @@ hbReceiveLightStates() {
 			# following params are availabe in the json output
 			lightBri=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"bri\"" | cut -f 2)
 			_BRIGHTNESS[$light]=$lightBri
-		
-			lightHue=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"hue\"" | cut -f 2)
-			_COLOR[$light]=$lightHue
 			
-			lightSat=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"sat\"" | cut -f 2)
-			_SAT[$light]=$lightSat
+			# if modelid is "ZLL" or "LWB004" do not support hue and sat
+			modelid=$(echo "$currentPJLightStates" | grep "\"$light\",\"modelid\"" | cut -f 2)
+			_MODEL[$light]=$modelid
+			if [[ "$modelid" == "\"ZLL Light\"" ]] || [[ "$modelid" == "\"LWB004\"" ]] ; then
+				_COLOR[$light]=12000
+				_SAT[$light]=192
+			else
+				lightHue=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"hue\"" | cut -f 2)
+				_COLOR[$light]=$lightHue
+			
+				lightSat=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"sat\"" | cut -f 2)
+				_SAT[$light]=$lightSat
+			fi
 			lightReachable=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"reachable\"" | cut -f 2)
 			lightName=$(echo "$currentPJLightStates" | grep "\"$light\",\"name\"" | cut -f 2)
 			
