@@ -437,7 +437,8 @@ printMainScreen() {
 		# echo "$colorPosition"
 		# echo "firstNumer = '$firstNumer'"
 
-		# XXX   bug#24 fixed: carriage return instead of deleting chars one by one with backspace
+		# XXX   bug#23 fixed: use carriage return instead of deleting chars 
+		# one by one with backspace
 		echo -en "\r"
 		if [ -n "$firstNumer" ] ; then
 			echo -n "$firstNumer. "
