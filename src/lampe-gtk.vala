@@ -39,7 +39,7 @@ class Lampe : Gtk.Application {
 				"website-label", ("github.com/poinck/lampe"),
 				"logo", window.icon,
 				"copyright", "by poinck, 2015",
-				"version", "1.1.2",
+				"version", "1.1.3",
 				"comments", "Control your Hue lights.",
 				null
 			);
