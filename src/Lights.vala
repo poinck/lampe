@@ -386,7 +386,7 @@ public class Lights : ListBox {
 		box.pack_start(bri_label, false, false, 0);
 		
 		Label placeholder_swi = new Label(" ");
-		placeholder_swi.width_request = 94;
+		placeholder_swi.width_request = 142;
 		box.pack_start(placeholder_swi, false, false, 10);
 		
 		return box;
