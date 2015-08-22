@@ -53,6 +53,14 @@ checkKey() {
 			# off
 			_N=1
 		;;
+		"Y")
+			# on: all lights
+			_YY=1
+		;;
+		"N")
+			# off: all lights
+			_NN=1
+		;;
 		"h")
 			# help
 			_H=1
@@ -517,7 +525,8 @@ printHelpScreen() {
 	echo "    w, s     BRIGHTNESS    -"
 	echo "    a, d     SATURATION    ="
 	echo "    q, e     COLOR         C"
-	echo "    y, n     SWITCH        on, off"
+	echo "    y, Y     ON            switch (all) light/s on"
+	echo "    n, N     SWITCHES      switch (all) light/s off"
 	echo "    i, I     INFO          receive (all) light state/s"
 	echo "    S, l     SETTINGS      save, load user defaults"
 	echo "    F        FIND          find new lights (TODO)"
@@ -570,6 +579,8 @@ lampeMain() {
 		_R=0
 		_B=0
 		_M=0
+		_YY=0
+		_NN=0
 
 		readAKey
 
@@ -596,11 +607,16 @@ lampeMain() {
 			hbSendLightColor
 		elif [[ "$_Y" == 1 ]] ; then
 			setSwitch 1
-			# hbSendLightSwitch
 			hbSendLightsState
 		elif [[ "$_N" == 1 ]] ; then
 			setSwitch 0
 			hbSendLightSwitch
+		elif [[ "$_YY" == 1 ]] ; then
+			_GLOBAL_SWITCH="true"
+			hbSendLightSwitches
+		elif [[ "$_NN" == 1 ]] ; then
+			_GLOBAL_SWITCH="false"
+			hbSendLightSwitches
 		elif [[ "$_H" == 1 ]] ; then
 			printHelpScreen
 		elif [[ "$_A" == 1 ]] ; then
@@ -652,6 +668,17 @@ hbSendLightSwitch() {
 	if [ $diffTime -gt 100 ] ; then
 		# only send new state every 100ms
 		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]}}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		local lastTime=$(date +%s%3N)
+	fi
+}
+
+# send on,off switch state only (all lights)
+hbSendLightSwitches() {
+	local thisTime=$(date +%s%3N)
+	local diffTime=$((thisTime-lastTime))
+	if [ $diffTime -gt 100 ] ; then
+		# only send new state every 100ms
+		curl -s -d "{\"on\":${_GLOBAL_SWITCH}}" -X PUT "http://$bridgeip/api/lampe-bash/groups/0/action" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
