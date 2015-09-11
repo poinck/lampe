@@ -2,22 +2,22 @@
 
 public class LampeRc {
 	public const string RC_FILE = "/.lamperc";
-	
+
 	private File rc_file;
-	
+
 	public LampeRc() {
 		rc_file = File.new_for_path(Environment.get_home_dir() + RC_FILE);
 	}
-	
+
 	public string getBridgeIp() {
 		if (rc_file.query_exists() == false) {
-		    debug("[LampeRc] ERROR file '" + rc_file.get_path() 
+		    debug("[LampeRc] ERROR file '" + rc_file.get_path()
 		    	+ "' does not exist.");
 		    return "";
 		}
-		
+
 		string ip = "";
-		
+
 		try {
 			DataInputStream dis = new DataInputStream(rc_file.read());
 			string line;
@@ -40,7 +40,7 @@ public class LampeRc {
 		catch (Error e) {
 			debug("[LampeRc] ERROR: " + e.message);
 		}
-		
+
 		return ip;
 	}
 }
