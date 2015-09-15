@@ -17,7 +17,7 @@ Following cli-tools need to be installed on your system in order to use **lampe(
 - ip
 - sed
 - cut
-- grep 
+- grep
 - JSON.sh
 - bc (optional)
 
@@ -35,7 +35,7 @@ make install # as root or use sudo
 ```
 
 **on Arch Linux:**
-Thx to [FSMaxB](https://github.com/FSMaxB) there is an Arch package availabe in the AUR: 
+Thx to [FSMaxB](https://github.com/FSMaxB) there is an Arch package availabe in the AUR:
 ```.sh
 yaourt lampe
 ```
@@ -47,7 +47,7 @@ emerge -av lampe
 ```
 
 ## Configuration
-"lampe" will ask you for automatic discovery on first start. If you cannot use automatic discovery in your network or detection fails, you can enter the IP of your bridge manually. After that it will try to register the user "lampe-bash" at your Hue-bridge and ask you to press the Link-button.  
+"lampe" will ask you for automatic discovery on first start. If you cannot use automatic discovery in your network or detection fails, you can enter the IP of your bridge manually. After that it will try to register the user "lampe-bash" at your Hue-bridge and ask you to press the Link-button.
 
 **Problems?**
 
@@ -66,7 +66,7 @@ rm ~/.lamperc
 ## Usage: lampe(-bash)
 Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
 ```
-1..99 - select light 
+1..99 - select light
     w - increase brightness
     a - lower saturation
     s - lower brightness

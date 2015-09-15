@@ -113,6 +113,6 @@ Affirmer's express Statement of Purpose.
   party to this document and has no duty or obligation with respect to this
   CC0 or use of the Work.
 
-For more information, please see: 
+For more information, please see:
 http://creativecommons.org/publicdomain/zero/1.0";
 }

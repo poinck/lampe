@@ -1,13 +1,13 @@
 // lampe-gtk by André Klausnitzer, CC0
 
-public void hsv_to_rgb (double h, double s, double v, out double r, 
+public void hsv_to_rgb (double h, double s, double v, out double r,
 		out double g, out double b)
 		requires (h >= 0 && h <= 360)
 		requires (s >= 0 && s <= 1)
 		requires (v >= 0 && v <= 1) {
     // by Robert Dyer, GPLv3 or later
-    r = 0; 
-    g = 0; 
+    r = 0;
+    g = 0;
     b = 0;
 
     if (s == 0) {
@@ -23,7 +23,7 @@ public void hsv_to_rgb (double h, double s, double v, out double r,
         var p = v * (1 - s);
         var q = v * (1 - s * fracSec);
         var t = v * (1 - s * (1 - fracSec));
-        
+
         switch (secNum) {
         case 0:
             r = v;
