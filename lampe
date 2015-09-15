@@ -123,10 +123,10 @@ readAKey() {
 
 readLightNumber() {
 	local number=$_KEY
-	
+
 	# debug
 	# echo "number = '$number'"
-	
+
 	read -s -n 1 _NEXT_KEY
 	case $_NEXT_KEY in
 		[0-9])
@@ -136,40 +136,40 @@ readLightNumber() {
 			checkKey "$_NEXT_KEY"
 		;;
 	esac
-	
+
 	_SELECTED_LAMP=$number
-	
+
 	# debug
 	# echo "_SELECTED_LAMP = '$_SELECTED_LAMP'"
 }
 
 # init brightness
 declare -a _BRIGHTNESS
-for (( b=1 ; b<100 ; b=b+1 )) ; do 
+for (( b=1 ; b<100 ; b=b+1 )) ; do
 	_BRIGHTNESS[$b]=32
 done
 
 # init saturation
 declare -a _SAT
-for (( s=1 ; s<100 ; s=s+1 )) ; do 
+for (( s=1 ; s<100 ; s=s+1 )) ; do
 	_SAT[$s]=192
 done
 
 # init switch
 declare -a _SWITCH # on or off
-for (( s=1 ; s<100 ; s=s+1 )) ; do 
+for (( s=1 ; s<100 ; s=s+1 )) ; do
 	_SWITCH[$s]="true"
 done
 
 # init color
-declare -a _COLOR 
-for (( s=1 ; s<100 ; s=s+1 )) ; do 
+declare -a _COLOR
+for (( s=1 ; s<100 ; s=s+1 )) ; do
 	_COLOR[$s]=12000 # orange
 done
 
 # init model
-declare -a _MODEL 
-for (( s=1 ; s<100 ; s=s+1 )) ; do 
+declare -a _MODEL
+for (( s=1 ; s<100 ; s=s+1 )) ; do
 	_MODEL[$s]="\"LCT001\"" # standard Hue bulb
 done
 
@@ -179,22 +179,22 @@ moodSequence() {
 		tmdLine=$(tail -n 1 < "$tmdCsvFile" | cut -f 2-3 -d',' 2> /dev/null)
 		tmdInside=$(echo "$tmdLine" | cut -f 1 -d',')
 		tmdOutside=$(echo "$tmdLine" | cut -f 2 -d',')
-		
+
 		# debug
 		# echo "tmdInside  = '$tmdInside'"
 		# echo "tmdOutside = '$tmdOutside'"
-		
+
 		local temperatureDiff=$(( tmdOutside-tmdInside ))
 		local diffFactor=2
 		if [[ "$temperatureDiff" -gt 0 ]] ; then
 			diffFactor=4
 		fi
 		local hueDiff=$(( temperatureDiff*diffFactor+25750 ))
-		
+
 		# debug
 		# echo "temperatureDiff = '$temperatureDiff'"
 		# echo "hueDiff         = '$hueDiff'"
-		
+
 		local hue="\"hue\":$hueDiff,\"transitiontime\":30"
 		curl -s -d "{$hue}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
@@ -211,8 +211,8 @@ previewRandom() {
 	while [[ -f "/tmp/lampeSequenceR$_SELECTED_LAMP" ]] ; do
 		# debug
 		# echo "do random, '$LAMPE_R'"
-	
-		local hue=$(( RANDOM*2 )) 
+
+		local hue=$(( RANDOM*2 ))
 		local color="\"hue\":$hue,\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]},\"transitiontime\":100"
 		curl -s -d "{\"on\":$on,$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
@@ -222,7 +222,7 @@ previewRandom() {
 
 # blink preview sequence
 previewBlink() {
-	local on="true" 
+	local on="true"
 	local bri="$1"
 	while [[ -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; do
 		curl -s -d "{\"on\":$on,\"transitiontime\":0,\"bri\":$bri}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
@@ -242,7 +242,7 @@ selectAlert() {
 
 setBrightness() {
 	brightness=${_BRIGHTNESS[$_SELECTED_LAMP]}
-	
+
 	brightness=$((brightness+$1))
 	if [ $brightness -lt 2 ] ; then
 		brightness=1
@@ -257,11 +257,11 @@ setBrightness() {
 	# debug
 	# echo -n "param = $1 "
 	# echo "brightness = ${_BRIGHTNESS[$_SELECTED_LAMP]} "
-} 
+}
 
 setSat() {
 	sat=${_SAT[$_SELECTED_LAMP]}
-	
+
 	sat=$((sat+$1))
 	if [ $sat -lt 1 ] ; then
 		sat=1
@@ -274,7 +274,7 @@ setSat() {
 
 setColor() {
 	hue=${_COLOR[$_SELECTED_LAMP]}
-	
+
 	hue=$((hue+$1))
 	if [ $hue -lt 1 ] ; then
 		hue=65280
@@ -286,17 +286,17 @@ setColor() {
 	# echo " $hue "
 
 	_COLOR[$_SELECTED_LAMP]=$hue
-} 
+}
 
 setSwitch() {
 	# debug
 	# echo -n $1
 
-	if [[ "$1" == 1 ]] ; then 
+	if [[ "$1" == 1 ]] ; then
 		_SWITCH[$_SELECTED_LAMP]="true"
 	else
 		_SWITCH[$_SELECTED_LAMP]="false"
-		
+
 		# disable sequences that would turn the light on again
 		rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
 		rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
@@ -397,7 +397,7 @@ getColorOfLight() {
 	if [[ ! -n "$hue" ]] ; then
 		hue=12000
 	fi
-	
+
 	# debug
 	# echo " getColor.hue = '$hue'"
 
@@ -445,7 +445,7 @@ printMainScreen() {
 		# echo "$colorPosition"
 		# echo "firstNumer = '$firstNumer'"
 
-		# XXX   bug#23 fixed: use carriage return instead of deleting chars 
+		# XXX   bug#23 fixed: use carriage return instead of deleting chars
 		# one by one with backspace
 		echo -en "\r"
 		if [ -n "$firstNumer" ] ; then
@@ -456,9 +456,9 @@ printMainScreen() {
 			fi
 			echo -en "$(getColorOfLight)$_SELECTED_LAMP $(lColor ltwhite)"
 		fi
-		
+
 		echo -en "[$(lColor off)"
-		for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do 
+		for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do
 			colorValue=$((65279*ii/currentBrightness))
 			echo -en "$(getColorByValue $colorValue)"
 
@@ -494,7 +494,7 @@ printMainScreen() {
 
 toggleSequence() {
 	local sequence=$1
-	
+
 	if [[ ! -f "/tmp/lampeSequence$sequence$_SELECTED_LAMP" ]] ; then
 		# activate $sequence, deactivate others
 		touch "/tmp/lampeSequence$sequence$_SELECTED_LAMP" 2> /dev/null
@@ -544,7 +544,7 @@ lampeQuit() {
 	read doQuit
 	if [[ "$doQuit" == "y" ]] || [[ "$doQuit" == "Y" ]] || [[ "$doQuit" == "" ]] ; then
 		echo " $(lColor ltgreen)!$(lColor off)  bye"
-		
+
 		# cleanup and quit
 		rm /tmp/lampeSequence* 2> /dev/null
 		# killall lampe > /dev/null
@@ -643,7 +643,7 @@ lampeMain() {
 			echo ""
 			hbReceiveLightStates
 		fi
-		
+
 		printMainScreen
 	done
 }
@@ -651,7 +651,7 @@ lampeMain() {
 # send hue light state only
 hbSendLightColor() {
 	local color="\"hue\":${_COLOR[$_SELECTED_LAMP]}"
-	
+
 	local thisTime=$(date +%s%3N)
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 100 ] ; then
@@ -686,7 +686,7 @@ hbSendLightSwitches() {
 # send brightness and switch light state only
 hbSendLightBri() {
 	local color="\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]}"
-	
+
 	local thisTime=$(date +%s%3N)
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 100 ] ; then
@@ -699,7 +699,7 @@ hbSendLightBri() {
 # send saturation light state only
 hbSendLightSat() {
 	local color="\"sat\":${_SAT[$_SELECTED_LAMP]}"
-	
+
 	local thisTime=$(date +%s%3N)
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 100 ] ; then
@@ -720,7 +720,7 @@ hbSendLightsState() {
 	else
 		local color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
 	fi
-	
+
 	local thisTime=$(date +%s%3N)
 	local diffTime=$((thisTime-lastTime))
 	if [[ "$diffTime" -gt 100 ]] ; then
@@ -732,7 +732,7 @@ hbSendLightsState() {
 
 # XXX   not used
 # evaluate floating-point expression
-# taken from http://www.linuxjournal.com/content/floating-point-math-bash, 
+# taken from http://www.linuxjournal.com/content/floating-point-math-bash,
 # by Mitch Frazier
 fEval() {
     local stat=0
@@ -742,7 +742,7 @@ fEval() {
         stat=$?
         if [[ $stat -eq 0  &&  -z "$result" ]]; then stat=1; fi
     fi
-    
+
     echo "$result"
     return $stat
 }
@@ -759,7 +759,7 @@ fCond() {
         if [[ "$cond" != 0  &&  "$cond" != 1 ]]; then cond=0; fi
     fi
     local stat=$((cond == 0))
-    
+
     return $stat
 }
 
@@ -772,49 +772,49 @@ hbCheck() {
 # try to detect the first Hue Bridge in the LAN (ipv4 class-C networks only, can detect only one bridge)
 hbDetect() {
 	_BRIDGE_FOUND=false
-	
+
 	# XXX   bug#4 fixed, all subnets will be searched, but discovery will stop at the first found hue-bridge
 	tmpIPsFile="/tmp/lampe$$.tmp"
 	L_ips=$(ip -f inet addr show | grep "/24" | sed -r "s/inet //" | cut -f 1-4 -d. | cut -f 1 -d"/")
 		# TODO support subnets other than /24, maybe all that are <= /24 (for that, it is necessary to calculate the range of IPs in the subnet)
-	for L_ip in $L_ips ; do 
+	for L_ip in $L_ips ; do
 		# debug
 		# echo "L_ip = '$L_ip'"
-		
+
 		ipByte4=$(echo "$L_ip" | cut -f 4 -d.)
 		currentIpByte4=$ipByte4
 		ipBytes13=$(echo "$L_ip" | cut -f 1-3 -d.)
-		
+
 		# debug
 		# echo "ipByte4 = '$ipByte4', ipBytes13 = '$ipBytes13'"
-		
+
 		# ping the whole subnet in parallel and write ip-adresses to a file
 		subnet="$ipBytes13."
-		( for addr in $(seq 1 1 254); do ( ping -c 1 -t 3 "$subnet$addr" > /dev/null && echo "$subnet$addr" >> "$tmpIPsFile" ) & done ) > /dev/null 
+		( for addr in $(seq 1 1 254); do ( ping -c 1 -t 3 "$subnet$addr" > /dev/null && echo "$subnet$addr" >> "$tmpIPsFile" ) & done ) > /dev/null
 	done
-	
+
 	# debug
 	# cat $tmpIPsFile
-	
+
 	# check for model description
 	while read nextIP ; do
 		# debug
 		# echo "nextIP = $nextIP"
-		
+
 		ownIP="$subnet$currentIpByte4"
 		if [[ "$nextIP" != "$ownIP" ]] ; then
 			hbCheck "$nextIP"
-		
+
 			# debug
 			# echo "hbDescription (response) = '$hbDescription'"
 			# echo "hbModel = '$hbModel'"
-		
+
 			if [ -n "$hbModel" ] ; then
 				_BRIDGE_FOUND=true
 				bridgeip=$nextIP
 				echo "    bridge found at '$nextIP'."
 				break
-			fi	
+			fi
 		fi
 	done < $tmpIPsFile
 	rm $tmpIPsFile 2> /dev/null
@@ -828,7 +828,7 @@ hbEnterIP() {
 		_BRIDGE_FOUND=true
 		bridgeip=$manualIP
 		echo "    bridge found."
-	fi	
+	fi
 }
 
 # this function will be called, if the configuration is valid
@@ -850,13 +850,13 @@ hbRegisterUser() {
 	while true ; do
 		# try user registration every two seconds
 		sleep 2
-		
+
 		hbUser=$(curl -d "{\"devicetype\": \"lampe-$version\", \"username\": \"lampe-bash\"}" "http://$bridgeip/api" -m 2 2> /dev/null)
 		success=$(echo "$hbUser" | grep "success")
-		
+
 		# debug
 		# echo "hbUser = $hbUser"
-		
+
 		if [ -n "$success" ] ; then
 			echo -e "\n    user registered."
 			break
@@ -881,7 +881,7 @@ hbReceiveLightState() {
 	if [ -n "$lightState" ] ; then
 		# debug
 		# echo "lightState[$light] = '$lightState'"
-		
+
 		# no use of JSON.sh, so that users who cannot install JSON.sh are still able to receive the
 		# state of the current light
 		lightSwi=$(echo "$lightState" | sed -r "s/\"on\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
@@ -894,13 +894,13 @@ hbReceiveLightState() {
 			lightHue=$(echo "$lightState" | sed -r "s/\"hue\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 			lightSat=$(echo "$lightState" | sed -r "s/\"sat\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 		fi
-		
+
 		# debug
-		# echo "lightSwi[$light] = '$lightSwi'" 
+		# echo "lightSwi[$light] = '$lightSwi'"
 		# echo "lightBri[$light] = '$lightBri'"
 		# echo "lightHue[$light] = '$lightHue'"
 		# echo "lightSat[$light] = '$lightSat'"
-		
+
 		_SWITCH[$light]=$lightSwi
 		_BRIGHTNESS[$light]=$lightBri
 		_COLOR[$light]=$lightHue
@@ -911,24 +911,24 @@ hbReceiveLightState() {
 # receives all light states. received json will be parsed by using JSON.sh
 hbReceiveLightStates() {
 	local lightStates=""
-	
+
 	lightStates=$(curl "http://$bridgeip/api/lampe-bash/lights" -m 2 2> /dev/null)
 	parsedJsonLightStates=$(echo "$lightStates" | JSON.sh -b 2> /dev/null)
 	for (( light=1 ; light<51 ; light=light+1 )) ; do
 		# debug
-		# echo "light = $light"	
-		
+		# echo "light = $light"
+
 		local currentPJLightStates=$(echo "$parsedJsonLightStates" | grep "\[\"$light\",")
-		if [[ -n "$currentPJLightStates" ]] ; then	
+		if [[ -n "$currentPJLightStates" ]] ; then
 			lightSwi=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"on\"" | cut -f 2)
 			# if [[ -n "$lightSwi" ]] ; then
 			_SWITCH[$light]=$lightSwi
-			
-			# it is assumed that for every light that has a switch the 
+
+			# it is assumed that for every light that has a switch the
 			# following params are availabe in the json output
 			lightBri=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"bri\"" | cut -f 2)
 			_BRIGHTNESS[$light]=$lightBri
-			
+
 			# if modelid is "ZLL" or "LWB004" do not support hue and sat
 			modelid=$(echo "$currentPJLightStates" | grep "\"$light\",\"modelid\"" | cut -f 2)
 			_MODEL[$light]=$modelid
@@ -938,13 +938,13 @@ hbReceiveLightStates() {
 			else
 				lightHue=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"hue\"" | cut -f 2)
 				_COLOR[$light]=$lightHue
-			
+
 				lightSat=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"sat\"" | cut -f 2)
 				_SAT[$light]=$lightSat
 			fi
 			lightReachable=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"reachable\"" | cut -f 2)
 			lightName=$(echo "$currentPJLightStates" | grep "\"$light\",\"name\"" | cut -f 2)
-			
+
 			# output for state of all lights
 			if [ "$light" -lt 10 ] ; then
 				echo -n " "
@@ -972,7 +972,7 @@ hbReceiveLightStates() {
 			_COLOR[$light]=12000
 			_SAT[$light]=192
 		fi
-		
+
 		# debug
 		# echo "_COLOR = ${_COLOR[$light]}"
 	done
@@ -990,7 +990,7 @@ checkDependency "JSON.sh"
 
 loadLightSetting() {
 	if [[ -n "${SAVED_SWITCH[$_SELECTED_LAMP]}" ]] ; then
-		# it is assumed that for every light that has a saved switch state 
+		# it is assumed that for every light that has a saved switch state
 		# there are saved values for all following params
 		_SWITCH[$_SELECTED_LAMP]=${SAVED_SWITCH[$_SELECTED_LAMP]}
 		_BRIGHTNESS[$_SELECTED_LAMP]=${SAVED_BRIGHTNESS[$_SELECTED_LAMP]}
@@ -1010,16 +1010,16 @@ saveAllSettings() {
 	mkdir -p ~/.config/lampe 2> /dev/null
 	echo "" > ~/.config/lampe/light-settings
 	for (( light=1 ; light<51 ; light=light+1 )) ; do
-		if [[ -n "${SAVED_SWITCH[$light]}" ]] ; then			
-			# it is assumed that for every light that has a saved switch state 
+		if [[ -n "${SAVED_SWITCH[$light]}" ]] ; then
+			# it is assumed that for every light that has a saved switch state
 			# there are saved values for all following params
-			{ echo "_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" ; 
-			echo "SAVED_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" ; 
-			echo "_BRIGHTNESS[$light]=\"${SAVED_BRIGHTNESS[$light]}\"" ; 
-			echo "SAVED_BRIGHTNESS[$light]=\"${SAVED_BRIGHTNESS[$light]}\"" ; 
-			echo "_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" ; 
-			echo "SAVED_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" ; 
-			echo "_SAT[$light]=\"${SAVED_SAT[$light]}\"" ; 
+			{ echo "_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" ;
+			echo "SAVED_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" ;
+			echo "_BRIGHTNESS[$light]=\"${SAVED_BRIGHTNESS[$light]}\"" ;
+			echo "SAVED_BRIGHTNESS[$light]=\"${SAVED_BRIGHTNESS[$light]}\"" ;
+			echo "_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" ;
+			echo "SAVED_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" ;
+			echo "_SAT[$light]=\"${SAVED_SAT[$light]}\"" ;
 			echo "SAVED_SAT[$light]=\"${SAVED_SAT[$light]}\"" ; } >> ~/.config/lampe/light-settings
 		fi
 	done
@@ -1031,12 +1031,12 @@ if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
 elif [[ -f ~/.lamperc ]] ; then
 	# read configuration
 	source ~/.lamperc
-	
+
 	# load user defaults from light-settings
 	if [[ -f ~/.config/lampe/light-settings ]] ; then
 		source ~/.config/lampe/light-settings
 	fi
-	
+
 	# receive light states
 	hbReceiveLightStates
 
@@ -1053,20 +1053,20 @@ else
 			echo " $(lColor ltred)?$(lColor off)  warning, unable to find bridge"
 			hbEnterIP
 		fi
-	else 
+	else
 		hbEnterIP
 	fi
-	
+
 	if [[ "$_BRIDGE_FOUND" == true ]] ; then
 		# register a user at bridge
 		hbRegisterUser
-		
+
 		# store configuration if bridge was found
 		echo "bridgeip=\"$bridgeip\"" > ~/.lamperc
-		
+
 		# receive light states
 		hbReceiveLightStates
-		
+
 		startLampe "$@"
 	else
 		echo " $(lColor ltred)!$(lColor off)  no bridge found, error 2"

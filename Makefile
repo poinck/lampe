@@ -24,10 +24,8 @@ install:
 	install --mode=755 -d $(BINDIR)/
 	install --mode=755 lampe $(BINDIR)/
 	install --mode=755 lampe-gtk $(BINDIR)/
-
 	install --mode=755 -d $(PIXDIR)/
 	install --mode=655 lampe-icon.png $(PIXDIR)/
-
 	install --mode=755 -d $(MENDIR)/
 	install --mode=655 lampe.desktop $(MENDIR)/
 
