@@ -218,7 +218,7 @@ redshiftSequence() {
         # test fake chicago
         # redshifts_options="-l 41:-87"
 
-        kelvin=$( redshift -op $redshift_options | grep -e ":*K$" | cut -f 2 -d ":" | cut -b 2-5 )
+        kelvin=$( redshift -op $redshift_options 2>/dev/null | grep -e ":*K$" | cut -f 2 -d ":" | cut -b 2-5 )
         mired=$(( 1000000 / kelvin ))
 
         # debug
