@@ -218,9 +218,9 @@ redshiftSequence() {
         mired=$(( 1000000 / kelvin ))
 
         # debug
-        echo "t/R:redshift_options = $redshift_options"
-        echo "t/R:kelvin = $kelvin"
-        echo "t/R:mired = $mired"
+        # echo "t/R:redshift_options = $redshift_options"
+        # echo "t/R:kelvin = $kelvin"
+        # echo "t/R:mired = $mired"
 
 		local ct="\"ct\":$mired,\"transitiontime\":30"
 		curl -s -d "{$ct}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
