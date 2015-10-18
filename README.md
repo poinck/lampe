@@ -34,7 +34,14 @@ If you want to use "lampe" system-wide, you can install it this way:
 make
 make install # as root or use sudo
 ```
-- If your version of redshift is compiled without geoclue-support than you have to add `redshift_options="-l xx.xx:yy.yy"` to your "~/.lamperc" in order to have color temperature based on your location.
+- If your version of redshift is compiled without geoclue-support than you have to add `redshift_options="-l xx.xx:yy.yy"` to your "~/.lamperc" in order to have color temperature based on your location; a few examples:
+```.sh
+# redshift_options="-l 65.6:-36.6" # ammassalik, grönland
+# redshift_options="-l 31:121" # shanghai
+# redshift_options="-l 41:-87" # chicago
+redshift_options="-l 52.52:13.40" # berlin
+redshift_options="${redshift_options} -t 9500:1700"
+```
 
 **on Arch Linux:**
 Thx to [FSMaxB](https://github.com/FSMaxB) there is an Arch package availabe in the AUR:
