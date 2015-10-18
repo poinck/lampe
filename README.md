@@ -19,6 +19,7 @@ Following cli-tools need to be installed on your system in order to use **lampe(
 - cut
 - grep
 - JSON.sh
+- redshift
 - bc (optional)
 
 **lampe-gtk** has the following dependencies:
@@ -33,6 +34,7 @@ If you want to use "lampe" system-wide, you can install it this way:
 make
 make install # as root or use sudo
 ```
+- If your version of redshift is compiled without geoclue-support than you have to add `redshift_options="-l xx.xx:yy.yy"` to your "~/.lamperc" in order to have color temperature based on your location.
 
 **on Arch Linux:**
 Thx to [FSMaxB](https://github.com/FSMaxB) there is an Arch package availabe in the AUR:
@@ -80,6 +82,7 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
     b - start or stop blinking sequence
     A - alert
     m - start or stop temperature difference based color sequence
+    t - start or stop redshift sequence
     Q - quit
 ```
 
