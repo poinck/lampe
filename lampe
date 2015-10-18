@@ -189,13 +189,17 @@ moodSequence() {
 		# echo "tmdOutside = '$tmdOutside'"
 
 		local temperatureDiff=$(( tmdOutside-tmdInside ))
-		local diffFactor=2
+		local diffFactor=1
 		if [[ "$temperatureDiff" -gt 0 ]] ; then
-			diffFactor=4
+			diffFactor=2
 		fi
 		local hueDiff=$(( temperatureDiff*diffFactor+25750 ))
+        if [[ "$hueDiff" -lt 0 ]] ; then
+            hueDiff=0
+        fi
 
 		# debug
+        # echo "diffFactor      = '$diffFactor'"
 		# echo "temperatureDiff = '$temperatureDiff'"
 		# echo "hueDiff         = '$hueDiff'"
 
@@ -402,10 +406,10 @@ getColorByValue() {
 	elif [ "$hue" -gt 35000 ] && [ "$hue" -lt 48001 ] ; then
 		# blue
 		colorEscape="blue"
-	elif [ "$hue" -gt 48000 ] && [ "$hue" -lt 63279 ] ; then
+	elif [ "$hue" -gt 48000 ] && [ "$hue" -lt 62280 ] ; then
 		# purple
 		colorEscape="magenta"
-	elif [ "$hue" -gt 63279 ] ; then
+	elif [ "$hue" -gt 62279 ] ; then
 		# red
 		colorEscape="red"
 	fi
@@ -447,7 +451,7 @@ getColorOfLight() {
 	elif [[ "$hue" -gt 35000 ]] && [[ "$hue" -lt 48001 ]] ; then
 		# blue
 		colorEscape="blue"
-	elif [[ "$hue" -gt 48000 ]] && [[ "$hue" -lt 63279 ]] ; then
+	elif [[ "$hue" -gt 48000 ]] && [[ "$hue" -lt 63280 ]] ; then
 		# purple
 		colorEscape="magenta"
 	elif [[ "$hue" -gt 63279 ]] ; then
