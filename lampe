@@ -218,18 +218,26 @@ redshiftSequence() {
         # test fake chicago
         # redshifts_options="-l 41:-87"
 
+        # get old color temperature
+        old_mired=$( head -n 1 "/tmp/lampeSequenceT$_SELECTED_LAMP" )
+
+        # get new color temperature
         kelvin=$( redshift -op $redshift_options 2>/dev/null | grep -e ":*K$" | cut -f 2 -d ":" | cut -b 2-5 )
         mired=$(( 1000000 / kelvin ))
 
         # debug
         # echo "t/R:redshift_options = $redshift_options"
         # echo "t/R:kelvin = $kelvin"
-        # echo "t/R:mired = $mired"
+        # echo "t/R:mired ?= old_mired => $mired ?= $old_mired"
 
-		local ct="\"ct\":$mired,\"transitiontime\":30"
+		local ct="\"ct\":$mired,\"transitiontime\":150"
 		curl -s -d "{$ct}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
-
-        sleep 600 # 10 minutes
+        if [[ "$old_mired" -ne "$mired" ]] ; then
+            echo "$mired" > "/tmp/lampeSequenceT$_SELECTED_LAMP"
+            sleep 60 # 1 minute
+        else
+            sleep 600 # 10 minutes
+        fi
     done
 }
 
