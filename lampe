@@ -584,8 +584,9 @@ printHelpScreen() {
 	echo "    A        ALERT"
 	echo "    m        MOOD          M: temperature difference"
 	echo "                              based color sequence"
-    echo "    t        REDSHIFT      T: color temperature based"
-    echo "                              on redshift"
+    echo "    t        REDSHIFT      T: color temperature"
+    echo "                              sequence based on"
+    echo "                              redshift"
 	#        [--------------------------------------------------]
 	echo "    Q        QUIT"
 }
