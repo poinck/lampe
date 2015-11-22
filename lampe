@@ -2,7 +2,7 @@
 # lampe by André Klausnitzer, CC0
 # interactive bash script to control your Philips Hue lights
 
-version="1.1.4"
+version="1.1.5"
 
 # XXX   not used
 readKey() {
@@ -204,7 +204,7 @@ moodSequence() {
 		# echo "hueDiff         = '$hueDiff'"
 
 		local hue="\"hue\":$hueDiff,\"transitiontime\":30"
-		curl -s -d "{$hue}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{$hue}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
 		sleep 60
 	done
@@ -231,7 +231,7 @@ redshiftSequence() {
         # echo "t/R:mired ?= old_mired => $mired ?= $old_mired"
 
 		local ct="\"ct\":$mired,\"transitiontime\":150"
-		curl -s -d "{$ct}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{$ct}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
         if [[ "$old_mired" -ne "$mired" ]] ; then
             echo "$mired" > "/tmp/lampeSequenceT$_SELECTED_LAMP"
             sleep 60 # 1 minute
@@ -253,7 +253,7 @@ previewRandom() {
 
 		local hue=$(( RANDOM*2 ))
 		local color="\"hue\":$hue,\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]},\"transitiontime\":100"
-		curl -s -d "{\"on\":$on,$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{\"on\":$on,$color}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
 		sleep 10
 	done
@@ -264,7 +264,7 @@ previewBlink() {
 	local on="true"
 	local bri="$1"
 	while [[ -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; do
-		curl -s -d "{\"on\":$on,\"transitiontime\":0,\"bri\":$bri}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{\"on\":$on,\"transitiontime\":0,\"bri\":$bri}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
 		sleep 1
 		if [[ "$on" == "true" ]] ; then
@@ -276,7 +276,7 @@ previewBlink() {
 }
 
 selectAlert() {
-	curl -s -d "{\"alert\":\"select\"}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+	curl -s -d "{\"alert\":\"select\"}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 }
 
 setBrightness() {
@@ -711,7 +711,7 @@ hbSendLightColor() {
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 100 ] ; then
 		# only send new state every 100ms
-		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
@@ -722,7 +722,7 @@ hbSendLightSwitch() {
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 100 ] ; then
 		# only send new state every 100ms
-		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]}}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]}}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
@@ -733,7 +733,7 @@ hbSendLightSwitches() {
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 100 ] ; then
 		# only send new state every 100ms
-		curl -s -d "{\"on\":${_GLOBAL_SWITCH}}" -X PUT "http://$bridgeip/api/lampe-bash/groups/0/action" -m 1 > /dev/null
+		curl -s -d "{\"on\":${_GLOBAL_SWITCH}}" -X PUT "http://$bridgeip/api/$bridgeuser/groups/0/action" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
@@ -746,7 +746,7 @@ hbSendLightBri() {
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 100 ] ; then
 		# only send new state every 100ms
-		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
@@ -759,7 +759,7 @@ hbSendLightSat() {
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 100 ] ; then
 		# only send new state every 100ms
-		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
@@ -780,7 +780,7 @@ hbSendLightsState() {
 	local diffTime=$((thisTime-lastTime))
 	if [[ "$diffTime" -gt 100 ]] ; then
 		# only send new state every 100ms
-		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
@@ -906,13 +906,16 @@ hbRegisterUser() {
 		# try user registration every two seconds
 		sleep 2
 
-		hbUser=$(curl -d "{\"devicetype\": \"lampe-$version\", \"username\": \"lampe-bash\"}" "http://$bridgeip/api" -m 2 2> /dev/null)
+		# hbUser=$(curl -d "{\"devicetype\": \"lampe-$version\", \"username\": \"lampe-bash\"}" "http://$bridgeip/api" -m 2 2> /dev/null)
+		hbUser=$(curl -d "{\"devicetype\": \"lampe-$version#test1\"}" "http://$bridgeip/api" -m 2 2> /dev/null)
 		success=$(echo "$hbUser" | grep "success")
 
 		# debug
 		# echo "hbUser = $hbUser"
 
 		if [ -n "$success" ] ; then
+            registeredUser=$(echo "$success" | sed -r "s/\"username\":/;/" | cut -f 2 -d";" | cut -f 1 -d"}" )
+            echo "bridgeuser=${registeredUser}" >> ~/.lamperc
 			echo -e "\n    user registered."
 			break
 		fi
@@ -931,7 +934,7 @@ showHelp() {
 # receive just one light state.
 hbReceiveLightState() {
 	local light=$1
-	hbLightState=$(curl "http://$bridgeip/api/lampe-bash/lights/$light" -m 2 2> /dev/null)
+	hbLightState=$(curl "http://$bridgeip/api/$bridgeuser/lights/$light" -m 2 2> /dev/null)
 	lightState=$(echo "$hbLightState" | grep "state")
 	if [ -n "$lightState" ] ; then
 		# debug
@@ -967,7 +970,7 @@ hbReceiveLightState() {
 hbReceiveLightStates() {
 	local lightStates=""
 
-	lightStates=$(curl "http://$bridgeip/api/lampe-bash/lights" -m 2 2> /dev/null)
+	lightStates=$(curl "http://$bridgeip/api/$bridgeuser/lights" -m 2 2> /dev/null)
 	parsedJsonLightStates=$(echo "$lightStates" | JSON.sh -b 2> /dev/null)
 	for (( light=1 ; light<51 ; light=light+1 )) ; do
 		# debug
@@ -1121,6 +1124,7 @@ else
 
 		# store configuration if bridge was found
 		echo "bridgeip=\"$bridgeip\"" >> ~/.lamperc
+        source ~/.lamperc
 
 		# receive light states
 		hbReceiveLightStates
