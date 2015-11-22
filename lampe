@@ -906,8 +906,7 @@ hbRegisterUser() {
 		# try user registration every two seconds
 		sleep 2
 
-		# hbUser=$(curl -d "{\"devicetype\": \"lampe-$version\", \"username\": \"lampe-bash\"}" "http://$bridgeip/api" -m 2 2> /dev/null)
-		hbUser=$(curl -d "{\"devicetype\": \"lampe-$version#test1\"}" "http://$bridgeip/api" -m 2 2> /dev/null)
+		hbUser=$(curl -d "{\"devicetype\": \"lampe-$version#$USER\"}" "http://$bridgeip/api" -m 2 2> /dev/null)
 		success=$(echo "$hbUser" | grep "success")
 
 		# debug
