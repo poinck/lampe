@@ -204,6 +204,9 @@ moodSequence() {
 		# echo "hueDiff         = '$hueDiff'"
 
 		local hue="\"hue\":$hueDiff,\"transitiontime\":30"
+        if [[ -v "mood_sat" ]] ; then
+            hue="${hue},\"sat\":$mood_sat"
+        fi
 		curl -s -d "{$hue}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
 		sleep 60
@@ -575,7 +578,7 @@ printHelpScreen() {
 	echo "    a, d     SATURATION    ="
 	echo "    q, e     COLOR         C"
 	echo "    y, Y     ON            switch (all) light/s on"
-	echo "    n, N     SWITCHES      switch (all) light/s off"
+	echo "    n, N     OFF           switch (all) light/s off"
 	echo "    i, I     INFO          receive (all) light state/s"
 	echo "    S, l     SETTINGS      save, load user defaults"
 	echo "    F        FIND          find new lights (TODO)"
@@ -587,6 +590,7 @@ printHelpScreen() {
     echo "    t        REDSHIFT      T: color temperature"
     echo "                              sequence based on"
     echo "                              redshift"
+    echo "    o        NOISE         O: noise color sequence"
 	#        [--------------------------------------------------]
 	echo "    Q        QUIT"
 }
@@ -1085,6 +1089,59 @@ saveAllSettings() {
 	done
 }
 
+# load user configuration
+loadUserConfig() {
+	if [[ -f ~/.config/lampe/light-settings ]] ; then
+		source ~/.config/lampe/light-settings
+	fi
+    if [[ -f ~/.config/lampe/light-defaults ]] ; then
+        source ~/.config/lampe/light-defaults
+    fi
+
+    # check light defaults
+    not_set=0
+    if [[ -v "mood_sat" ]] ; then
+        echo "    mood_sat=$mood_sat"
+    else
+        echo " $(lColor ltyellow)?$(lColor off)  mood_sat=[0..254]     default saturation for mood sequence"
+        echo "                          not set. saturation will not be changed"
+        echo "                          during sequence"
+        not_set=1
+    fi
+
+    if [[ -v "redshift_options" ]] ; then
+        echo "    redshift_options=\"$redshift_options\""
+    else
+        echo " $(lColor ltyellow)?$(lColor off)  redshift_options=\"\"   no options will be forwarded to"
+        echo "                          redshift"
+        not_set=1
+    fi
+
+    if [[ -v "noise_range" ]] ; then
+        echo "    noise_range=$noise_range"
+    else
+        echo " $(lColor ltyellow)?$(lColor off)  noise_range=   "
+        not_set=1
+    fi
+    if [[ -v "noise_interval" ]] ; then
+        echo "    noise_interval=$noise_interval"
+    else
+        echo " $(lColor ltyellow)?$(lColor off)  noise_interval=   "
+        not_set=1
+    fi
+    if [[ -v "noise_step" ]] ; then
+        echo "    noise_step=$noise_step"
+    else
+        echo " $(lColor ltyellow)?$(lColor off)  noise_step=   "
+        not_set=1
+    fi
+    if [[ "$not_set" -eq 1 ]] ; then
+        echo " *  You can set these vars in ~/.config/lampe/light-defaults"
+        echo ""
+    fi
+}
+
+
 if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
 	# show help and quit
 	showHelp
@@ -1092,10 +1149,7 @@ elif [[ -f ~/.lamperc ]] ; then
 	# read configuration
 	source ~/.lamperc
 
-	# load user defaults from light-settings
-	if [[ -f ~/.config/lampe/light-settings ]] ; then
-		source ~/.config/lampe/light-settings
-	fi
+    loadUserConfig
 
 	# receive light states
 	hbReceiveLightStates
@@ -1124,6 +1178,8 @@ else
 		# store configuration if bridge was found
 		echo "bridgeip=\"$bridgeip\"" >> ~/.lamperc
         source ~/.lamperc
+
+        loadUserConfig
 
 		# receive light states
 		hbReceiveLightStates
