@@ -475,7 +475,7 @@ getColorOfLight() {
 printMainScreen() {
 	local firstNumer=$1
 
-	if [[ "$L_BLIND" == 0 ]] ; then
+	if [[ "$L_BLIND" == 0 ]] || [[ "$_I" -eq 1 ]] ; then
 		currentBrightness=$((_BRIGHTNESS[_SELECTED_LAMP]/5))
 		currentSat=$((_SAT[_SELECTED_LAMP]*currentBrightness/254))
 		colorPosition=$((_COLOR[_SELECTED_LAMP]*currentBrightness/65279))

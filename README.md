@@ -34,7 +34,7 @@ If you want to use "lampe" system-wide, you can install it this way:
 make
 make install # as root or use sudo
 ```
-- If your version of redshift is compiled without geoclue-support than you have to add `redshift_options="-l xx.xx:yy.yy"` to your "~/.lamperc" in order to have color temperature based on your location; a few examples:
+- If your version of redshift is compiled without geoclue-support than you have to add `redshift_options="-l xx.xx:yy.yy"` to your "~/.config/lampe/light-defaults" in order to have color temperature based on your location; a few examples:
 ```.sh
 # redshift_options="-l 65.6:-36.6" # ammassalik, grönland
 # redshift_options="-l 31:121" # shanghai
@@ -56,18 +56,11 @@ emerge -av lampe
 ```
 
 ## Configuration
-"lampe" will ask you for automatic discovery on first start. If you cannot use automatic discovery in your network or detection fails, you can enter the IP of your bridge manually. After that it will try to register the user "lampe-bash" at your Hue-bridge and ask you to press the Link-button.
-
-**Problems?**
-
-If you cannot enter the IP interactively, you can create the file "~/.lamperc" with following content (for now it is not possible to register a user if you create this file yourself):
-```.sh
-bridgeip="192.168.?.?" # replace ? with respective IP bytes
-```
+`lampe` will ask you for automatic discovery on first start. If the discovery fails, it will ask for the IP of the bridge. After that it will try to register itself at your Hue-bridge and ask you to press the Link-button. This should work with the new Hue-bridge api version which does not allow explicit user names anymore.
 
 **Reset**
 
-To reset the per user configuration, remove '.lamperc' from your home-directory:
+If the IP of the bridge has changed you can edit it in `~/.lamperc`. If that does not help you can reset the initial configuration by removing `~/.lamperc` and restart `lampe`.
 ```.sh
 rm ~/.lamperc
 ```
@@ -81,7 +74,8 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
     s - lower brightness
     d - increase saturation
  q, e - change hue-color
- y, n - switch on, off
+ y, Y - switch (all) lights on
+ n, N - switch (all) lights off
  i, I - info: receive current or all light state(s)
  S, l - save and load user configuration
     F - find new lights
@@ -90,12 +84,13 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
     A - alert
     m - start or stop temperature difference based color sequence
     t - start or stop redshift sequence
+    o - start or stop noise sequnce (TODO)
     Q - quit
 ```
 
 **blind mode**
 
-if you have a very slow terminal, you can use the blind mode as follows; it won't show up the current light state, but everything else is still accessible:
+if you have a very slow terminal, you can use the blind mode as follows; it won't show up the current light state unless you type "i" or "I". All other function are still accessible:
 ```.sh
 lampe -b
 ```
