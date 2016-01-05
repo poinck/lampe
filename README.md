@@ -1,14 +1,15 @@
 # Readme: lampe
 
+**lampe:**
+
+Interactive bash-script to control your Philips Hue lights.
+
+![lampe](/lampe.png)
+
 **lampe-gtk:**
 Control your Philips Hue lights from the Gnome-Desktop
 
 ![lampe-gtk](/lampe-gtk.png)
-
-**lampe(-bash):**
-Interactive bash-script to control your Philips Hue lights.
-
-![lampe](/lampe.png)
 
 ## Requirements
 Following cli-tools need to be installed on your system in order to use **lampe(-bash)**:
@@ -84,7 +85,7 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
     A - alert
     m - start or stop temperature difference based color sequence
     t - start or stop redshift sequence
-    o - start or stop noise sequnce (TODO)
+    o - start or stop noise sequnce
     Q - quit
 ```
 
