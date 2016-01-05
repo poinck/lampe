@@ -1172,44 +1172,48 @@ loadUserConfig() {
     if [[ -v "mood_sat" ]] ; then
         echo "    mood_sat=$mood_sat"
     else
-        echo " $(lColor ltyellow)?$(lColor off)  mood_sat=[0..254]     default saturation for mood sequence"
-        echo "                          not set. saturation will not be changed"
-        echo "                          during sequence"
+        echo " $(lColor ltyellow)?$(lColor off)  mood_sat=[0..254]        default saturation for"
+        echo "                             mood sequence not set."
+        echo "                             saturation will not be"
+        echo "                             changed during sequence"
         not_set=1
     fi
 
     if [[ -v "redshift_options" ]] ; then
         echo "    redshift_options=\"$redshift_options\""
     else
-        echo " $(lColor ltyellow)?$(lColor off)  redshift_options=\"\"   no options will be forwarded to"
-        echo "                          redshift"
+        echo " $(lColor ltyellow)?$(lColor off)  redshift_options=\"\"      no options will be"
+        echo "                             forwarded to redshift"
         not_set=1
     fi
 
     if [[ -v "noise_range" ]] ; then
         echo "    noise_range=$noise_range"
     else
-        echo " $(lColor ltyellow)?$(lColor off)  noise_range=[0..65000]   default 15000, a color between two colors"
+        echo " $(lColor ltyellow)?$(lColor off)  noise_range=[0..65000]   default 15000, a color"
+        echo "                             between two colors"
         not_set=1
         noise_range=15000
     fi
     if [[ -v "noise_interval" ]] ; then
         echo "    noise_interval=$noise_interval"
     else
-        echo " $(lColor ltyellow)?$(lColor off)  noise_interval=[1..]   default 3 seconds"
+        echo " $(lColor ltyellow)?$(lColor off)  noise_interval=[1..]     default 3 seconds"
         not_set=1
         noise_interval=3
     fi
     if [[ -v "noise_step" ]] ; then
         echo "    noise_step=$noise_step"
     else
-        echo " $(lColor ltyellow)?$(lColor off)  noise_step=[1..65000]   default 5000, could be more than just"
-        echo "                           one shade of the current color "
+        echo " $(lColor ltyellow)?$(lColor off)  noise_step=[1..65000]    default 5000, could be"
+        echo "                             more than just one shade"
+        echo "                             of the current color "
         not_set=1
         noise_step=5000
     fi
     if [[ "$not_set" -eq 1 ]] ; then
-        echo " *  You can set these vars in ~/.config/lampe/light-defaults"
+        echo " *  You can set these vars in"
+        echo "    ~/.config/lampe/light-defaults"
         echo ""
     fi
 }
