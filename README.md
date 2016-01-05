@@ -1,8 +1,7 @@
 # Readme: lampe
 
-**lampe:**
-
-Interactive bash-script to control your Philips Hue lights.
+**lampe (-bash):**
+Interactive bash-script to control your Philips Hue lights connected to the bridge.
 
 ![lampe](/lampe.png)
 
@@ -12,7 +11,7 @@ Control your Philips Hue lights from the Gnome-Desktop
 ![lampe-gtk](/lampe-gtk.png)
 
 ## Requirements
-Following cli-tools need to be installed on your system in order to use **lampe(-bash)**:
+Following cli-tools need to be installed on your system in order to use **lampe (-bash)**:
 - curl
 - ping
 - ip
@@ -66,7 +65,7 @@ If the IP of the bridge has changed you can edit it in `~/.lamperc`. If that doe
 rm ~/.lamperc
 ```
 
-## Usage: lampe(-bash)
+## Usage: lampe (-bash)
 Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
 ```
 1..99 - select light
