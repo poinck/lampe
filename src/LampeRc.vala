@@ -5,18 +5,30 @@ public class LampeRc {
 
 	private File rc_file;
 
+    private string ip;
+    private string user;
+
 	public LampeRc() {
 		rc_file = File.new_for_path(Environment.get_home_dir() + RC_FILE);
 	}
 
-	public string getBridgeIp() {
+    public string getIp() {
+        return this.ip;
+    }
+
+    public string getUser() {
+        return this.user;
+    }
+
+	public bool read() {
 		if (rc_file.query_exists() == false) {
 		    debug("[LampeRc] ERROR file '" + rc_file.get_path()
 		    	+ "' does not exist.");
-		    return "";
+		    return false;
 		}
 
-		string ip = "";
+		this.ip = "";
+        this.user = "";
 
 		try {
 			DataInputStream dis = new DataInputStream(rc_file.read());
@@ -32,7 +44,20 @@ public class LampeRc {
 					}
 #endif
 					if (parts_of_line.length >= 2) {
-						ip = parts_of_line[1];
+						this.ip = parts_of_line[1];
+					}
+				}
+
+				if (line.contains("bridgeuser=") == true) {
+					debug("[LampeRc] found bridgeuser");
+					parts_of_line = line.split("\"");
+#if DEBUG
+					foreach (string part_of_line in parts_of_line) {
+						debug("'" + part_of_line + "'");
+					}
+#endif
+					if (parts_of_line.length >= 2) {
+						this.user = parts_of_line[1];
 					}
 				}
 			}
@@ -41,6 +66,6 @@ public class LampeRc {
 			debug("[LampeRc] ERROR: " + e.message);
 		}
 
-		return ip;
+		return true;
 	}
 }

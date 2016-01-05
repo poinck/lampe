@@ -38,8 +38,8 @@ class Lampe : Gtk.Application {
 				"website", "http://github.com/poinck/lampe",
 				"website-label", ("github.com/poinck/lampe"),
 				"logo", window.icon,
-				"copyright", "by poinck, 2015",
-				"version", "1.1.3",
+				"copyright", "by poinck, 2016",
+				"version", "1.1.5",
 				"comments", "Control your Hue lights.",
 				null
 			);
@@ -71,14 +71,19 @@ class Lampe : Gtk.Application {
 
 		// initialize soup session for bridge connection
 		LampeRc rc = new LampeRc();
-		string ip = rc.getBridgeIp();
+        string ip = "";
+        string user = "";
+        if (rc.read()) {
+		    ip = rc.getIp();
+            user = rc.getUser();
+        }
 		if (ip == "") {
 			header.set_subtitle("no bridge");
 		}
 		else {
 			header.set_subtitle("using bridge at " + ip);
 		}
-		HueBridge bridge = new HueBridge(ip);
+		HueBridge bridge = new HueBridge(ip, user);
 
 		Grid mainGrid = new Grid();
 

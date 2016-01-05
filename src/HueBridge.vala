@@ -5,6 +5,7 @@ using Posix;
 
 public class HueBridge : Soup.Session {
 	private string ip_address;
+    private string user_name;
 	public static const string BRIDGE_USER = "lampe-bash";
 		// TODO  choose user name other than "lampe-bash", use "lampe"; the bash-version should then use the same user
 
@@ -12,8 +13,9 @@ public class HueBridge : Soup.Session {
 	private bool timer_is_running = false;
 	private Soup.Message s_msg;
 
-	public HueBridge(string ip_address) {
+	public HueBridge(string ip_address, string user_name) {
 		this.ip_address = ip_address;
+        this.user_name = user_name;
 	}
 
 	// send message async without callback
@@ -33,7 +35,7 @@ public class HueBridge : Soup.Session {
 	public void put_light_state(int light, string request) {
 		s_msg = new Soup.Message(
 			"PUT",
-			"http://" + this.ip_address + "/api/" + BRIDGE_USER
+			"http://" + this.ip_address + "/api/" + this.user_name
 				+ "/lights/" + light.to_string() + "/state"
 		);
 		s_msg.set_request("application/json", MemoryUse.COPY, request.data);
@@ -54,7 +56,7 @@ public class HueBridge : Soup.Session {
 	public void put_schedule_state(Schedule schedule, string request) {
 		Soup.Message msg = new Soup.Message(
 			"PUT",
-			"http://" + this.ip_address + "/api/" + BRIDGE_USER
+			"http://" + this.ip_address + "/api/" + this.user_name
 				+ "/schedules/" + schedule.get_schedule_id().to_string()
 		);
 		msg.set_request("application/json", MemoryUse.COPY, request.data);
@@ -72,7 +74,7 @@ public class HueBridge : Soup.Session {
 	public void post_schedule(Light light, Schedule schedule, string request) {
 		Soup.Message msg = new Soup.Message(
 			"POST",
-			"http://" + this.ip_address + "/api/" + BRIDGE_USER
+			"http://" + this.ip_address + "/api/" + this.user_name
 				+ "/schedules"
 		);
 		msg.set_request("application/json", MemoryUse.COPY, request.data);
@@ -90,7 +92,7 @@ public class HueBridge : Soup.Session {
 	public void put_group_state(int group, string request) {
 		s_msg = new Soup.Message(
 			"PUT",
-			"http://" + this.ip_address + "/api/" + BRIDGE_USER
+			"http://" + this.ip_address + "/api/" + this.user_name
 				+ "/groups/" + group.to_string() + "/action"
 		);
 		s_msg.set_request("application/json", MemoryUse.COPY, request.data);
@@ -111,7 +113,7 @@ public class HueBridge : Soup.Session {
 	public void get_states(Lights lights) {
 		Soup.Message msg = new Soup.Message(
 			"GET",
-			"http://" + this.ip_address + "/api/" + BRIDGE_USER + "/lights"
+			"http://" + this.ip_address + "/api/" + this.user_name + "/lights"
 		);
 
 		this.queue_message(msg, (s, m) => {
@@ -127,7 +129,7 @@ public class HueBridge : Soup.Session {
 	public void get_schedules(Lights lights) {
 		Soup.Message msg = new Soup.Message(
 			"GET",
-			"http://" + this.ip_address + "/api/" + BRIDGE_USER + "/schedules"
+			"http://" + this.ip_address + "/api/" + this.user_name + "/schedules"
 		);
 
 		this.queue_message(msg, (s, m) => {
