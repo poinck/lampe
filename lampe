@@ -105,6 +105,10 @@ checkKey() {
 			# redshift sequence
 			_T=1
 		;;
+		"o")
+			# noise sequence
+			_O=1
+		;;
 	esac
 }
 
@@ -241,6 +245,54 @@ redshiftSequence() {
         else
             sleep 600 # 10 minutes
         fi
+    done
+}
+
+noiseSequence() {
+    local transition=$(( noise_interval * 10 )) # transition time
+    local ihue=${_COLOR[$_SELECTED_LAMP]}
+    local isat=${_SAT[$_SELECTED_LAMP]}
+
+    # debug
+    # echo "current hue = ${_COLOR[$_SELECTED_LAMP]}"
+    # echo "lamp = $_SELECTED_LAMP"
+    # echo "ihue = $ihue"
+
+    local min_hue=$(( ihue-noise_range ))
+    local max_hue=$(( ihue+noise_range ))
+
+    # echo "min_hue = $min_hue"
+    # echo "max_hue = $max_hue"
+
+    osat=$isat
+    ohue=$ihue
+	while [[ -f "/tmp/lampeSequenceO$_SELECTED_LAMP" ]] ; do
+        local hue_step=$(( RANDOM*noise_step*2/32767-noise_step ))
+        local nhue=$(( ohue+hue_step ))
+        if [[ "$nhue" -gt "$max_hue" ]] ; then
+            nhue=$max_hue
+        fi
+        if [[ "$nhue" -lt "$min_hue" ]] ; then
+            nhue=$min_hue
+        fi
+
+        local nsat=$(( osat+(hue_step/500) ))
+        if [[ "$nsat" -gt 254 ]] ; then
+            nsat=254
+        fi
+        if [[ "$nsat" -lt 0 ]] ; then
+            nsat=192
+        fi
+
+        local noise="\"hue\":$nhue,\"transitiontime\":$transition,\"sat\":$nsat"
+		curl -s -d "{$noise}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+        sleep "$noise_interval"
+        ohue=$nhue
+        osat=$nsat
+
+        # debug
+        # echo "nsat = $nsat, osat = $osat"
+        # echo "nhue = $nhue, ohue = $ohue"
     done
 }
 
@@ -513,6 +565,8 @@ printMainScreen() {
 					echo -en "$(getColorOfLight)M$(lColor off)"
 				elif [[ -f "/tmp/lampeSequenceT$_SELECTED_LAMP" ]] ; then
 					echo -en "$(getColorOfLight)T$(lColor off)"
+				elif [[ -f "/tmp/lampeSequenceO$_SELECTED_LAMP" ]] ; then
+					echo -en "$(getColorOfLight)O$(lColor off)"
 				else
 					echo -en "$(getColorOfLight)C$(lColor off)"
 				fi
@@ -546,24 +600,34 @@ toggleSequence() {
 			rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
 			rm "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
 			rm "/tmp/lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
 			_SWITCH[_SELECTED_LAMP]="true"
 			( previewRandom ) &
 		elif [[ "$sequence" == "B" ]] ; then
 			rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
 			rm "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
 			rm "/tmp/lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
 			_SWITCH[_SELECTED_LAMP]="true"
 			( previewBlink "${_BRIGHTNESS[$_SELECTED_LAMP]}" ) &
 		elif [[ "$sequence" == "M" ]] ; then
 			rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
 			rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
 			rm "/tmp/lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
 			( moodSequence ) &
 		elif [[ "$sequence" == "T" ]] ; then
 			rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
 			rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
 			rm "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
 			( redshiftSequence ) &
+		elif [[ "$sequence" == "O" ]] ; then
+			rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
+			( noiseSequence ) &
 		fi
 	else
 		# deactivate $sequence
@@ -638,6 +702,7 @@ lampeMain() {
 		_YY=0
 		_NN=0
         _T=0
+        _O=0
 
 		readAKey
 
@@ -694,6 +759,8 @@ lampeMain() {
 			toggleSequence "M"
 		elif [[ "$_T" == 1 ]] ; then
 			toggleSequence "T"
+		elif [[ "$_O" == 1 ]] ; then
+			toggleSequence "O"
 		elif [[ "$_I" == 1 ]] ; then
 			# receive current light state
 			hbReceiveLightState "$_SELECTED_LAMP"
@@ -1024,6 +1091,8 @@ hbReceiveLightStates() {
 				echo -n "M  "
 			elif [[ -f "/tmp/lampeSequenceT$light" ]] ; then
 				echo -n "T  "
+			elif [[ -f "/tmp/lampeSequenceO$light" ]] ; then
+				echo -n "O  "
 			else
 				echo -n "C  "
 			fi
@@ -1120,20 +1189,24 @@ loadUserConfig() {
     if [[ -v "noise_range" ]] ; then
         echo "    noise_range=$noise_range"
     else
-        echo " $(lColor ltyellow)?$(lColor off)  noise_range=   "
+        echo " $(lColor ltyellow)?$(lColor off)  noise_range=[0..65000]   default 15000, a color between two colors"
         not_set=1
+        noise_range=15000
     fi
     if [[ -v "noise_interval" ]] ; then
         echo "    noise_interval=$noise_interval"
     else
-        echo " $(lColor ltyellow)?$(lColor off)  noise_interval=   "
+        echo " $(lColor ltyellow)?$(lColor off)  noise_interval=[1..]   default 3 seconds"
         not_set=1
+        noise_interval=3
     fi
     if [[ -v "noise_step" ]] ; then
         echo "    noise_step=$noise_step"
     else
-        echo " $(lColor ltyellow)?$(lColor off)  noise_step=   "
+        echo " $(lColor ltyellow)?$(lColor off)  noise_step=[1..65000]   default 5000, could be more than just"
+        echo "                           one shade of the current color "
         not_set=1
+        noise_step=5000
     fi
     if [[ "$not_set" -eq 1 ]] ; then
         echo " *  You can set these vars in ~/.config/lampe/light-defaults"
