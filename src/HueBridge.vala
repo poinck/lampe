@@ -15,7 +15,12 @@ public class HueBridge : Soup.Session {
 
 	public HueBridge(string ip_address, string user_name) {
 		this.ip_address = ip_address;
-        this.user_name = user_name;
+        if (user_name == "") {
+            this.user_name = BRIDGE_USER;
+        }
+        else {
+            this.user_name = user_name;
+        }
 	}
 
 	// send message async without callback
