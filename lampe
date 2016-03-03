@@ -545,6 +545,9 @@ printMainScreen() {
 		if [ -n "$firstNumer" ] ; then
 			echo -n "$firstNumer. "
 		else
+            # debug
+            # echo "_SELECTED_LAMP = $_SELECTED_LAMP"
+
 			if [ "$_SELECTED_LAMP" -lt 10 ] ; then
 				echo -n " "
 			fi
@@ -672,106 +675,131 @@ lampeQuit() {
 	fi
 }
 
+initializeKeys() {
+	_UP=0
+	_DOWN=0
+	_RIGHT=0
+	_LEFT=0
+	_Q=0
+	_E=0
+	_Y=0
+	_N=0
+	_H=0
+	_I=0
+	_II=0
+	_A=0
+	_QQ=0
+	_S=0
+	_L=0
+	_R=0
+	_B=0
+	_M=0
+	_YY=0
+	_NN=0
+    _T=0
+    _O=0
+}
+
+handleKey() {
+	if [[ "$_UP" == 1 ]] ; then
+		setBrightness 5
+		hbSendLightBri
+	elif [[ "$_DOWN" == 1 ]] ; then
+		setBrightness -5
+		hbSendLightBri
+	elif [[ "$_RIGHT" == 1 ]] ; then
+		setSat 10
+		hbSendLightSat
+	elif [[ "$_LEFT" == 1 ]] ; then
+		setSat -10
+		hbSendLightSat
+	elif [[ "$_Q" == 1 ]] ; then
+		# hue
+		setColor -1000
+		hbSendLightColor
+	elif [[ "$_E" == 1 ]] ; then
+		# hue
+		setColor 1000
+		hbSendLightColor
+	elif [[ "$_Y" == 1 ]] ; then
+		setSwitch 1
+		hbSendLightsState
+	elif [[ "$_N" == 1 ]] ; then
+		setSwitch 0
+		hbSendLightSwitch
+	elif [[ "$_YY" == 1 ]] ; then
+		_GLOBAL_SWITCH="true"
+		hbSendLightSwitches
+	elif [[ "$_NN" == 1 ]] ; then
+		_GLOBAL_SWITCH="false"
+		hbSendLightSwitches
+	elif [[ "$_H" == 1 ]] ; then
+		printHelpScreen
+	elif [[ "$_A" == 1 ]] ; then
+		selectAlert
+	elif [[ "$_QQ" == 1 ]] ; then
+		lampeQuit
+	elif [[ "$_S" == 1 ]] ; then
+		saveLightSetting
+		saveAllSettings
+	elif [[ "$_L" == 1 ]] ; then
+		loadLightSetting
+		hbSendLightsState
+	elif [[ "$_R" == 1 ]] ; then
+		toggleSequence "R"
+	elif [[ "$_B" == 1 ]] ; then
+		toggleSequence "B"
+	elif [[ "$_M" == 1 ]] ; then
+		toggleSequence "M"
+	elif [[ "$_T" == 1 ]] ; then
+		toggleSequence "T"
+	elif [[ "$_O" == 1 ]] ; then
+		toggleSequence "O"
+	elif [[ "$_I" == 1 ]] ; then
+		# receive current light state
+		hbReceiveLightState "$_SELECTED_LAMP"
+	elif [[ "$_II" == 1 ]] ; then
+		# receive all light states
+		echo ""
+		hbReceiveLightStates
+	fi
+}
+
 lampeMain() {
-	# initial screen
-	echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor cyan)=$(lColor blue)=$(lColor magenta)=$(lColor ltwhite)---LAMPE-$version---PRESS-h-FOR-HELP-----------$(lColor off)]"
+    if [[ "$L_ONESHOT" == 1 ]] ; then
+        # oneshot-mode
+        initializeKeys
+        _SELECTED_LAMP=1
 
-	lastTime=$(date +%s%3N) # seconds + milliseconds
-	while true; do
-		# main loop
+        # debug
+        # echo "1:=$1 2:=$2 3:=$3"
 
-		# initialize keys
-		_UP=0
-		_DOWN=0
-		_RIGHT=0
-		_LEFT=0
-		_Q=0
-		_E=0
-		_Y=0
-		_N=0
-		_H=0
-		_I=0
-		_II=0
-		_A=0
-		_QQ=0
-		_S=0
-		_L=0
-		_R=0
-		_B=0
-		_M=0
-		_YY=0
-		_NN=0
-        _T=0
-        _O=0
-
-		readAKey
-
-		# handle keys
-		if [[ "$_UP" == 1 ]] ; then
-			setBrightness 5
-			hbSendLightBri
-		elif [[ "$_DOWN" == 1 ]] ; then
-			setBrightness -5
-			hbSendLightBri
-		elif [[ "$_RIGHT" == 1 ]] ; then
-			setSat 10
-			hbSendLightSat
-		elif [[ "$_LEFT" == 1 ]] ; then
-			setSat -10
-			hbSendLightSat
-		elif [[ "$_Q" == 1 ]] ; then
-			# hue
-			setColor -1000
-			hbSendLightColor
-		elif [[ "$_E" == 1 ]] ; then
-			# hue
-			setColor 1000
-			hbSendLightColor
-		elif [[ "$_Y" == 1 ]] ; then
-			setSwitch 1
-			hbSendLightsState
-		elif [[ "$_N" == 1 ]] ; then
-			setSwitch 0
-			hbSendLightSwitch
-		elif [[ "$_YY" == 1 ]] ; then
-			_GLOBAL_SWITCH="true"
-			hbSendLightSwitches
-		elif [[ "$_NN" == 1 ]] ; then
-			_GLOBAL_SWITCH="false"
-			hbSendLightSwitches
-		elif [[ "$_H" == 1 ]] ; then
-			printHelpScreen
-		elif [[ "$_A" == 1 ]] ; then
-			selectAlert
-		elif [[ "$_QQ" == 1 ]] ; then
-			lampeQuit
-		elif [[ "$_S" == 1 ]] ; then
-			saveLightSetting
-			saveAllSettings
-		elif [[ "$_L" == 1 ]] ; then
-			loadLightSetting
-			hbSendLightsState
-		elif [[ "$_R" == 1 ]] ; then
-			toggleSequence "R"
-		elif [[ "$_B" == 1 ]] ; then
-			toggleSequence "B"
-		elif [[ "$_M" == 1 ]] ; then
-			toggleSequence "M"
-		elif [[ "$_T" == 1 ]] ; then
-			toggleSequence "T"
-		elif [[ "$_O" == 1 ]] ; then
-			toggleSequence "O"
-		elif [[ "$_I" == 1 ]] ; then
-			# receive current light state
+        if [[ ! -n "$2" ]] ; then
+            checkKey "$1"
+        else
+	        _SELECTED_LAMP=$1
 			hbReceiveLightState "$_SELECTED_LAMP"
-		elif [[ "$_II" == 1 ]] ; then
-			# receive all light states
-			echo ""
-			hbReceiveLightStates
-		fi
+            checkKey "$2"
+        fi
 
-		printMainScreen
-	done
+        handleKey
+        # receive light state of selected light again
+		hbReceiveLightState "$_SELECTED_LAMP"
+        printMainScreen
+		echo -e "\n $(lColor ltgreen)!$(lColor off)  bye"
+    else
+    	# interactive-mode: initial screen
+    	echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor cyan)=$(lColor blue)=$(lColor magenta)=$(lColor ltwhite)---LAMPE-$version---PRESS-h-FOR-HELP-----------$(lColor off)]"
+
+    	lastTime=$(date +%s%3N) # seconds + milliseconds
+    	while true; do
+    		# main loop
+            initializeKeys
+    		readAKey
+            handleKey
+    		printMainScreen
+    	done
+    fi
 }
 
 # send hue light state only
@@ -960,10 +988,15 @@ hbEnterIP() {
 # this function will be called, if the configuration is valid
 startLampe() {
 	L_BLIND=0
+    L_ONESHOT=0
 	if [[ "$1" == "-b" ]] || [[ "$1" == "--blind" ]] ; then
 		# blind modus: do not print main screen
 		L_BLIND=1
 		lampeMain
+    elif [[ "$1" == "-s" ]] || [[ "$1" == "--set" ]] ; then
+        # set option and quit
+        L_ONESHOT=1
+        lampeMain "$2" "$3"
 	else
 		# default: interactive-mode
 		lampeMain
@@ -997,6 +1030,10 @@ showHelp() {
 	echo "    without option (interactive)"
 	echo " -b, --blind"
 	echo "    blind-mode (interactive)"
+    echo " -s, --set [LIGHT] OPTION"
+    echo "    set option. for available options press h in interactive-mode or"
+    echo "    'lampe -s h'; LIGHT is mandatory for all non-global options."
+    echo "    currently cannot be combined with bline-mode (oneshot)"
 	echo " -h, --help"
 	echo "    show this help"
 }
@@ -1229,7 +1266,11 @@ elif [[ -f ~/.lamperc ]] ; then
     loadUserConfig
 
 	# receive light states
-	hbReceiveLightStates
+	if [[ "$1" != "-s" ]] && [[ "$1" != "--set" ]] ; then
+        # FIXME receiving all light states in oneshot-mode is currently not supported;
+        # this function takes too much time
+        hbReceiveLightStates
+    fi
 
 	startLampe "$@"
 else
