@@ -234,10 +234,10 @@ redshiftSequence() {
         # echo "t/R:kelvin = $kelvin"
         # echo "t/R:mired ?= old_mired => $mired ?= $old_mired"
 
-		local ct="\"ct\":$mired,\"transitiontime\":6000"
+		local ct="\"ct\":$mired,\"transitiontime\":600"
 		curl -s -d "{$ct}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
-        sleep 600 # 10 minutes
+        sleep 60 # 1 minute
     done
 }
 
