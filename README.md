@@ -1,7 +1,7 @@
 # Readme: lampe
 
 **lampe (-bash):**
-Interactive bash-script to control your Philips Hue lights connected to the bridge.
+bash-script to control your Philips Hue lights in interactive, oneshot or blind mode.
 
 ![lampe](/lampe.png)
 
@@ -66,7 +66,11 @@ rm ~/.lamperc
 ```
 
 ## Usage: lampe (-bash)
-Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:* **interactive mode**
+
+**interactive mode**
+
+Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
+See following list for more options:
 ```
 1..99 - select light
     w - increase brightness
