@@ -66,7 +66,7 @@ rm ~/.lamperc
 ```
 
 ## Usage: lampe (-bash)
-Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
+Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:* **interactive mode**
 ```
 1..99 - select light
     w - increase brightness
@@ -88,9 +88,16 @@ Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
     Q - quit
 ```
 
+**oneshot mode**
+
+If you prefere that "lampe" just exists after changing a light setting, you can use the oneshot mode. All options can be used. The parameter LIGHT (number) is mandatory for all non-global options.
+```.sh
+lampe -s [LIGHT] OPTION
+```
+
 **blind mode**
 
-if you have a very slow terminal, you can use the blind mode as follows; it won't show up the current light state unless you type "i" or "I". All other function are still accessible:
+If you have a very slow terminal, you can use the blind mode as follows; it won't show up the current light state unless you type "i" or "I". All other function are still accessible:
 ```.sh
 lampe -b
 ```

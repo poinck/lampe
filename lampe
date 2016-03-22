@@ -2,7 +2,7 @@
 # lampe by André Klausnitzer, CC0
 # interactive bash script to control your Philips Hue lights
 
-version="1.1.5"
+version="1.1.6"
 
 # XXX   not used
 readKey() {
