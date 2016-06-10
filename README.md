@@ -55,6 +55,9 @@ Add my overlay ["koo"](https://github.com/poinck/koo) (instructions there) with 
 emerge -av lampe
 ```
 
+**Docker image**
+Build your Docker [image](https://gist.github.com/wico/076ba6cf4c52c4dbf13f028e3c1872d4). Thx [wico](https://github.com/wico).
+
 ## Configuration
 `lampe` will ask you for automatic discovery on first start. If the discovery fails, it will ask for the IP of the bridge. After that it will try to register itself at your Hue-bridge and ask you to press the Link-button. This should work with the new Hue-bridge api version which does not allow explicit user names anymore.
 
