@@ -8,12 +8,11 @@ DEBUG = 0
 VALA_OPTS = -v --pkg gtk+-3.0 --pkg libsoup-2.4 --pkg json-glib-1.0 --pkg posix --target-glib=2.42 --pkg glib-2.0
 CC_OPTS = -X -lm
 
+VALA_DEBUG_OPTS =
+CC_DEBUG_OPTS =
 ifeq ($(DEBUG), 1)
-	VALA_DEBUG_OPTS = -g -D DEBUG -D TEST
-	CC_DEBUG_OPTS = -X -g
-else
-	VALA_DEBUG_OPTS =
-	CC_DEBUG_OPTS =
+VALA_DEBUG_OPTS = -g -D DEBUG -D TEST
+CC_DEBUG_OPTS = -X -g
 endif
 
 SRC_FILES := $(wildcard src/*.vala)
