@@ -2,7 +2,7 @@
 # lampe by André Klausnitzer, CC0
 # interactive bash script to control your Philips Hue lights
 
-version="1.1.6"
+version="1.1.7"
 
 # XXX   not used
 readKey() {
@@ -17,7 +17,7 @@ readKey() {
 
 # defaults: can be redefined in ~/.lamperc
 declare _SELECTED_LAMP=1
-tmdCsvFile="$HOME/public_html/tm/tm_720.csv"
+tmdCsvFile="$HOME/public_html/tm/tm_1.csv"
 
 checkKey() {
 	case $1 in
