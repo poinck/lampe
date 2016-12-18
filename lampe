@@ -2,7 +2,7 @@
 # lampe by André Klausnitzer, CC0
 # interactive bash script to control your Philips Hue lights
 
-version="1.1.7"
+version="1.1.8"
 
 # XXX   not used
 readKey() {
@@ -412,7 +412,7 @@ lColor() {
 			echo -en "\e[0;36m"
 		;;
 		"white")
-			echo -en "\e[0;37m"
+			echo -en "\e[0;38m"
 		;;
 		"ltred")
 			echo -en "\e[1;31m"
@@ -433,7 +433,8 @@ lColor() {
 			echo -en "\e[1;36m"
 		;;
 		"ltwhite")
-			echo -en "\e[1;37m"
+			#echo -en "\e[0m\e[1;38m"
+			echo -en "\e[1;38m"
 		;;
 		"off")
 			echo -en "\e[0m"
@@ -782,7 +783,7 @@ lampeMain() {
 		echo -e "\n $(lColor ltgreen)!$(lColor off)  bye"
     else
     	# interactive-mode: initial screen
-    	echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor cyan)=$(lColor blue)=$(lColor magenta)=$(lColor ltwhite)---LAMPE-$version---PRESS-h-FOR-HELP-----------$(lColor off)]"
+    	echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor cyan)=$(lColor blue)=$(lColor magenta)=$(lColor off)$(lColor ltwhite)---LAMPE-${version}---PRESS-h-FOR-HELP-----------$(lColor off)]"
 
     	lastTime=$(date +%s%3N) # seconds + milliseconds
     	while true; do
