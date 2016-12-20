@@ -412,7 +412,7 @@ lColor() {
 			echo -en "\e[0;36m"
 		;;
 		"white")
-			echo -en "\e[0;97m"
+			echo -en "\e[0m"
 		;;
 		"ltred")
 			echo -en "\e[1;31m"
@@ -433,7 +433,7 @@ lColor() {
 			echo -en "\e[1;36m"
 		;;
 		"ltwhite")
-			echo -en "\e[1;97m"
+			echo -en "\e[1m"
 		;;
 		"off")
 			echo -en "\e[0m"
