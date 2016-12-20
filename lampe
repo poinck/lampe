@@ -547,7 +547,7 @@ printMainScreen() {
 			echo -en "$(getColorOfLight)$_SELECTED_LAMP $(lColor ltwhite)"
 		fi
 
-		echo -en "[$(lColor off)"
+		echo -en "$(lColor off)$(lColor ltwhite)[$(lColor off)"
 		for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do
 			colorValue=$((65279*ii/currentBrightness))
 			echo -en "$(getColorByValue $colorValue)"
@@ -577,7 +577,7 @@ printMainScreen() {
 		for (( ii=0 ; ii<50-currentBrightness ; ii=ii+1 )) ; do
 			echo -n " "
 		done
-		echo -en "$(lColor ltwhite)]$(lColor off) "
+		echo -en "$(lColor off)$(lColor ltwhite)]$(lColor off) "
 		if [[ ${_SWITCH[$_SELECTED_LAMP]} != "true" ]] ; then
 			echo -n "off "
 		else
