@@ -198,12 +198,15 @@ public class Lights : ListBox {
 					}
 				}
 
-				// append found lights in json-response to internal list of lights
-				Light found_light = new Light(
-					light_id, name, hue, sat, bri, lswitch, reachable, bridge,
-					this
-				);
-				lights.append(found_light);
+				// append found lights in json-response to internal list of
+                // lights
+                if (light_id != 0) {
+				    Light found_light = new Light(
+				    	light_id, name, hue, sat, bri, lswitch, reachable, bridge,
+				    	this
+				    );
+				    lights.append(found_light);
+                }
 			}
 		}
 		catch (Error e) {
@@ -283,12 +286,20 @@ public class Lights : ListBox {
 						foreach (string command in command_obj.get_members()) {
 							if (command == "address") {
 								address = command_obj.get_string_member(command);
+
+                                // test
+                                //address = "";
+
 								debug("[Lights.schedules_received] address = '"
 									+ address + "'");
 								parts_of_address = address.split("/");
-								if (parts_of_address[3] == "lights") {
-									light_id = int.parse(parts_of_address[4]);
-								}
+
+                                int parts = parts_of_address.length;
+                                if (parts > 0) {
+								    if (parts_of_address[3] == "lights") {
+								    	light_id = int.parse(parts_of_address[4]);
+								    }
+                                }
 								debug("[Lights.schedules_received] light_id = '"
 									+ light_id.to_string() + "'");
 							}
@@ -312,11 +323,13 @@ public class Lights : ListBox {
 					}
 				}
 
-				// insert found schedules to temporary schedules list
-				Schedule s = new Schedule(schedule_id, name, light_id, time,
-					bri, sat, status, app, bridge
-				);
-				schedule_list.append(s);
+				// insert found schedules of lights to temporary schedules list
+                if (light_id != 0) {
+				    Schedule s = new Schedule(schedule_id, name, light_id, time,
+				    	bri, sat, status, app, bridge
+				    );
+				    schedule_list.append(s);
+                }
 			}
 		}
 		catch (Error e) {
