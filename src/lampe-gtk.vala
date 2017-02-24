@@ -6,12 +6,12 @@ class Lampe : Gtk.Application {
 	public Lampe() {
 		Object(application_id: "net.lampe.app", flags: ApplicationFlags.FLAGS_NONE);
 	}
-	
+
 	private void set_global_menu(ApplicationWindow window) {
 		GLib.Menu global_menu = new GLib.Menu();
 		global_menu.append("Info", "app.about");
 		global_menu.append("Quit", "app.quit");
-		
+
 		GLib.SimpleAction exit_action = new GLib.SimpleAction("quit", null);
 		exit_action.set_enabled(true);
 		exit_action.activate.connect(() => {
@@ -19,13 +19,13 @@ class Lampe : Gtk.Application {
 			window.close();
 		});
 		this.add_action(exit_action);
-		
+
 		GLib.SimpleAction about_action = new GLib.SimpleAction("about", null);
 		about_action.set_enabled(true);
 		about_action.activate.connect(() => {
 			debug("[Lampe] about");
 			string license_text = get_cc0_license_text(); // see: license.vala
-			
+
 			string[] authors = { "André Klausnitzer", null };
 			string[] documenters = { "André Klausnitzer", null };
 			Gtk.show_about_dialog(
@@ -38,17 +38,17 @@ class Lampe : Gtk.Application {
 				"website", "http://github.com/poinck/lampe",
 				"website-label", ("github.com/poinck/lampe"),
 				"logo", window.icon,
-				"copyright", "by poinck, 2015",
-				"version", "1.1.3",
+				"copyright", "by poinck, 2016",
+				"version", "1.1.5",
 				"comments", "Control your Hue lights.",
 				null
 			);
 		});
 		this.add_action(about_action);
-		
+
 		this.app_menu = global_menu;
 	}
-	
+
 	protected override void activate() {
 		// main window
 		Gtk.ApplicationWindow lampeWindow = new Gtk.ApplicationWindow(this);
@@ -62,41 +62,46 @@ class Lampe : Gtk.Application {
 		catch (Error e) {
 			debug("[Lampe] ERROR: could not load icon");
 		}
-			
+
 		// header bar: add to main window
 		var header = new HeaderBar();
 		header.set_show_close_button(true);
 		header.set_title("Lampe");
 		lampeWindow.set_titlebar(header);
-		
+
 		// initialize soup session for bridge connection
 		LampeRc rc = new LampeRc();
-		string ip = rc.getBridgeIp();
+        string ip = "";
+        string user = "";
+        if (rc.read()) {
+		    ip = rc.getIp();
+            user = rc.getUser();
+        }
 		if (ip == "") {
 			header.set_subtitle("no bridge");
 		}
 		else {
 			header.set_subtitle("using bridge at " + ip);
 		}
-		HueBridge bridge = new HueBridge(ip);
-	
+		HueBridge bridge = new HueBridge(ip, user);
+
 		Grid mainGrid = new Grid();
-	
+
 		// box: lights
 			// TODO  maybe: move everything related to the stack to a seperate method?
 		Box lights_box = new Box(Orientation.VERTICAL, 8);
 		Box lights_border_box = new Box(Orientation.HORIZONTAL, 8);
 		Gdk.RGBA boxColor = Gdk.RGBA();
 		boxColor.parse("#a4a4a4"); // grey
-		lights_border_box.override_background_color(StateFlags.NORMAL, boxColor); 
-		
+		lights_border_box.override_background_color(StateFlags.NORMAL, boxColor);
+
 		Lights lights = new Lights(bridge, this); // ListBox
 		lights.refresh_lights();
 		// header.pack_end(lights.get_global_switch());
 		lights_box.add(lights.get_header()); // Box
 		lights_border_box.add(lights);
 		lights_box.add(lights_border_box);
-		
+
 		// box: groups
 		ListBox groupsListBox = new ListBox();
 		groupsListBox.insert(new Label("Group A"), 1);
@@ -111,29 +116,29 @@ class Lampe : Gtk.Application {
 		stack.margin_start = 64;
 		stack.margin_end = 64;
 		stack.margin_top = 24;
-	
+
 		// switcher buttons for stack: add to header bar
 		StackSwitcher buttons = new StackSwitcher();
 		buttons.set_stack(stack);
 		buttons.show();
 		header.pack_start(buttons);
-		
+
 		// stack: add to main grid
 		mainGrid.attach(stack, 0, 0, 1, 1); // first row
 		mainGrid.attach(new Label(" "), 0, 1, 1, 1); // second row
-		
-		// add main grid to viewport, add viewport to scrolled window, add 
+
+		// add main grid to viewport, add viewport to scrolled window, add
 		// scrolled window to main window
 		Viewport view = new Viewport(null, null);
 		view.add(mainGrid);
 		Gtk.ScrolledWindow scrolled = new Gtk.ScrolledWindow(null, null);
 		scrolled.add(view);
 		lampeWindow.add(scrolled);
-	
+
 		// button: settings
 			// TODO  maybe: swap out settings-menu in a different class?
 		Gtk.Button settingsButton = new Gtk.Button.from_icon_name(
-			"view-list-symbolic", 
+			"view-list-symbolic",
 			Gtk.IconSize.SMALL_TOOLBAR
 		);
 			// icons: preferences-other, document-properties, applications-utilities, preferences-system, start-here, applications-utilities, view-list
@@ -154,12 +159,12 @@ class Lampe : Gtk.Application {
 		this.add_action(registerAction);
 		// var popoverMenu = new Gtk.PopoverMenu ();
 		// settingsButton.set_popover (popoverMenu);
-			// XXX   there is no "Gtk.PopoverMenu" in 3.14?	
+			// XXX   there is no "Gtk.PopoverMenu" in 3.14?
 		header.pack_end(settingsButton);
-		
+
 		// button: refresh
 		var refreshButton = new Gtk.Button.from_icon_name(
-			"view-refresh-symbolic", 
+			"view-refresh-symbolic",
 			Gtk.IconSize.SMALL_TOOLBAR
 		);
 		refreshButton.clicked.connect(() => {
@@ -167,9 +172,9 @@ class Lampe : Gtk.Application {
 			lights.refresh_lights();
 		});
 		header.pack_end(refreshButton);
-		
+
 		header.pack_end(lights.get_global_switch());
-		
+
 		lampeWindow.show_all();
 	}
 }
@@ -187,7 +192,7 @@ public static void debug(string str) {
 
 public static int main(string[] args) {
 	debug("[main] start");
-	
-	Lampe lampe = new Lampe();	
+
+	Lampe lampe = new Lampe();
 	return lampe.run(args);
 }

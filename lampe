@@ -2,7 +2,7 @@
 # lampe by André Klausnitzer, CC0
 # interactive bash script to control your Philips Hue lights
 
-version="1.1.3"
+version="1.1.8"
 
 # XXX   not used
 readKey() {
@@ -17,7 +17,7 @@ readKey() {
 
 # defaults: can be redefined in ~/.lamperc
 declare _SELECTED_LAMP=1
-tmdCsvFile="$HOME/public_html/tm/tm_720.csv"
+tmdCsvFile="$HOME/public_html/tm/tm_1.csv"
 
 checkKey() {
 	case $1 in
@@ -101,6 +101,14 @@ checkKey() {
 			# mood light
 			_M=1
 		;;
+		"t")
+			# redshift sequence
+			_T=1
+		;;
+		"o")
+			# noise sequence
+			_O=1
+		;;
 	esac
 }
 
@@ -123,10 +131,10 @@ readAKey() {
 
 readLightNumber() {
 	local number=$_KEY
-	
+
 	# debug
 	# echo "number = '$number'"
-	
+
 	read -s -n 1 _NEXT_KEY
 	case $_NEXT_KEY in
 		[0-9])
@@ -136,40 +144,40 @@ readLightNumber() {
 			checkKey "$_NEXT_KEY"
 		;;
 	esac
-	
+
 	_SELECTED_LAMP=$number
-	
+
 	# debug
 	# echo "_SELECTED_LAMP = '$_SELECTED_LAMP'"
 }
 
 # init brightness
 declare -a _BRIGHTNESS
-for (( b=1 ; b<100 ; b=b+1 )) ; do 
+for (( b=1 ; b<100 ; b=b+1 )) ; do
 	_BRIGHTNESS[$b]=32
 done
 
 # init saturation
 declare -a _SAT
-for (( s=1 ; s<100 ; s=s+1 )) ; do 
+for (( s=1 ; s<100 ; s=s+1 )) ; do
 	_SAT[$s]=192
 done
 
 # init switch
 declare -a _SWITCH # on or off
-for (( s=1 ; s<100 ; s=s+1 )) ; do 
+for (( s=1 ; s<100 ; s=s+1 )) ; do
 	_SWITCH[$s]="true"
 done
 
 # init color
-declare -a _COLOR 
-for (( s=1 ; s<100 ; s=s+1 )) ; do 
+declare -a _COLOR
+for (( s=1 ; s<100 ; s=s+1 )) ; do
 	_COLOR[$s]=12000 # orange
 done
 
 # init model
-declare -a _MODEL 
-for (( s=1 ; s<100 ; s=s+1 )) ; do 
+declare -a _MODEL
+for (( s=1 ; s<100 ; s=s+1 )) ; do
 	_MODEL[$s]="\"LCT001\"" # standard Hue bulb
 done
 
@@ -179,27 +187,106 @@ moodSequence() {
 		tmdLine=$(tail -n 1 < "$tmdCsvFile" | cut -f 2-3 -d',' 2> /dev/null)
 		tmdInside=$(echo "$tmdLine" | cut -f 1 -d',')
 		tmdOutside=$(echo "$tmdLine" | cut -f 2 -d',')
-		
+
 		# debug
 		# echo "tmdInside  = '$tmdInside'"
 		# echo "tmdOutside = '$tmdOutside'"
-		
+
 		local temperatureDiff=$(( tmdOutside-tmdInside ))
-		local diffFactor=2
+		local diffFactor=1
 		if [[ "$temperatureDiff" -gt 0 ]] ; then
-			diffFactor=4
+			diffFactor=2
 		fi
 		local hueDiff=$(( temperatureDiff*diffFactor+25750 ))
-		
+        if [[ "$hueDiff" -lt 0 ]] ; then
+            hueDiff=0
+        fi
+
 		# debug
+        # echo "diffFactor      = '$diffFactor'"
 		# echo "temperatureDiff = '$temperatureDiff'"
 		# echo "hueDiff         = '$hueDiff'"
-		
+
 		local hue="\"hue\":$hueDiff,\"transitiontime\":30"
-		curl -s -d "{$hue}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+        if [[ -v "mood_sat" ]] ; then
+            hue="${hue},\"sat\":$mood_sat"
+        fi
+		curl -s -d "{$hue}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
 		sleep 60
 	done
+}
+
+redshiftSequence() {
+	while [[ -f "/tmp/lampeSequenceT$_SELECTED_LAMP" ]] ; do
+        # test fake berlin
+        # redshift_options="-l 52.52:13.40"
+
+        # test fake chicago
+        # redshifts_options="-l 41:-87"
+
+        # get new color temperature
+        kelvin=$( redshift -op $redshift_options 2>/dev/null | grep -e ":*K$" | cut -f 2 -d ":" | cut -b 2-5 )
+        mired=$(( 1000000 / kelvin ))
+
+        # debug
+        # echo "t/R:redshift_options = $redshift_options"
+        # echo "t/R:kelvin = $kelvin"
+        # echo "t/R:mired ?= old_mired => $mired ?= $old_mired"
+
+		local ct="\"ct\":$mired,\"transitiontime\":600"
+		curl -s -d "{$ct}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+
+        sleep 60 # 1 minute
+    done
+}
+
+noiseSequence() {
+    local transition=$(( noise_interval * 10 )) # transition time
+    local ihue=${_COLOR[$_SELECTED_LAMP]}
+    local isat=${_SAT[$_SELECTED_LAMP]}
+
+    # debug
+    # echo "current hue = ${_COLOR[$_SELECTED_LAMP]}"
+    # echo "lamp = $_SELECTED_LAMP"
+    # echo "ihue = $ihue"
+
+    local min_hue=$(( ihue-noise_range ))
+    local max_hue=$(( ihue+noise_range ))
+
+    # echo "min_hue = $min_hue"
+    # echo "max_hue = $max_hue"
+
+    osat=$isat
+    ohue=$ihue
+	while [[ -f "/tmp/lampeSequenceO$_SELECTED_LAMP" ]] ; do
+        local hue_step=$(( RANDOM*noise_step*2/32767-noise_step ))
+        local nhue=$(( ohue+hue_step ))
+        if [[ "$nhue" -gt "$max_hue" ]] ; then
+            nhue=$max_hue
+        fi
+        if [[ "$nhue" -lt "$min_hue" ]] ; then
+            nhue=$min_hue
+        fi
+
+        local nsat=$(( osat+(hue_step/500) ))
+        if [[ "$nsat" -gt 254 ]] ; then
+            nsat=254
+        fi
+        if [[ "$nsat" -lt 0 ]] ; then
+            nsat=192
+        fi
+
+        local noise="\"hue\":$nhue,\"transitiontime\":$transition,\"sat\":$nsat"
+		curl -s -d "{$noise}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+        sleep "$noise_interval"
+        ohue=$nhue
+        osat=$nsat
+
+        # debug
+        # echo "nsat = $nsat, osat = $osat"
+        # echo "nhue = $nhue, ohue = $ohue"
+    done
 }
 
 # GPN15 preview sequence
@@ -211,10 +298,10 @@ previewRandom() {
 	while [[ -f "/tmp/lampeSequenceR$_SELECTED_LAMP" ]] ; do
 		# debug
 		# echo "do random, '$LAMPE_R'"
-	
-		local hue=$(( RANDOM*2 )) 
+
+		local hue=$(( RANDOM*2 ))
 		local color="\"hue\":$hue,\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]},\"transitiontime\":100"
-		curl -s -d "{\"on\":$on,$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{\"on\":$on,$color}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
 		sleep 10
 	done
@@ -222,10 +309,10 @@ previewRandom() {
 
 # blink preview sequence
 previewBlink() {
-	local on="true" 
+	local on="true"
 	local bri="$1"
 	while [[ -f "/tmp/lampeSequenceB$_SELECTED_LAMP" ]] ; do
-		curl -s -d "{\"on\":$on,\"transitiontime\":0,\"bri\":$bri}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{\"on\":$on,\"transitiontime\":0,\"bri\":$bri}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
 		sleep 1
 		if [[ "$on" == "true" ]] ; then
@@ -237,12 +324,12 @@ previewBlink() {
 }
 
 selectAlert() {
-	curl -s -d "{\"alert\":\"select\"}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+	curl -s -d "{\"alert\":\"select\"}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 }
 
 setBrightness() {
 	brightness=${_BRIGHTNESS[$_SELECTED_LAMP]}
-	
+
 	brightness=$((brightness+$1))
 	if [ $brightness -lt 2 ] ; then
 		brightness=1
@@ -257,11 +344,11 @@ setBrightness() {
 	# debug
 	# echo -n "param = $1 "
 	# echo "brightness = ${_BRIGHTNESS[$_SELECTED_LAMP]} "
-} 
+}
 
 setSat() {
 	sat=${_SAT[$_SELECTED_LAMP]}
-	
+
 	sat=$((sat+$1))
 	if [ $sat -lt 1 ] ; then
 		sat=1
@@ -274,7 +361,7 @@ setSat() {
 
 setColor() {
 	hue=${_COLOR[$_SELECTED_LAMP]}
-	
+
 	hue=$((hue+$1))
 	if [ $hue -lt 1 ] ; then
 		hue=65280
@@ -286,17 +373,17 @@ setColor() {
 	# echo " $hue "
 
 	_COLOR[$_SELECTED_LAMP]=$hue
-} 
+}
 
 setSwitch() {
 	# debug
 	# echo -n $1
 
-	if [[ "$1" == 1 ]] ; then 
+	if [[ "$1" == 1 ]] ; then
 		_SWITCH[$_SELECTED_LAMP]="true"
 	else
 		_SWITCH[$_SELECTED_LAMP]="false"
-		
+
 		# disable sequences that would turn the light on again
 		rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
 		rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
@@ -325,7 +412,7 @@ lColor() {
 			echo -en "\e[0;36m"
 		;;
 		"white")
-			echo -en "\e[0;37m"
+			echo -en "\e[0m"
 		;;
 		"ltred")
 			echo -en "\e[1;31m"
@@ -346,7 +433,7 @@ lColor() {
 			echo -en "\e[1;36m"
 		;;
 		"ltwhite")
-			echo -en "\e[1;37m"
+			echo -en "\e[1m"
 		;;
 		"off")
 			echo -en "\e[0m"
@@ -375,10 +462,10 @@ getColorByValue() {
 	elif [ "$hue" -gt 35000 ] && [ "$hue" -lt 48001 ] ; then
 		# blue
 		colorEscape="blue"
-	elif [ "$hue" -gt 48000 ] && [ "$hue" -lt 63279 ] ; then
+	elif [ "$hue" -gt 48000 ] && [ "$hue" -lt 62280 ] ; then
 		# purple
 		colorEscape="magenta"
-	elif [ "$hue" -gt 63279 ] ; then
+	elif [ "$hue" -gt 62279 ] ; then
 		# red
 		colorEscape="red"
 	fi
@@ -397,7 +484,7 @@ getColorOfLight() {
 	if [[ ! -n "$hue" ]] ; then
 		hue=12000
 	fi
-	
+
 	# debug
 	# echo " getColor.hue = '$hue'"
 
@@ -420,7 +507,7 @@ getColorOfLight() {
 	elif [[ "$hue" -gt 35000 ]] && [[ "$hue" -lt 48001 ]] ; then
 		# blue
 		colorEscape="blue"
-	elif [[ "$hue" -gt 48000 ]] && [[ "$hue" -lt 63279 ]] ; then
+	elif [[ "$hue" -gt 48000 ]] && [[ "$hue" -lt 63280 ]] ; then
 		# purple
 		colorEscape="magenta"
 	elif [[ "$hue" -gt 63279 ]] ; then
@@ -433,7 +520,7 @@ getColorOfLight() {
 printMainScreen() {
 	local firstNumer=$1
 
-	if [[ "$L_BLIND" == 0 ]] ; then
+	if [[ "$L_BLIND" == 0 ]] || [[ "$_I" -eq 1 ]] ; then
 		currentBrightness=$((_BRIGHTNESS[_SELECTED_LAMP]/5))
 		currentSat=$((_SAT[_SELECTED_LAMP]*currentBrightness/254))
 		colorPosition=$((_COLOR[_SELECTED_LAMP]*currentBrightness/65279))
@@ -445,20 +532,23 @@ printMainScreen() {
 		# echo "$colorPosition"
 		# echo "firstNumer = '$firstNumer'"
 
-		# XXX   bug#23 fixed: use carriage return instead of deleting chars 
+		# XXX   bug#23 fixed: use carriage return instead of deleting chars
 		# one by one with backspace
 		echo -en "\r"
 		if [ -n "$firstNumer" ] ; then
 			echo -n "$firstNumer. "
 		else
+            # debug
+            # echo "_SELECTED_LAMP = $_SELECTED_LAMP"
+
 			if [ "$_SELECTED_LAMP" -lt 10 ] ; then
 				echo -n " "
 			fi
 			echo -en "$(getColorOfLight)$_SELECTED_LAMP $(lColor ltwhite)"
 		fi
-		
-		echo -en "[$(lColor off)"
-		for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do 
+
+		echo -en "$(lColor off)$(lColor ltwhite)[$(lColor off)"
+		for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do
 			colorValue=$((65279*ii/currentBrightness))
 			echo -en "$(getColorByValue $colorValue)"
 
@@ -469,6 +559,10 @@ printMainScreen() {
 					echo -en "$(getColorOfLight)B$(lColor off)"
 				elif [[ -f "/tmp/lampeSequenceM$_SELECTED_LAMP" ]] ; then
 					echo -en "$(getColorOfLight)M$(lColor off)"
+				elif [[ -f "/tmp/lampeSequenceT$_SELECTED_LAMP" ]] ; then
+					echo -en "$(getColorOfLight)T$(lColor off)"
+				elif [[ -f "/tmp/lampeSequenceO$_SELECTED_LAMP" ]] ; then
+					echo -en "$(getColorOfLight)O$(lColor off)"
 				else
 					echo -en "$(getColorOfLight)C$(lColor off)"
 				fi
@@ -483,7 +577,7 @@ printMainScreen() {
 		for (( ii=0 ; ii<50-currentBrightness ; ii=ii+1 )) ; do
 			echo -n " "
 		done
-		echo -en "$(lColor ltwhite)]$(lColor off) "
+		echo -en "$(lColor off)$(lColor ltwhite)]$(lColor off) "
 		if [[ ${_SWITCH[$_SELECTED_LAMP]} != "true" ]] ; then
 			echo -n "off "
 		else
@@ -494,24 +588,42 @@ printMainScreen() {
 
 toggleSequence() {
 	local sequence=$1
-	
+
 	if [[ ! -f "/tmp/lampeSequence$sequence$_SELECTED_LAMP" ]] ; then
 		# activate $sequence, deactivate others
 		touch "/tmp/lampeSequence$sequence$_SELECTED_LAMP" 2> /dev/null
 		if [[ "$sequence" == "R" ]] ; then
 			rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
 			rm "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
 			_SWITCH[_SELECTED_LAMP]="true"
 			( previewRandom ) &
 		elif [[ "$sequence" == "B" ]] ; then
 			rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
 			rm "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
 			_SWITCH[_SELECTED_LAMP]="true"
 			( previewBlink "${_BRIGHTNESS[$_SELECTED_LAMP]}" ) &
 		elif [[ "$sequence" == "M" ]] ; then
 			rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
 			rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
 			( moodSequence ) &
+		elif [[ "$sequence" == "T" ]] ; then
+			rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
+			( redshiftSequence ) &
+		elif [[ "$sequence" == "O" ]] ; then
+			rm "/tmp/lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
+			rm "/tmp/lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
+			( noiseSequence ) &
 		fi
 	else
 		# deactivate $sequence
@@ -526,7 +638,7 @@ printHelpScreen() {
 	echo "    a, d     SATURATION    ="
 	echo "    q, e     COLOR         C"
 	echo "    y, Y     ON            switch (all) light/s on"
-	echo "    n, N     SWITCHES      switch (all) light/s off"
+	echo "    n, N     OFF           switch (all) light/s off"
 	echo "    i, I     INFO          receive (all) light state/s"
 	echo "    S, l     SETTINGS      save, load user defaults"
 	echo "    F        FIND          find new lights (TODO)"
@@ -535,6 +647,10 @@ printHelpScreen() {
 	echo "    A        ALERT"
 	echo "    m        MOOD          M: temperature difference"
 	echo "                              based color sequence"
+    echo "    t        REDSHIFT      T: color temperature"
+    echo "                              sequence based on"
+    echo "                              redshift"
+    echo "    o        NOISE         O: noise color sequence"
 	#        [--------------------------------------------------]
 	echo "    Q        QUIT"
 }
@@ -544,7 +660,7 @@ lampeQuit() {
 	read doQuit
 	if [[ "$doQuit" == "y" ]] || [[ "$doQuit" == "Y" ]] || [[ "$doQuit" == "" ]] ; then
 		echo " $(lColor ltgreen)!$(lColor off)  bye"
-		
+
 		# cleanup and quit
 		rm /tmp/lampeSequence* 2> /dev/null
 		# killall lampe > /dev/null
@@ -552,111 +668,142 @@ lampeQuit() {
 	fi
 }
 
+initializeKeys() {
+	_UP=0
+	_DOWN=0
+	_RIGHT=0
+	_LEFT=0
+	_Q=0
+	_E=0
+	_Y=0
+	_N=0
+	_H=0
+	_I=0
+	_II=0
+	_A=0
+	_QQ=0
+	_S=0
+	_L=0
+	_R=0
+	_B=0
+	_M=0
+	_YY=0
+	_NN=0
+    _T=0
+    _O=0
+}
+
+handleKey() {
+	if [[ "$_UP" == 1 ]] ; then
+		setBrightness 5
+		hbSendLightBri
+	elif [[ "$_DOWN" == 1 ]] ; then
+		setBrightness -5
+		hbSendLightBri
+	elif [[ "$_RIGHT" == 1 ]] ; then
+		setSat 10
+		hbSendLightSat
+	elif [[ "$_LEFT" == 1 ]] ; then
+		setSat -10
+		hbSendLightSat
+	elif [[ "$_Q" == 1 ]] ; then
+		# hue
+		setColor -1000
+		hbSendLightColor
+	elif [[ "$_E" == 1 ]] ; then
+		# hue
+		setColor 1000
+		hbSendLightColor
+	elif [[ "$_Y" == 1 ]] ; then
+		setSwitch 1
+		hbSendLightsState
+	elif [[ "$_N" == 1 ]] ; then
+		setSwitch 0
+		hbSendLightSwitch
+	elif [[ "$_YY" == 1 ]] ; then
+		_GLOBAL_SWITCH="true"
+		hbSendLightSwitches
+	elif [[ "$_NN" == 1 ]] ; then
+		_GLOBAL_SWITCH="false"
+		hbSendLightSwitches
+	elif [[ "$_H" == 1 ]] ; then
+		printHelpScreen
+	elif [[ "$_A" == 1 ]] ; then
+		selectAlert
+	elif [[ "$_QQ" == 1 ]] ; then
+		lampeQuit
+	elif [[ "$_S" == 1 ]] ; then
+		saveLightSetting
+		saveAllSettings
+	elif [[ "$_L" == 1 ]] ; then
+		loadLightSetting
+		hbSendLightsState
+	elif [[ "$_R" == 1 ]] ; then
+		toggleSequence "R"
+	elif [[ "$_B" == 1 ]] ; then
+		toggleSequence "B"
+	elif [[ "$_M" == 1 ]] ; then
+		toggleSequence "M"
+	elif [[ "$_T" == 1 ]] ; then
+		toggleSequence "T"
+	elif [[ "$_O" == 1 ]] ; then
+		toggleSequence "O"
+	elif [[ "$_I" == 1 ]] ; then
+		# receive current light state
+		hbReceiveLightState "$_SELECTED_LAMP"
+	elif [[ "$_II" == 1 ]] ; then
+		# receive all light states
+		echo ""
+		hbReceiveLightStates
+	fi
+}
+
 lampeMain() {
-	# initial screen
-	echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor cyan)=$(lColor blue)=$(lColor magenta)=$(lColor ltwhite)---LAMPE-$version---PRESS-h-FOR-HELP-----------$(lColor off)]"
+    if [[ "$L_ONESHOT" == 1 ]] ; then
+        # oneshot-mode
+        initializeKeys
+        _SELECTED_LAMP=1
 
-	lastTime=$(date +%s%3N) # seconds + milliseconds
-	while true; do
-		# main loop
+        # debug
+        # echo "1:=$1 2:=$2 3:=$3"
 
-		# initialize keys
-		_UP=0
-		_DOWN=0
-		_RIGHT=0
-		_LEFT=0
-		_Q=0
-		_E=0
-		_Y=0
-		_N=0
-		_H=0
-		_I=0
-		_II=0
-		_A=0
-		_QQ=0
-		_S=0
-		_L=0
-		_R=0
-		_B=0
-		_M=0
-		_YY=0
-		_NN=0
-
-		readAKey
-
-		# handle keys
-		if [[ "$_UP" == 1 ]] ; then
-			setBrightness 5
-			hbSendLightBri
-		elif [[ "$_DOWN" == 1 ]] ; then
-			setBrightness -5
-			hbSendLightBri
-		elif [[ "$_RIGHT" == 1 ]] ; then
-			setSat 10
-			hbSendLightSat
-		elif [[ "$_LEFT" == 1 ]] ; then
-			setSat -10
-			hbSendLightSat
-		elif [[ "$_Q" == 1 ]] ; then
-			# hue
-			setColor -1000
-			hbSendLightColor
-		elif [[ "$_E" == 1 ]] ; then
-			# hue
-			setColor 1000
-			hbSendLightColor
-		elif [[ "$_Y" == 1 ]] ; then
-			setSwitch 1
-			hbSendLightsState
-		elif [[ "$_N" == 1 ]] ; then
-			setSwitch 0
-			hbSendLightSwitch
-		elif [[ "$_YY" == 1 ]] ; then
-			_GLOBAL_SWITCH="true"
-			hbSendLightSwitches
-		elif [[ "$_NN" == 1 ]] ; then
-			_GLOBAL_SWITCH="false"
-			hbSendLightSwitches
-		elif [[ "$_H" == 1 ]] ; then
-			printHelpScreen
-		elif [[ "$_A" == 1 ]] ; then
-			selectAlert
-		elif [[ "$_QQ" == 1 ]] ; then
-			lampeQuit
-		elif [[ "$_S" == 1 ]] ; then
-			saveLightSetting
-			saveAllSettings
-		elif [[ "$_L" == 1 ]] ; then
-			loadLightSetting
-			hbSendLightsState
-		elif [[ "$_R" == 1 ]] ; then
-			toggleSequence "R"
-		elif [[ "$_B" == 1 ]] ; then
-			toggleSequence "B"
-		elif [[ "$_M" == 1 ]] ; then
-			toggleSequence "M"
-		elif [[ "$_I" == 1 ]] ; then
-			# receive current light state
+        if [[ ! -n "$2" ]] ; then
+            checkKey "$1"
+        else
+	        _SELECTED_LAMP=$1
 			hbReceiveLightState "$_SELECTED_LAMP"
-		elif [[ "$_II" == 1 ]] ; then
-			# receive all light states
-			echo ""
-			hbReceiveLightStates
-		fi
-		
-		printMainScreen
-	done
+            checkKey "$2"
+        fi
+
+        handleKey
+        # receive light state of selected light again
+		hbReceiveLightState "$_SELECTED_LAMP"
+        printMainScreen
+		echo -e "\n $(lColor ltgreen)!$(lColor off)  bye"
+    else
+    	# interactive-mode: initial screen
+    	echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor cyan)=$(lColor blue)=$(lColor magenta)=$(lColor off)$(lColor ltwhite)---LAMPE-${version}---PRESS-h-FOR-HELP-----------$(lColor off)]"
+
+    	lastTime=$(date +%s%3N) # seconds + milliseconds
+    	while true; do
+    		# main loop
+            initializeKeys
+    		readAKey
+            handleKey
+    		printMainScreen
+    	done
+    fi
 }
 
 # send hue light state only
 hbSendLightColor() {
 	local color="\"hue\":${_COLOR[$_SELECTED_LAMP]}"
-	
+
 	local thisTime=$(date +%s%3N)
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 100 ] ; then
 		# only send new state every 100ms
-		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
@@ -667,7 +814,7 @@ hbSendLightSwitch() {
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 100 ] ; then
 		# only send new state every 100ms
-		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]}}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]}}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
@@ -678,7 +825,7 @@ hbSendLightSwitches() {
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 100 ] ; then
 		# only send new state every 100ms
-		curl -s -d "{\"on\":${_GLOBAL_SWITCH}}" -X PUT "http://$bridgeip/api/lampe-bash/groups/0/action" -m 1 > /dev/null
+		curl -s -d "{\"on\":${_GLOBAL_SWITCH}}" -X PUT "http://$bridgeip/api/$bridgeuser/groups/0/action" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
@@ -686,12 +833,12 @@ hbSendLightSwitches() {
 # send brightness and switch light state only
 hbSendLightBri() {
 	local color="\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]}"
-	
+
 	local thisTime=$(date +%s%3N)
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 100 ] ; then
 		# only send new state every 100ms
-		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
@@ -699,12 +846,12 @@ hbSendLightBri() {
 # send saturation light state only
 hbSendLightSat() {
 	local color="\"sat\":${_SAT[$_SELECTED_LAMP]}"
-	
+
 	local thisTime=$(date +%s%3N)
 	local diffTime=$((thisTime-lastTime))
 	if [ $diffTime -gt 100 ] ; then
 		# only send new state every 100ms
-		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{$color}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
@@ -720,19 +867,19 @@ hbSendLightsState() {
 	else
 		local color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
 	fi
-	
+
 	local thisTime=$(date +%s%3N)
 	local diffTime=$((thisTime-lastTime))
 	if [[ "$diffTime" -gt 100 ]] ; then
 		# only send new state every 100ms
-		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/lampe-bash/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+		curl -s -d "{\"on\":${_SWITCH[$_SELECTED_LAMP]},$color}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 		local lastTime=$(date +%s%3N)
 	fi
 }
 
 # XXX   not used
 # evaluate floating-point expression
-# taken from http://www.linuxjournal.com/content/floating-point-math-bash, 
+# taken from http://www.linuxjournal.com/content/floating-point-math-bash,
 # by Mitch Frazier
 fEval() {
     local stat=0
@@ -742,7 +889,7 @@ fEval() {
         stat=$?
         if [[ $stat -eq 0  &&  -z "$result" ]]; then stat=1; fi
     fi
-    
+
     echo "$result"
     return $stat
 }
@@ -759,7 +906,7 @@ fCond() {
         if [[ "$cond" != 0  &&  "$cond" != 1 ]]; then cond=0; fi
     fi
     local stat=$((cond == 0))
-    
+
     return $stat
 }
 
@@ -772,49 +919,49 @@ hbCheck() {
 # try to detect the first Hue Bridge in the LAN (ipv4 class-C networks only, can detect only one bridge)
 hbDetect() {
 	_BRIDGE_FOUND=false
-	
+
 	# XXX   bug#4 fixed, all subnets will be searched, but discovery will stop at the first found hue-bridge
 	tmpIPsFile="/tmp/lampe$$.tmp"
 	L_ips=$(ip -f inet addr show | grep "/24" | sed -r "s/inet //" | cut -f 1-4 -d. | cut -f 1 -d"/")
 		# TODO support subnets other than /24, maybe all that are <= /24 (for that, it is necessary to calculate the range of IPs in the subnet)
-	for L_ip in $L_ips ; do 
+	for L_ip in $L_ips ; do
 		# debug
 		# echo "L_ip = '$L_ip'"
-		
+
 		ipByte4=$(echo "$L_ip" | cut -f 4 -d.)
 		currentIpByte4=$ipByte4
 		ipBytes13=$(echo "$L_ip" | cut -f 1-3 -d.)
-		
+
 		# debug
 		# echo "ipByte4 = '$ipByte4', ipBytes13 = '$ipBytes13'"
-		
+
 		# ping the whole subnet in parallel and write ip-adresses to a file
 		subnet="$ipBytes13."
-		( for addr in $(seq 1 1 254); do ( ping -c 1 -t 3 "$subnet$addr" > /dev/null && echo "$subnet$addr" >> "$tmpIPsFile" ) & done ) > /dev/null 
+		( for addr in $(seq 1 1 254); do ( ping -c 1 -t 3 "$subnet$addr" > /dev/null && echo "$subnet$addr" >> "$tmpIPsFile" ) & done ) > /dev/null
 	done
-	
+
 	# debug
 	# cat $tmpIPsFile
-	
+
 	# check for model description
 	while read nextIP ; do
 		# debug
 		# echo "nextIP = $nextIP"
-		
+
 		ownIP="$subnet$currentIpByte4"
 		if [[ "$nextIP" != "$ownIP" ]] ; then
 			hbCheck "$nextIP"
-		
+
 			# debug
 			# echo "hbDescription (response) = '$hbDescription'"
 			# echo "hbModel = '$hbModel'"
-		
+
 			if [ -n "$hbModel" ] ; then
 				_BRIDGE_FOUND=true
 				bridgeip=$nextIP
 				echo "    bridge found at '$nextIP'."
 				break
-			fi	
+			fi
 		fi
 	done < $tmpIPsFile
 	rm $tmpIPsFile 2> /dev/null
@@ -828,16 +975,21 @@ hbEnterIP() {
 		_BRIDGE_FOUND=true
 		bridgeip=$manualIP
 		echo "    bridge found."
-	fi	
+	fi
 }
 
 # this function will be called, if the configuration is valid
 startLampe() {
 	L_BLIND=0
+    L_ONESHOT=0
 	if [[ "$1" == "-b" ]] || [[ "$1" == "--blind" ]] ; then
 		# blind modus: do not print main screen
 		L_BLIND=1
 		lampeMain
+    elif [[ "$1" == "-s" ]] || [[ "$1" == "--set" ]] ; then
+        # set option and quit
+        L_ONESHOT=1
+        lampeMain "$2" "$3"
 	else
 		# default: interactive-mode
 		lampeMain
@@ -850,14 +1002,16 @@ hbRegisterUser() {
 	while true ; do
 		# try user registration every two seconds
 		sleep 2
-		
-		hbUser=$(curl -d "{\"devicetype\": \"lampe-$version\", \"username\": \"lampe-bash\"}" "http://$bridgeip/api" -m 2 2> /dev/null)
+
+		hbUser=$(curl -d "{\"devicetype\": \"lampe-$version#$USER\"}" "http://$bridgeip/api" -m 2 2> /dev/null)
 		success=$(echo "$hbUser" | grep "success")
-		
+
 		# debug
 		# echo "hbUser = $hbUser"
-		
+
 		if [ -n "$success" ] ; then
+            registeredUser=$(echo "$success" | sed -r "s/\"username\":/;/" | cut -f 2 -d";" | cut -f 1 -d"}" )
+            echo "bridgeuser=${registeredUser}" >> ~/.lamperc
 			echo -e "\n    user registered."
 			break
 		fi
@@ -869,6 +1023,10 @@ showHelp() {
 	echo "    without option (interactive)"
 	echo " -b, --blind"
 	echo "    blind-mode (interactive)"
+    echo " -s, --set [LIGHT] OPTION"
+    echo "    set option. for available options press h in interactive-mode or"
+    echo "    'lampe -s h'; LIGHT is mandatory for all non-global options."
+    echo "    currently cannot be combined with bline-mode (oneshot)"
 	echo " -h, --help"
 	echo "    show this help"
 }
@@ -876,12 +1034,12 @@ showHelp() {
 # receive just one light state.
 hbReceiveLightState() {
 	local light=$1
-	hbLightState=$(curl "http://$bridgeip/api/lampe-bash/lights/$light" -m 2 2> /dev/null)
+	hbLightState=$(curl "http://$bridgeip/api/$bridgeuser/lights/$light" -m 2 2> /dev/null)
 	lightState=$(echo "$hbLightState" | grep "state")
 	if [ -n "$lightState" ] ; then
 		# debug
 		# echo "lightState[$light] = '$lightState'"
-		
+
 		# no use of JSON.sh, so that users who cannot install JSON.sh are still able to receive the
 		# state of the current light
 		lightSwi=$(echo "$lightState" | sed -r "s/\"on\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
@@ -894,13 +1052,13 @@ hbReceiveLightState() {
 			lightHue=$(echo "$lightState" | sed -r "s/\"hue\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 			lightSat=$(echo "$lightState" | sed -r "s/\"sat\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 		fi
-		
+
 		# debug
-		# echo "lightSwi[$light] = '$lightSwi'" 
+		# echo "lightSwi[$light] = '$lightSwi'"
 		# echo "lightBri[$light] = '$lightBri'"
 		# echo "lightHue[$light] = '$lightHue'"
 		# echo "lightSat[$light] = '$lightSat'"
-		
+
 		_SWITCH[$light]=$lightSwi
 		_BRIGHTNESS[$light]=$lightBri
 		_COLOR[$light]=$lightHue
@@ -911,24 +1069,24 @@ hbReceiveLightState() {
 # receives all light states. received json will be parsed by using JSON.sh
 hbReceiveLightStates() {
 	local lightStates=""
-	
-	lightStates=$(curl "http://$bridgeip/api/lampe-bash/lights" -m 2 2> /dev/null)
+
+	lightStates=$(curl "http://$bridgeip/api/$bridgeuser/lights" -m 2 2> /dev/null)
 	parsedJsonLightStates=$(echo "$lightStates" | JSON.sh -b 2> /dev/null)
 	for (( light=1 ; light<51 ; light=light+1 )) ; do
 		# debug
-		# echo "light = $light"	
-		
+		# echo "light = $light"
+
 		local currentPJLightStates=$(echo "$parsedJsonLightStates" | grep "\[\"$light\",")
-		if [[ -n "$currentPJLightStates" ]] ; then	
+		if [[ -n "$currentPJLightStates" ]] ; then
 			lightSwi=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"on\"" | cut -f 2)
 			# if [[ -n "$lightSwi" ]] ; then
 			_SWITCH[$light]=$lightSwi
-			
-			# it is assumed that for every light that has a switch the 
+
+			# it is assumed that for every light that has a switch the
 			# following params are availabe in the json output
 			lightBri=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"bri\"" | cut -f 2)
 			_BRIGHTNESS[$light]=$lightBri
-			
+
 			# if modelid is "ZLL" or "LWB004" do not support hue and sat
 			modelid=$(echo "$currentPJLightStates" | grep "\"$light\",\"modelid\"" | cut -f 2)
 			_MODEL[$light]=$modelid
@@ -938,13 +1096,13 @@ hbReceiveLightStates() {
 			else
 				lightHue=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"hue\"" | cut -f 2)
 				_COLOR[$light]=$lightHue
-			
+
 				lightSat=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"sat\"" | cut -f 2)
 				_SAT[$light]=$lightSat
 			fi
 			lightReachable=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"reachable\"" | cut -f 2)
 			lightName=$(echo "$currentPJLightStates" | grep "\"$light\",\"name\"" | cut -f 2)
-			
+
 			# output for state of all lights
 			if [ "$light" -lt 10 ] ; then
 				echo -n " "
@@ -961,6 +1119,10 @@ hbReceiveLightStates() {
 				echo -n "B  "
 			elif [[ -f "/tmp/lampeSequenceM$light" ]] ; then
 				echo -n "M  "
+			elif [[ -f "/tmp/lampeSequenceT$light" ]] ; then
+				echo -n "T  "
+			elif [[ -f "/tmp/lampeSequenceO$light" ]] ; then
+				echo -n "O  "
 			else
 				echo -n "C  "
 			fi
@@ -972,7 +1134,7 @@ hbReceiveLightStates() {
 			_COLOR[$light]=12000
 			_SAT[$light]=192
 		fi
-		
+
 		# debug
 		# echo "_COLOR = ${_COLOR[$light]}"
 	done
@@ -987,10 +1149,11 @@ checkDependency() {
 
 # check for dependencies
 checkDependency "JSON.sh"
+checkDependency "redshift"
 
 loadLightSetting() {
 	if [[ -n "${SAVED_SWITCH[$_SELECTED_LAMP]}" ]] ; then
-		# it is assumed that for every light that has a saved switch state 
+		# it is assumed that for every light that has a saved switch state
 		# there are saved values for all following params
 		_SWITCH[$_SELECTED_LAMP]=${SAVED_SWITCH[$_SELECTED_LAMP]}
 		_BRIGHTNESS[$_SELECTED_LAMP]=${SAVED_BRIGHTNESS[$_SELECTED_LAMP]}
@@ -1010,20 +1173,81 @@ saveAllSettings() {
 	mkdir -p ~/.config/lampe 2> /dev/null
 	echo "" > ~/.config/lampe/light-settings
 	for (( light=1 ; light<51 ; light=light+1 )) ; do
-		if [[ -n "${SAVED_SWITCH[$light]}" ]] ; then			
-			# it is assumed that for every light that has a saved switch state 
+		if [[ -n "${SAVED_SWITCH[$light]}" ]] ; then
+			# it is assumed that for every light that has a saved switch state
 			# there are saved values for all following params
-			{ echo "_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" ; 
-			echo "SAVED_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" ; 
-			echo "_BRIGHTNESS[$light]=\"${SAVED_BRIGHTNESS[$light]}\"" ; 
-			echo "SAVED_BRIGHTNESS[$light]=\"${SAVED_BRIGHTNESS[$light]}\"" ; 
-			echo "_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" ; 
-			echo "SAVED_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" ; 
-			echo "_SAT[$light]=\"${SAVED_SAT[$light]}\"" ; 
+			{ echo "_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" ;
+			echo "SAVED_SWITCH[$light]=\"${SAVED_SWITCH[$light]}\"" ;
+			echo "_BRIGHTNESS[$light]=\"${SAVED_BRIGHTNESS[$light]}\"" ;
+			echo "SAVED_BRIGHTNESS[$light]=\"${SAVED_BRIGHTNESS[$light]}\"" ;
+			echo "_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" ;
+			echo "SAVED_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" ;
+			echo "_SAT[$light]=\"${SAVED_SAT[$light]}\"" ;
 			echo "SAVED_SAT[$light]=\"${SAVED_SAT[$light]}\"" ; } >> ~/.config/lampe/light-settings
 		fi
 	done
 }
+
+# load user configuration
+loadUserConfig() {
+	if [[ -f ~/.config/lampe/light-settings ]] ; then
+		source ~/.config/lampe/light-settings
+	fi
+    if [[ -f ~/.config/lampe/light-defaults ]] ; then
+        source ~/.config/lampe/light-defaults
+    fi
+
+    # check light defaults
+    not_set=0
+    if [[ -v "mood_sat" ]] ; then
+        echo "    mood_sat=$mood_sat"
+    else
+        echo " $(lColor ltyellow)?$(lColor off)  mood_sat=[0..254]        default saturation for"
+        echo "                             mood sequence not set."
+        echo "                             saturation will not be"
+        echo "                             changed during sequence"
+        not_set=1
+    fi
+
+    if [[ -v "redshift_options" ]] ; then
+        echo "    redshift_options=\"$redshift_options\""
+    else
+        echo " $(lColor ltyellow)?$(lColor off)  redshift_options=\"\"      no options will be"
+        echo "                             forwarded to redshift"
+        not_set=1
+    fi
+
+    if [[ -v "noise_range" ]] ; then
+        echo "    noise_range=$noise_range"
+    else
+        echo " $(lColor ltyellow)?$(lColor off)  noise_range=[0..65000]   default 15000, a color"
+        echo "                             between two colors"
+        not_set=1
+        noise_range=15000
+    fi
+    if [[ -v "noise_interval" ]] ; then
+        echo "    noise_interval=$noise_interval"
+    else
+        echo " $(lColor ltyellow)?$(lColor off)  noise_interval=[1..]     default 3 seconds"
+        not_set=1
+        noise_interval=3
+    fi
+    if [[ -v "noise_step" ]] ; then
+        echo "    noise_step=$noise_step"
+    else
+        echo " $(lColor ltyellow)?$(lColor off)  noise_step=[1..65000]    default 5000, could be"
+        echo "                             more than just one shade"
+        echo "                             of the current color "
+        not_set=1
+        noise_step=5000
+    fi
+    if [[ "$not_set" -eq 1 ]] ; then
+        echo " *  You can set these vars in"
+        echo "    ~/.config/lampe/light-defaults"
+        echo ""
+    fi
+}
+
 
 if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
 	# show help and quit
@@ -1031,14 +1255,15 @@ if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
 elif [[ -f ~/.lamperc ]] ; then
 	# read configuration
 	source ~/.lamperc
-	
-	# load user defaults from light-settings
-	if [[ -f ~/.config/lampe/light-settings ]] ; then
-		source ~/.config/lampe/light-settings
-	fi
-	
+
+    loadUserConfig
+
 	# receive light states
-	hbReceiveLightStates
+	if [[ "$1" != "-s" ]] && [[ "$1" != "--set" ]] ; then
+        # FIXME receiving all light states in oneshot-mode is currently not supported;
+        # this function takes too much time
+        hbReceiveLightStates
+    fi
 
 	startLampe "$@"
 else
@@ -1053,20 +1278,23 @@ else
 			echo " $(lColor ltred)?$(lColor off)  warning, unable to find bridge"
 			hbEnterIP
 		fi
-	else 
+	else
 		hbEnterIP
 	fi
-	
+
 	if [[ "$_BRIDGE_FOUND" == true ]] ; then
 		# register a user at bridge
 		hbRegisterUser
-		
+
 		# store configuration if bridge was found
-		echo "bridgeip=\"$bridgeip\"" > ~/.lamperc
-		
+		echo "bridgeip=\"$bridgeip\"" >> ~/.lamperc
+        source ~/.lamperc
+
+        loadUserConfig
+
 		# receive light states
 		hbReceiveLightStates
-		
+
 		startLampe "$@"
 	else
 		echo " $(lColor ltred)!$(lColor off)  no bridge found, error 2"
