@@ -864,6 +864,9 @@ hbSendLightsState() {
 	if [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"ZLL Light\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB004\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB010\"" ]] ; then
 		# light models "ZLL", "LWB004" and "LWB010" do not support hue and sat
 		local color="\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]}"
+    elif [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LTW001\"" ]] ; then
+		local color="\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]}"
+            # TODO  implement "ct" (color temperature)
 	else
 		local color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
 	fi
@@ -1038,7 +1041,7 @@ hbReceiveLightState() {
 	lightState=$(echo "$hbLightState" | grep "state")
 	if [ -n "$lightState" ] ; then
 		# debug
-		# echo "lightState[$light] = '$lightState'"
+		#echo "lightState[$light] = '$lightState'"
 
 		# no use of JSON.sh, so that users who cannot install JSON.sh are still able to receive the
 		# state of the current light
@@ -1048,6 +1051,10 @@ hbReceiveLightState() {
 			# light models "ZLL", "LWB004", "LWB010" do not support hue and sat
 			lightHue=12000
 			lightSat=192
+        elif [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LTW001\"" ]] ; then
+            lightHue=12000
+			lightSat=192
+                # TODO  implement "ct" (color temperature)
 		else
 			lightHue=$(echo "$lightState" | sed -r "s/\"hue\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 			lightSat=$(echo "$lightState" | sed -r "s/\"sat\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
@@ -1074,7 +1081,7 @@ hbReceiveLightStates() {
 	parsedJsonLightStates=$(echo "$lightStates" | JSON.sh -b 2> /dev/null)
 	for (( light=1 ; light<51 ; light=light+1 )) ; do
 		# debug
-		# echo "light = $light"
+		#echo "light = $light"
 
 		local currentPJLightStates=$(echo "$parsedJsonLightStates" | grep "\[\"$light\",")
 		if [[ -n "$currentPJLightStates" ]] ; then
@@ -1096,6 +1103,10 @@ hbReceiveLightStates() {
 			if [[ "$modelid" == "\"ZLL Light\"" ]] || [[ "$modelid" == "\"LWB004\"" ]] || [[ "$modelid" == "\"LWB010\"" ]] ; then
 				_COLOR[$light]=12000
 				_SAT[$light]=192
+            elif [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LTW001\"" ]] ; then
+				_COLOR[$light]=12000
+				_SAT[$light]=192
+                    # TODO  implement "ct" (color temperature)
 			else
 				lightHue=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"hue\"" | cut -f 2)
 				_COLOR[$light]=$lightHue
