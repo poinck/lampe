@@ -858,10 +858,10 @@ hbSendLightSat() {
 # send light state (switch and color) to Hue Bridge
 hbSendLightsState() {
 	# debug
-	# echo -e "\n    DEBUG hbSendLightsState().modelid = ${_MODEL[$_SELECTED_LAMP]}"
+	#echo -e "\n    DEBUG hbSendLightsState().modelid = ${_MODEL[$_SELECTED_LAMP]}"
 
-	if [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"ZLL Light\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB004\"" ]] ; then
-		# light models "ZLL" and LWB004 do not support hue and sat
+	if [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"ZLL Light\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB004\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB010\"" ]] ; then
+		# light models "ZLL", "LWB004" and "LWB010" do not support hue and sat
 		local color="\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]}"
 	else
 		local color="\"hue\":${_COLOR[$_SELECTED_LAMP]},\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]}"
@@ -1043,8 +1043,8 @@ hbReceiveLightState() {
 		# state of the current light
 		lightSwi=$(echo "$lightState" | sed -r "s/\"on\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
 		lightBri=$(echo "$lightState" | sed -r "s/\"bri\":/;/" | cut -f 2 -d";" | cut -f 1 -d"," )
-		if [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"ZLL Light\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB004\"" ]] ; then
-			# light models "ZLL" and LWB004 do not support hue and sat
+		if [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"ZLL Light\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB004\"" ]] || [[ "${_MODEL[$_SELECTED_LAMP]}" == "\"LWB010\"" ]] ; then
+			# light models "ZLL", "LWB004", "LWB010" do not support hue and sat
 			lightHue=12000
 			lightSat=192
 		else
@@ -1086,10 +1086,10 @@ hbReceiveLightStates() {
 			lightBri=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"bri\"" | cut -f 2)
 			_BRIGHTNESS[$light]=$lightBri
 
-			# if modelid is "ZLL" or "LWB004" do not support hue and sat
+			# if modelid is "ZLL", "LWB004" or "LWB010" do not support hue and sat
 			modelid=$(echo "$currentPJLightStates" | grep "\"$light\",\"modelid\"" | cut -f 2)
 			_MODEL[$light]=$modelid
-			if [[ "$modelid" == "\"ZLL Light\"" ]] || [[ "$modelid" == "\"LWB004\"" ]] ; then
+			if [[ "$modelid" == "\"ZLL Light\"" ]] || [[ "$modelid" == "\"LWB004\"" ]] || [[ "$modelid" == "\"LWB010\"" ]]; then
 				_COLOR[$light]=12000
 				_SAT[$light]=192
 			else
