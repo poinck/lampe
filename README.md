@@ -89,7 +89,7 @@ See following list for more options:
     r - start or stop random color sequence
     b - start or stop blinking sequence
     A - alert
-    m - start or stop temperature difference based color sequence
+    m - start or stop time based sequence
     t - start or stop redshift sequence
     o - start or stop noise sequnce
     Q - quit

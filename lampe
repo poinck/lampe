@@ -2,21 +2,9 @@
 # lampe by André Klausnitzer, CC0
 # interactive bash script to control your Philips Hue lights
 
-version="1.1.9"
-
-# XXX   not used
-readKey() {
-    # Wait for first char
-    if read -s -n 1 _KEY; then
-      	# Read rest of chars
-      	while read -s -N 1 -t 0.001 ; do
-      		_KEY+="${REPLY}"
-      	done
-    fi
-}
+version="1.1.10"
 
 declare _SELECTED_LAMP=1
-tmdCsvFile="$HOME/public_html/tm/tm_1.csv"
 
 checkKey() {
 	case $1 in
@@ -132,7 +120,7 @@ readLightNumber() {
 	local number=$_KEY
 
 	# debug
-	# echo "number = '$number'"
+	#echo "number = '$number'"
 
 	read -s -n 1 _NEXT_KEY
 	case $_NEXT_KEY in
@@ -147,7 +135,7 @@ readLightNumber() {
 	_SELECTED_LAMP=$number
 
 	# debug
-	# echo "_SELECTED_LAMP = '$_SELECTED_LAMP'"
+	#echo "_SELECTED_LAMP = '$_SELECTED_LAMP'"
 }
 
 # init brightness
@@ -181,32 +169,13 @@ for (( s=1 ; s<100 ; s=s+1 )) ; do
 done
 
 moodSequence() {
-	while [[ -f "${cache_dir}lampeSequenceM$_SELECTED_LAMP" ]] ; do
-		# tmdLine=$(cat "$tmdCsvFile" | tail -n 1 | cut -f 2-3 -d',' 2> /dev/null)
-		tmdLine=$(tail -n 1 < "$tmdCsvFile" | cut -f 2-3 -d',' 2> /dev/null)
-		tmdInside=$(echo "$tmdLine" | cut -f 1 -d',')
-		tmdOutside=$(echo "$tmdLine" | cut -f 2 -d',')
+	while [[ -f "${cache_dir}lampeSequenceM${_SELECTED_LAMP}" ]] ; do
+        local high_color_factor=45 # 16bit-color, 65536 colors devided through 1439 steps
+        local time_value=$(( $( date '+%-M' )+$( date '+%-H' )*60 ))
 
-		# debug
-		# echo "tmdInside  = '$tmdInside'"
-		# echo "tmdOutside = '$tmdOutside'"
+        local hue_color=$(( time_value*high_color_factor ))
 
-		local temperatureDiff=$(( tmdOutside-tmdInside ))
-		local diffFactor=1
-		if [[ "$temperatureDiff" -gt 0 ]] ; then
-			diffFactor=2
-		fi
-		local hueDiff=$(( temperatureDiff*diffFactor+25750 ))
-        if [[ "$hueDiff" -lt 0 ]] ; then
-            hueDiff=0
-        fi
-
-		# debug
-        # echo "diffFactor      = '$diffFactor'"
-		# echo "temperatureDiff = '$temperatureDiff'"
-		# echo "hueDiff         = '$hueDiff'"
-
-		local hue="\"hue\":$hueDiff,\"transitiontime\":30"
+		local hue="\"hue\":$hue_color,\"transitiontime\":30"
         if [[ -v "mood_sat" ]] ; then
             hue="${hue},\"sat\":$mood_sat"
         fi
@@ -219,19 +188,19 @@ moodSequence() {
 redshiftSequence() {
 	while [[ -f "${cache_dir}lampeSequenceT$_SELECTED_LAMP" ]] ; do
         # test fake berlin
-        # redshift_options="-l 52.52:13.40"
+        #redshift_options="-l 52.52:13.40"
 
         # test fake chicago
-        # redshifts_options="-l 41:-87"
+        #redshifts_options="-l 41:-87"
 
         # get new color temperature
         kelvin=$( redshift -op $redshift_options 2>/dev/null | grep -e ":*K$" | cut -f 2 -d ":" | cut -b 2-5 )
         mired=$(( 1000000 / kelvin ))
 
         # debug
-        # echo "t/R:redshift_options = $redshift_options"
-        # echo "t/R:kelvin = $kelvin"
-        # echo "t/R:mired ?= old_mired => $mired ?= $old_mired"
+        #echo "t/R:redshift_options = $redshift_options"
+        #echo "t/R:kelvin = $kelvin"
+        #echo "t/R:mired ?= old_mired => $mired ?= $old_mired"
 
 		local ct="\"ct\":$mired,\"transitiontime\":600"
 		curl -s -d "{$ct}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
@@ -246,15 +215,15 @@ noiseSequence() {
     local isat=${_SAT[$_SELECTED_LAMP]}
 
     # debug
-    # echo "current hue = ${_COLOR[$_SELECTED_LAMP]}"
-    # echo "lamp = $_SELECTED_LAMP"
-    # echo "ihue = $ihue"
+    #echo "current hue = ${_COLOR[$_SELECTED_LAMP]}"
+    #echo "lamp = $_SELECTED_LAMP"
+    #echo "ihue = $ihue"
 
     local min_hue=$(( ihue-noise_range ))
     local max_hue=$(( ihue+noise_range ))
 
-    # echo "min_hue = $min_hue"
-    # echo "max_hue = $max_hue"
+    #echo "min_hue = $min_hue"
+    #echo "max_hue = $max_hue"
 
     osat=$isat
     ohue=$ihue
@@ -283,20 +252,20 @@ noiseSequence() {
         osat=$nsat
 
         # debug
-        # echo "nsat = $nsat, osat = $osat"
-        # echo "nhue = $nhue, ohue = $ohue"
+        #echo "nsat = $nsat, osat = $osat"
+        #echo "nhue = $nhue, ohue = $ohue"
     done
 }
 
 # GPN15 preview sequence
 previewRandom() {
 	# debug
-	# echo "random called, '$LAMPE_R'"
+	#echo "random called, '$LAMPE_R'"
 
 	local on="true"
 	while [[ -f "${cache_dir}lampeSequenceR$_SELECTED_LAMP" ]] ; do
 		# debug
-		# echo "do random, '$LAMPE_R'"
+		#echo "do random, '$LAMPE_R'"
 
 		local hue=$(( RANDOM*2 ))
 		local color="\"hue\":$hue,\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]},\"transitiontime\":100"
@@ -341,8 +310,8 @@ setBrightness() {
 	_BRIGHTNESS[$_SELECTED_LAMP]=$brightness
 
 	# debug
-	# echo -n "param = $1 "
-	# echo "brightness = ${_BRIGHTNESS[$_SELECTED_LAMP]} "
+	#echo -n "param = $1 "
+	#echo "brightness = ${_BRIGHTNESS[$_SELECTED_LAMP]} "
 }
 
 setSat() {
@@ -376,7 +345,7 @@ setColor() {
 
 setSwitch() {
 	# debug
-	# echo -n $1
+	#echo -n $1
 
 	if [[ "$1" == 1 ]] ; then
 		_SWITCH[$_SELECTED_LAMP]="true"
@@ -485,7 +454,7 @@ getColorOfLight() {
 	fi
 
 	# debug
-	# echo " getColor.hue = '$hue'"
+	#echo " getColor.hue = '$hue'"
 
 	bold=""
 	if [[ ${_SWITCH[$light]} == "true" ]] ; then
@@ -528,10 +497,10 @@ printMainScreen() {
 		fi
 
 		# debug
-		# echo "$colorPosition"
-		# echo "firstNumer = '$firstNumer'"
+		#echo "$colorPosition"
+		#echo "firstNumer = '$firstNumer'"
 
-		# XXX   bug#23 fixed: use carriage return instead of deleting chars
+		# bug#23 fixed: use carriage return instead of deleting chars
 		# one by one with backspace
 		echo -en "\r"
 		if [ -n "$firstNumer" ] ; then
@@ -644,11 +613,9 @@ printHelpScreen() {
 	echo "    r        RANDOM        R: random color sequence"
 	echo "    b        BLINK         B: blinking sequence"
 	echo "    A        ALERT"
-	echo "    m        MOOD          M: temperature difference"
-	echo "                              based color sequence"
+	echo "    m        MOOD          M: color based on time"
     echo "    t        REDSHIFT      T: color temperature"
-    echo "                              sequence based on"
-    echo "                              redshift"
+    echo "                              based on redshift"
     echo "    o        NOISE         O: noise color sequence"
 	#        [--------------------------------------------------]
 	echo "    Q        QUIT"
@@ -764,7 +731,7 @@ lampeMain() {
         _SELECTED_LAMP=1
 
         # debug
-        # echo "1:=$1 2:=$2 3:=$3"
+        #echo "1:=$1 2:=$2 3:=$3"
 
         if [[ ! -n "$2" ]] ; then
             checkKey "$1"
@@ -879,39 +846,6 @@ hbSendLightsState() {
 	fi
 }
 
-# XXX   not used
-# evaluate floating-point expression
-# taken from http://www.linuxjournal.com/content/floating-point-math-bash,
-# by Mitch Frazier
-fEval() {
-    local stat=0
-    local result=0.0
-    if [[ $# -gt 0 ]]; then
-        result=$(echo "$fScale $*" | bc -q 2> /dev/null)
-        stat=$?
-        if [[ $stat -eq 0  &&  -z "$result" ]]; then stat=1; fi
-    fi
-
-    echo "$result"
-    return $stat
-}
-
-# XXX   not used
-# check floating-point condition
-# taken from http://www.linuxjournal.com/content/floating-point-math-bash
-# by Mitch Frazier
-fCond() {
-    local cond=0
-    if [[ $# -gt 0 ]]; then
-        cond=$(echo "$*" | bc -q 2> /dev/null)
-        if [[ -z "$cond" ]]; then cond=0; fi
-        if [[ "$cond" != 0  &&  "$cond" != 1 ]]; then cond=0; fi
-    fi
-    local stat=$((cond == 0))
-
-    return $stat
-}
-
 # checks wether there is a hue bridge at given IP
 hbCheck() {
 	hbDescription=$(curl "http://$1/description.xml" -m 3 2> /dev/null)
@@ -922,20 +856,20 @@ hbCheck() {
 hbDetect() {
 	_BRIDGE_FOUND=false
 
-	# XXX   bug#4 fixed, all subnets will be searched, but discovery will stop at the first found hue-bridge
+	# bug#4 fixed, all subnets will be searched, but discovery will stop at the first found hue-bridge
 	tmpIPsFile="${cache_dir}lampe$$.tmp"
 	L_ips=$(ip -f inet addr show | grep "/24" | sed -r "s/inet //" | cut -f 1-4 -d. | cut -f 1 -d"/")
 		# TODO support subnets other than /24, maybe all that are <= /24 (for that, it is necessary to calculate the range of IPs in the subnet)
 	for L_ip in $L_ips ; do
 		# debug
-		# echo "L_ip = '$L_ip'"
+		#echo "L_ip = '$L_ip'"
 
 		ipByte4=$(echo "$L_ip" | cut -f 4 -d.)
 		currentIpByte4=$ipByte4
 		ipBytes13=$(echo "$L_ip" | cut -f 1-3 -d.)
 
 		# debug
-		# echo "ipByte4 = '$ipByte4', ipBytes13 = '$ipBytes13'"
+		#echo "ipByte4 = '$ipByte4', ipBytes13 = '$ipBytes13'"
 
 		# ping the whole subnet in parallel and write ip-adresses to a file
 		subnet="$ipBytes13."
@@ -943,7 +877,7 @@ hbDetect() {
 	done
 
 	# debug
-	# cat $tmpIPsFile
+	#cat $tmpIPsFile
 
 	# check for model description
 	while read nextIP ; do
@@ -955,8 +889,8 @@ hbDetect() {
 			hbCheck "$nextIP"
 
 			# debug
-			# echo "hbDescription (response) = '$hbDescription'"
-			# echo "hbModel = '$hbModel'"
+			#echo "hbDescription (response) = '$hbDescription'"
+			#echo "hbModel = '$hbModel'"
 
 			if [ -n "$hbModel" ] ; then
 				_BRIDGE_FOUND=true
@@ -1009,7 +943,7 @@ hbRegisterUser() {
 		success=$(echo "$hbUser" | grep "success")
 
 		# debug
-		# echo "hbUser = $hbUser"
+		#echo "hbUser = $hbUser"
 
 		if [ -n "$success" ] ; then
             registeredUser=$(echo "$success" | sed -r "s/\"username\":/;/" | cut -f 2 -d";" | cut -f 1 -d"}" )
@@ -1060,10 +994,10 @@ hbReceiveLightState() {
 		fi
 
 		# debug
-		# echo "lightSwi[$light] = '$lightSwi'"
-		# echo "lightBri[$light] = '$lightBri'"
-		# echo "lightHue[$light] = '$lightHue'"
-		# echo "lightSat[$light] = '$lightSat'"
+		#echo "lightSwi[$light] = '$lightSwi'"
+		#echo "lightBri[$light] = '$lightBri'"
+		#echo "lightHue[$light] = '$lightHue'"
+		#echo "lightSat[$light] = '$lightSat'"
 
 		_SWITCH[$light]=$lightSwi
 		_BRIGHTNESS[$light]=$lightBri
@@ -1146,7 +1080,7 @@ hbReceiveLightStates() {
 		fi
 
 		# debug
-		# echo "_COLOR = ${_COLOR[$light]}"
+		#echo "_COLOR = ${_COLOR[$light]}"
 	done
 }
 
