@@ -1,6 +1,6 @@
 # Readme: lampe
 
-**lampe (-bash):**
+**lampe (-cli):**
 bash-script to control your Philips Hue lights in interactive, oneshot or blind mode.
 
 ![lampe](/lampe.png)
