@@ -104,7 +104,7 @@ lampe -s [LIGHT] OPTION
 
 **blind mode**
 
-If you have a very slow terminal, you can use the blind mode as follows; it won't show up the current light state unless you type "i" or "I". All other function are still accessible:
+If you have a very slow terminal, you can use the blind mode as follows; it won't show up the current light state unless you type "`i`" or "`I`". All other function are still accessible:
 ```.sh
 lampe -b
 ```
