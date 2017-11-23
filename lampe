@@ -173,7 +173,7 @@ moodSequence() {
         local high_color_factor=45 # 16bit-color, 65536 colors devided through 1439 steps
         local time_value=$(( $( date '+%-M' )+$( date '+%-H' )*60 ))
 
-        local hue_color=$(( time_value*high_color_factor ))
+        local hue_color=$(( 65536-time_value*high_color_factor ))
 
 		local hue="\"hue\":$hue_color,\"transitiontime\":30"
         if [[ -v "mood_sat" ]] ; then
