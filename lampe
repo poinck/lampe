@@ -138,34 +138,28 @@ readLightNumber() {
 	#echo "_SELECTED_LAMP = '$_SELECTED_LAMP'"
 }
 
-# init brightness
+# init
 declare -a _BRIGHTNESS
-for (( b=1 ; b<100 ; b=b+1 )) ; do
-	_BRIGHTNESS[$b]=32
-done
-
-# init saturation
 declare -a _SAT
-for (( s=1 ; s<100 ; s=s+1 )) ; do
-	_SAT[$s]=192
-done
-
-# init switch
 declare -a _SWITCH # on or off
-for (( s=1 ; s<100 ; s=s+1 )) ; do
-	_SWITCH[$s]="true"
-done
-
-# init color
 declare -a _COLOR
-for (( s=1 ; s<100 ; s=s+1 )) ; do
-	_COLOR[$s]=12000 # orange
-done
-
-# init model
 declare -a _MODEL
+declare -a _CT
+declare -a _CAP_CT # capability: color temperature
+declare -a _CAP_SAT # capability: saturation
+declare -a _CAP_COLOR # capability: hue
+declare -a _CAP_BRIGHTNESS # capability: brightness
 for (( s=1 ; s<100 ; s=s+1 )) ; do
+	_BRIGHTNESS[$b]=32
+	_SAT[$s]=192
+	_SWITCH[$s]="true"
+	_COLOR[$s]=12000 # orange
 	_MODEL[$s]="\"LCT001\"" # standard Hue bulb
+    _CT[$s]=0
+    _CAP_CT[$s]=0
+    _CAP_SAT[$s]=0
+    _CAP_COLOR[$s]=0
+    _CAP_BRIGHTNESS[$s]=0
 done
 
 moodSequence() {
@@ -1087,6 +1081,14 @@ hbReceiveLightStates() {
 			_BRIGHTNESS[$light]=32
 			_COLOR[$light]=12000
 			_SAT[$light]=192
+
+            _CT[$light]=0
+            _CAP_CT[$light]=0
+            _CAP_SAT[$light]=0
+            _CAP_COLOR[$light]=0
+            _CAP_BRIGHTNESS[$light]=0
+                # TODO  introduce color temperature (CT) and capabilities (CAP)
+                #       to generalize light bulb support, issues #43 and #44
 		fi
 
 		# debug
