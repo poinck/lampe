@@ -8,21 +8,17 @@ declare _SELECTED_LAMP=1
 
 checkKey() {
 	case $1 in
-		# $'\e[A' |
 		"w")
 			_UP=1
 		;;
-		# $'\e[B' |
+		"a")
+			_LEFT=1
+		;;
 		"s")
 			_DOWN=1
 		;;
-		# $'\e[C' |
 		"d")
 			_RIGHT=1
-		;;
-		# $'\e[D' |
-		"a")
-			_LEFT=1
 		;;
 		"q")
 			# hue
@@ -253,9 +249,6 @@ noiseSequence() {
 
 # GPN15 preview sequence
 previewRandom() {
-	# debug
-	#echo "random called, '$LAMPE_R'"
-
 	local on="true"
 	while [[ -f "${cache_dir}lampeSequenceR$_SELECTED_LAMP" ]] ; do
 		# debug
@@ -375,6 +368,9 @@ lColor() {
 		;;
 		"white")
 			echo -en "\e[0m"
+		;;
+		"gray")
+			echo -en "\e[0;37m"
 		;;
 		"ltred")
 			echo -en "\e[1;31m"
@@ -526,7 +522,7 @@ printMainScreen() {
 				elif [[ -f "${cache_dir}lampeSequenceO$_SELECTED_LAMP" ]] ; then
 					echo -en "$(getColorOfLight)O$(lColor off)"
 				else
-					echo -en "$(getColorOfLight)C$(lColor off)"
+					echo -en "$(getColorOfLight)H$(lColor off)"
 				fi
 			else
 				if [ $ii -lt $currentSat ] ; then
@@ -595,10 +591,10 @@ toggleSequence() {
 
 printHelpScreen() {
 	echo ""
-	echo "    1..99    LIGHT         confirm with any key"
-	echo "    w, s     BRIGHTNESS    -"
-	echo "    a, d     SATURATION    ="
-	echo "    q, e     COLOR         C"
+	echo "    1..99    LIGHT         L: confirm with any key"
+	echo "    w, s     BRIGHTNESS    B: -"
+	echo "    a, d     SATURATION    S: ="
+	echo "    q, e     HUE           H"
 	echo "    y, Y     ON            switch (all) light/s on"
 	echo "    n, N     OFF           switch (all) light/s off"
 	echo "    i, I     INFO          receive (all) light state/s"
@@ -1009,6 +1005,13 @@ hbReceiveLightState() {
 	fi
 }
 
+debug() {
+    msg="$1"
+    if [[ "$DEBUG" -eq 1 ]] ; then
+        echo "[DEBUG] $msg"
+    fi
+}
+
 # receives all light states. received json will be parsed by using JSON.sh
 hbReceiveLightStates() {
 	local lightStates=""
@@ -1023,31 +1026,56 @@ hbReceiveLightStates() {
         currentPJLightStates=$(echo "$parsedJsonLightStates" | grep "\[\"$light\",")
 		if [[ -n "$currentPJLightStates" ]] ; then
 			lightSwi=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"on\"" | cut -f 2)
-			# if [[ -n "$lightSwi" ]] ; then
 			_SWITCH[$light]=$lightSwi
 
-			# it is assumed that for every light that has a switch the
-			# following params are availabe in the json output
-			lightBri=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"bri\"" | cut -f 2)
-			_BRIGHTNESS[$light]=$lightBri
+			# brightness
+			lightBri=$(echo "$lightStates" | jq ".\"$light\".\"state\".\"bri\"" )
+            if [[ "$lightBr" == "null" ]] ; then
+			    _BRIGHTNESS[$light]="32"
+                _CAP_BRIGHTNESS[$light]=0
+            else
+			    _BRIGHTNESS[$light]=$lightBri
+                _CAP_BRIGHTNESS[$light]=1
+            fi
+            debug "bri: ${_BRIGHTNESS[$light]}"
 
             # get light-bulb model
 			modelid=$(echo "$currentPJLightStates" | grep "\"$light\",\"modelid\"" | cut -f 2)
 			_MODEL[$light]=$modelid
 
-            # debug
-	        #echo -e "\n    DEBUG hbSendLightsState().modelid = ${_MODEL[$light]}"
-			if [[ "$modelid" == "\"ZLL Light\"" ]] || [[ "$modelid" == "\"LWB004\"" ]] || [[ "$modelid" == "\"LWB010\"" ]] ; then
-				_COLOR[$light]=12000
-				_SAT[$light]=192
-                    # TODO  implement "ct" (color temperature)
-			else
-				lightHue=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"hue\"" | cut -f 2)
-				_COLOR[$light]=$lightHue
+            # saturation
+			lightSat=$(echo "$lightStates" | jq ".\"$light\".\"state\".\"sat\"" )
+            if [[ "$lightSat" == "null" ]] ; then
+			    _SAT[$light]="192"
+                _CAP_SAT[$light]=0
+            else
+			    _SAT[$light]="$lightSat"
+                _CAP_SAT[$light]=1
+            fi
+            debug "sat: ${_SAT[$light]}"
 
-				lightSat=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"sat\"" | cut -f 2)
-				_SAT[$light]=$lightSat
-			fi
+            # hue color
+			lightHue=$(echo "$lightStates" | jq ".\"$light\".\"state\".\"hue\"" )
+            if [[ "$lightHue" == "null" ]] ; then
+			    _COLOR[$light]="12000"
+                _CAP_COLOR[$light]=0
+            else
+			    _COLOR[$light]="$lightHue"
+                _CAP_COLOR[$light]=1
+            fi
+            debug "hue: ${_COLOR[$light]}"
+
+            # color temperature
+			lightCt=$(echo "$lightStates" | jq ".\"$light\".\"state\".\"ct\"" )
+            if [[ "$lightCt" == "null" ]] ; then
+			    _CT[$light]="0"
+                _CAP_CT[$light]=0
+            else
+			    _CT[$light]="$lightCt"
+                _CAP_CT[$light]=1
+            fi
+            debug " ct: ${_CT[$light]}"
+
 			lightReachable=$(echo "$currentPJLightStates" | grep "\"$light\",\"state\",\"reachable\"" | cut -f 2)
 			lightName=$(echo "$currentPJLightStates" | grep "\"$light\",\"name\"" | cut -f 2)
 
@@ -1072,23 +1100,50 @@ hbReceiveLightStates() {
 			elif [[ -f "${cache_dir}lampeSequenceO$light" ]] ; then
 				echo -n "O  "
 			else
-				echo -n "C  "
+                if [[ "${_CAP_COLOR[$light]}" -eq 1 ]] \
+                || [[ "${_CAP_CT[$light]}" -eq 1 ]] ; then
+				    echo -n "H  "
+                else
+				    echo -n "L  "
+                fi
 			fi
-			echo "$(lColor white)$lightName$(lColor off)"
+
+            # capabilities: HSTB
+            echo -n "$(lColor gray)"
+            if [[ "${_CAP_COLOR[$light]}" -eq 1 ]] ; then
+                echo -n "H"
+            else
+                echo -n " "
+            fi
+            if [[ "${_CAP_SAT[$light]}" -eq 1 ]] ; then
+                echo -n "S"
+            else
+                echo -n " "
+            fi
+            if [[ "${_CAP_CT[$light]}" -eq 1 ]] ; then
+                echo -n "T"
+            else
+                echo -n " "
+            fi
+            if [[ "${_CAP_BRIGHTNESS[$light]}" -eq 1 ]] ; then
+                echo -n "B"
+            else
+                echo -n " "
+            fi
+
+			echo "  $(lColor white)$lightName$(lColor off)"
 		else
 			# defaults
 			_SWITCH[$light]="true"
 			_BRIGHTNESS[$light]=32
 			_COLOR[$light]=12000
 			_SAT[$light]=192
-
             _CT[$light]=0
+
             _CAP_CT[$light]=0
             _CAP_SAT[$light]=0
             _CAP_COLOR[$light]=0
             _CAP_BRIGHTNESS[$light]=0
-                # TODO  introduce color temperature (CT) and capabilities (CAP)
-                #       to generalize light bulb support, issues #43 and #44
 		fi
 
 		# debug

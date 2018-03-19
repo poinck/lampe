@@ -18,7 +18,8 @@ Following cli-tools need to be installed on your system in order to use **lampe 
 - sed
 - cut
 - grep
-- JSON.sh [v0.2.1](https://github.com/poinck/JSON.sh/tree/v0.2.1) forked, tested and branched from [dominictarr/JSON.sh](https://github.com/dominictarr/JSON.sh), later versions may work as well
+- jq (since v1.1.11)
+- JSON.sh [v0.2.1](https://github.com/poinck/JSON.sh/tree/v0.2.1) forked, tested and branched from [dominictarr/JSON.sh](https://github.com/dominictarr/JSON.sh), later versions may work as well (will be depricated in future versions)
 - redshift
 - bc (optional)
 
