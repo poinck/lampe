@@ -1161,6 +1161,7 @@ checkDependency() {
 # check for dependencies
 checkDependency "JSON.sh"
 checkDependency "redshift"
+checkDependency "jq"
 
 loadLightSetting() {
 	if [[ -n "${SAVED_SWITCH[$_SELECTED_LAMP]}" ]] ; then
