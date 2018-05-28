@@ -1018,6 +1018,7 @@ hbReceiveLightStates() {
 
 	lightStates=$(curl "http://$bridgeip/api/$bridgeuser/lights" -m 2 2> /dev/null)
 	parsedJsonLightStates=$(echo "$lightStates" | JSON.sh -b 2> /dev/null)
+        # TODO  remove usage of JSON.sh. model_id is still depending on it, issue #44
 	for (( light=1 ; light<51 ; light=light+1 )) ; do
 		# debug
 		#echo "light = $light"
