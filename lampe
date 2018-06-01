@@ -1017,12 +1017,10 @@ hbReceiveLightStates() {
 	local lightStates=""
 
 	lightStates=$(curl "http://$bridgeip/api/$bridgeuser/lights" -m 2 2> /dev/null)
+    debug "$lightStates"
 	parsedJsonLightStates=$(echo "$lightStates" | JSON.sh -b 2> /dev/null)
         # TODO  remove usage of JSON.sh. model_id is still depending on it, issue #44
 	for (( light=1 ; light<51 ; light=light+1 )) ; do
-		# debug
-		#echo "light = $light"
-
 		local currentPJLightStates
         currentPJLightStates=$(echo "$parsedJsonLightStates" | grep "\[\"$light\",")
 		if [[ -n "$currentPJLightStates" ]] ; then
@@ -1031,7 +1029,7 @@ hbReceiveLightStates() {
 
 			# brightness
 			lightBri=$(echo "$lightStates" | jq ".\"$light\".\"state\".\"bri\"" )
-            if [[ "$lightBr" == "null" ]] ; then
+            if [[ "$lightBri" == "null" ]] ; then
 			    _BRIGHTNESS[$light]="32"
                 _CAP_BRIGHTNESS[$light]=0
             else
