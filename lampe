@@ -141,6 +141,8 @@ declare -a _SWITCH # on or off
 declare -a _COLOR
 declare -a _MODEL
 declare -a _CT
+declare -a _NAME
+declare -a _REACHABLE
 declare -a _CAP_CT # capability: color temperature
 declare -a _CAP_SAT # capability: saturation
 declare -a _CAP_COLOR # capability: hue
@@ -741,7 +743,6 @@ lampeMain() {
             checkKey "$2"
         fi
         if [[ ! "$_I" -eq 1 ]] ; then
-            debug "WTFigo $_I"
             receive_light_states
         fi
 
@@ -1253,13 +1254,6 @@ elif [[ -f ~/.lamperc ]] ; then
 	source ~/.lamperc
 
     loadUserConfig
-
-	# receive light states
-	#if [[ "$1" != "-s" ]] && [[ "$1" != "--set" ]] ; then
-    #    # FIXME receiving all light states in oneshot-mode is currently not supported;
-    #    # this function takes too much time
-    #    hbReceiveLightStates
-    #fi
 
 	startLampe "$@"
 else
