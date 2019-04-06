@@ -97,7 +97,7 @@ checkKey() {
 
 readAKey() {
 	# readKey
-	read -s -n 1 _KEY
+	read -r -s -n 1 _KEY
 
 	case $_KEY in
 		[1-9])
@@ -118,7 +118,7 @@ readLightNumber() {
 	# debug
 	#echo "number = '$number'"
 
-	read -s -n 1 _NEXT_KEY
+	read -r -s -n 1 _NEXT_KEY
 	case $_NEXT_KEY in
 		[0-9])
 			number=$number$_NEXT_KEY
@@ -623,7 +623,7 @@ printHelpScreen() {
 
 lampeQuit() {
 	echo -en "\n    Do you really want to quit 'lampe'? [$(lColor ltwhite)y$(lColor off)/$(lColor ltred)n$(lColor off)] "
-	read doQuit
+	read -r doQuit
 	if [[ "$doQuit" == "y" ]] || [[ "$doQuit" == "Y" ]] || [[ "$doQuit" == "" ]] ; then
 		echo " $(lColor ltgreen)!$(lColor off)  bye"
 
@@ -888,7 +888,7 @@ hbDetect() {
 	#cat $tmpIPsFile
 
 	# check for model description
-	while read nextIP ; do
+	while read -r nextIP ; do
 		# debug
 		# echo "nextIP = $nextIP"
 
@@ -913,7 +913,7 @@ hbDetect() {
 
 hbEnterIP() {
 	echo -n "    Please enter the IP of your HUE-bridge: "
-	read manualIP
+	read -r manualIP
 	hbCheck "$manualIP"
 	if [ -n "$hbModel" ] ; then
 		_BRIDGE_FOUND=true
@@ -1180,10 +1180,10 @@ saveAllSettings() {
 # load user configuration
 loadUserConfig() {
 	if [[ -f ~/.config/lampe/light-settings ]] ; then
-		source ~/.config/lampe/light-settings
+		. ~/.config/lampe/light-settings
 	fi
     if [[ -f ~/.config/lampe/light-defaults ]] ; then
-        source ~/.config/lampe/light-defaults
+        . ~/.config/lampe/light-defaults
     fi
 
     # check light defaults
@@ -1251,7 +1251,7 @@ if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
 	showHelp
 elif [[ -f ~/.lamperc ]] ; then
 	# read configuration
-	source ~/.lamperc
+	. ~/.lamperc
 
     loadUserConfig
 
@@ -1261,7 +1261,7 @@ else
 	echo " $(lColor ltyellow)?$(lColor off) [======---$(lColor ltwhite)LAMPE$(lColor off)------------------------------------]"
 	echo "    You are running 'lampe' for the first time. Do you "
 	echo -n "    wish automatic discovery and configuration? [$(lColor ltwhite)y$(lColor off)/$(lColor ltred)n$(lColor off)] "
-	read doIt
+	read -r doIt
 	if [[ "$doIt" == "y" ]] || [[ "$doIt" == "Y" ]] || [[ "$doIt" == "" ]] ; then
 		hbDetect 2> /dev/null
 		if [ "$_BRIDGE_FOUND" == false ] ; then
@@ -1278,7 +1278,7 @@ else
 
 		# store configuration if bridge was found
 		echo "bridgeip=\"$bridgeip\"" >> ~/.lamperc
-        source ~/.lamperc
+        . ~/.lamperc
 
         loadUserConfig
 
