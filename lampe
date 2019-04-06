@@ -162,6 +162,16 @@ for (( s=1 ; s<100 ; s=s+1 )) ; do
     _CAP_BRIGHTNESS[$s]=0
 done
 
+get_timemins() {
+    local raw_time=$( date '+%-H %-M' )
+    local mins=0    # midnight
+
+    raw_time_a=(${raw_time})
+    mins=$(( raw_time_a[0] * 60 + raw_time_a[1] ))
+
+    echo "${mins}"
+}
+
 get_bri_from_time() {
     local time_mins="$1"
     local time_bri=254
@@ -175,9 +185,10 @@ get_bri_from_time() {
 moodSequence() {
 	while [[ -f "${cache_dir}lampeSequenceM${_SELECTED_LAMP}" ]] ; do
         local high_color_factor=45 # 16bit-color, 65536 colors devided through 1439 steps
-        local time_value=$(( $( date '+%-M' )+$( date '+%-H' )*60 ))
+        #local time_value=$(( $( date '+%-M' )+$( date '+%-H' )*60 ))
+        local time_value=$( get_timemins )
 
-        local hue_color=$(( 65536-time_value*high_color_factor ))
+        local hue_color=$(( 65536 - time_value * high_color_factor ))
 
 		local hue="\"hue\":$hue_color,\"transitiontime\":30"
         if [[ -v "mood_sat" ]] ; then
@@ -216,9 +227,14 @@ redshiftSequence() {
         #echo "t/R:mired ?= old_mired => $mired ?= $old_mired"
 
 		local ct="\"ct\":$mired,\"transitiontime\":600"
+        if [[ "${sequence_bri}" -eq 1 ]] ; then
+            mins=$( get_timemins )
+            time_bri=$( get_bri_from_time "${mins}" )
+            ct="${ct},\"bri\":$time_bri"
+        fi
 		curl -s -d "{$ct}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
-        sleep 60 # 1 minute
+        sleep 60
     done
 }
 
@@ -259,6 +275,11 @@ noiseSequence() {
         fi
 
         local noise="\"hue\":$nhue,\"transitiontime\":$transition,\"sat\":$nsat"
+        if [[ "${sequence_bri}" -eq 1 ]] ; then
+            mins=$( get_timemins )
+            time_bri=$( get_bri_from_time "${mins}" )
+            noise="${noise},\"bri\":$time_bri"
+        fi
 		curl -s -d "{$noise}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
         sleep "$noise_interval"
         ohue=$nhue
@@ -279,6 +300,11 @@ previewRandom() {
 
 		local hue=$(( RANDOM*2 ))
 		local color="\"hue\":$hue,\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]},\"transitiontime\":100"
+        if [[ "${sequence_bri}" -eq 1 ]] ; then
+            mins=$( get_timemins )
+            time_bri=$( get_bri_from_time "${mins}" )
+            color="${color},\"bri\":$time_bri"
+        fi
 		curl -s -d "{\"on\":$on,$color}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
 		sleep 10
