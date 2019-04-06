@@ -92,6 +92,10 @@ checkKey() {
 			# noise sequence
 			_O=1
 		;;
+		"x")
+			# toggle time-based brightness
+			_X=1
+		;;
 	esac
 }
 
@@ -394,59 +398,23 @@ setSwitch() {
 	fi
 }
 
-# get colorEscapes from colors
-lColor() {
-	case $1 in
-		"red")
-			echo -en "\e[0;31m"
-		;;
-		"yellow")
-			echo -en "\e[0;33m"
-		;;
-		"green")
-			echo -en "\e[0;32m"
-		;;
-		"blue")
-			echo -en "\e[0;34m"
-		;;
-		"magenta")
-			echo -en "\e[0;35m"
-		;;
-		"cyan")
-			echo -en "\e[0;36m"
-		;;
-		"white")
-			echo -en "\e[0m"
-		;;
-		"gray")
-			echo -en "\e[0;37m"
-		;;
-		"ltred")
-			echo -en "\e[1;31m"
-		;;
-		"ltyellow")
-			echo -en "\e[1;33m"
-		;;
-		"ltgreen")
-			echo -en "\e[1;32m"
-		;;
-		"ltblue")
-			echo -en "\e[1;34m"
-		;;
-		"ltmagenta")
-			echo -en "\e[1;35m"
-		;;
-		"ltcyan")
-			echo -en "\e[1;36m"
-		;;
-		"ltwhite")
-			echo -en "\e[1m"
-		;;
-		"off")
-			echo -en "\e[0m"
-		;;
-	esac
-}
+cred="\e[31m"
+cyellow="\e[33m"
+cgreen="\e[32m"
+cblue="\e[34m"
+cmagenta="\e[35m"
+ccyan="\e[36m"
+cwhite="\e[0m"
+cgray="\e[37m"
+cltred="\e[1;31m"
+cltyellow="\e[1;33m"
+cltgreen="\e[1;32m"
+cltblue="\e[1;34m"
+cltmagenta="\e[1;35m"
+cltcyan="\e[1;36m"
+cltwhite="\e[1m"
+clt="\e[1m" # bold
+coff="\e[0m"
 
 getColorByValue() {
 	hue=$1
@@ -456,27 +424,27 @@ getColorByValue() {
 
 	if [ "$hue" -lt 9001 ] ; then
 		# red
-		colorEscape="red"
+		colorEscape="${cred}"
 	elif [ "$hue" -gt 9000 ] && [ "$hue" -lt 19001 ] ; then
 		# orange, yellow
-		colorEscape="yellow"
+		colorEscape="${cyellow}"
 	elif [ "$hue" -gt 19000 ] && [ "$hue" -lt 31001 ] ; then
 		# green
-		colorEscape="green"
+		colorEscape="${cgreen}"
 	elif [ "$hue" -gt 31000 ] && [ "$hue" -lt 35001 ] ; then
 		# white, green-blue, cyan
-		colorEscape="cyan"
+		colorEscape="${ccyan}"
 	elif [ "$hue" -gt 35000 ] && [ "$hue" -lt 48001 ] ; then
 		# blue
-		colorEscape="blue"
+		colorEscape="${cblue}"
 	elif [ "$hue" -gt 48000 ] && [ "$hue" -lt 62280 ] ; then
 		# purple
-		colorEscape="magenta"
+		colorEscape="${cmagenta}"
 	elif [ "$hue" -gt 62279 ] ; then
 		# red
-		colorEscape="red"
+		colorEscape="${cred}"
 	fi
-	echo -en "$(lColor $colorEscape)"
+	echo -en "${colorEscape}"
 }
 
 # get print-color of selected or given light number
@@ -497,31 +465,31 @@ getColorOfLight() {
 
 	bold=""
 	if [[ ${_SWITCH[$light]} == "true" ]] ; then
-		bold="lt"
+		bold="${clt}"
 	fi
 	if [[ "$hue" -lt 9001 ]] ; then
 		# red
-		colorEscape="red"
+		colorEscape="${cred}"
 	elif [[ "$hue" -gt 9000 ]] && [[ "$hue" -lt 19001 ]] ; then
 		# orange, yellow
-		colorEscape="yellow"
+		colorEscape="${cyellow}"
 	elif [[ "$hue" -gt 19000 ]] && [[ "$hue" -lt 31001 ]] ; then
 		# green
-		colorEscape="green"
+		colorEscape="${cgreen}"
 	elif [[ "$hue" -gt 31000 ]] && [[ "$hue" -lt 35001 ]] ; then
 		# white, green-blue, cyan
-		colorEscape="cyan"
+		colorEscape="${ccyan}"
 	elif [[ "$hue" -gt 35000 ]] && [[ "$hue" -lt 48001 ]] ; then
 		# blue
-		colorEscape="blue"
+		colorEscape="${cblue}"
 	elif [[ "$hue" -gt 48000 ]] && [[ "$hue" -lt 63280 ]] ; then
 		# purple
-		colorEscape="magenta"
+		colorEscape="${cmagenta}"
 	elif [[ "$hue" -gt 63279 ]] ; then
 		# red
-		colorEscape="red"
+		colorEscape="${cred}"
 	fi
-	echo -en "$(lColor $bold$colorEscape)"
+	echo -en "${bold}${colorEscape}"
 }
 
 printMainScreen() {
@@ -557,40 +525,57 @@ printMainScreen() {
 			if [ "$_SELECTED_LAMP" -lt 10 ] ; then
 				echo -n " "
 			fi
-			echo -en "$(getColorOfLight)$_SELECTED_LAMP $(lColor ltwhite)"
+			echo -en "$(getColorOfLight)$_SELECTED_LAMP ${cltwhite}"
 		fi
 
-		echo -en "$(lColor off)$(lColor ltwhite)[$(lColor off)"
+        x_time_bold=""
+        x_time_bold_off=""
+        a_sequence_is_running=0
+        for f in ${cache_dir}lampeSequence*${_SELECTED_LAMP} ; do
+            # debug
+            #echo "$f"
+            if [[ -f "$f" ]] ; then
+                a_sequence_is_running=1
+            fi
+        done
+        if [[ "${sequence_bri}" -eq 1 ]] \
+        && [[ "${a_sequence_is_running}" -eq 1 ]] ; then
+            x_time_bold="${cltwhite}"
+            x_time_bold_off="${coff}"
+        fi
+
+
+		echo -en "${coff}${cltwhite}[${coff}"
 		for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do
 			colorValue=$((65279*ii/currentBrightness))
 			echo -en "$(getColorByValue $colorValue)"
 
 			if [ $ii == $colorPosition ] ; then
 				if [[ -f "${cache_dir}lampeSequenceR$_SELECTED_LAMP" ]] ; then
-					echo -en "$(getColorOfLight)R$(lColor off)"
+					echo -en "$(getColorOfLight)R${coff}"
 				elif [[ -f "${cache_dir}lampeSequenceB$_SELECTED_LAMP" ]] ; then
-					echo -en "$(getColorOfLight)B$(lColor off)"
+					echo -en "$(getColorOfLight)B${coff}"
 				elif [[ -f "${cache_dir}lampeSequenceM$_SELECTED_LAMP" ]] ; then
-					echo -en "$(getColorOfLight)M$(lColor off)"
+					echo -en "$(getColorOfLight)M${coff}"
 				elif [[ -f "${cache_dir}lampeSequenceT$_SELECTED_LAMP" ]] ; then
-					echo -en "$(getColorOfLight)T$(lColor off)"
+					echo -en "$(getColorOfLight)T${coff}"
 				elif [[ -f "${cache_dir}lampeSequenceO$_SELECTED_LAMP" ]] ; then
-					echo -en "$(getColorOfLight)O$(lColor off)"
+					echo -en "$(getColorOfLight)O${coff}"
 				else
-					echo -en "$(getColorOfLight)H$(lColor off)"
+					echo -en "$(getColorOfLight)H${coff}"
 				fi
 			else
 				if [ $ii -lt $currentSat ] ; then
-					echo -n "="
+					echo -en "${x_time_bold}=${x_time_bold_off}"
 				else
-					echo -n "-"
+					echo -en "-"
 				fi
 			fi
 		done
 		for (( ii=0 ; ii<50-currentBrightness ; ii=ii+1 )) ; do
 			echo -n " "
 		done
-		echo -en "$(lColor off)$(lColor ltwhite)]$(lColor off) "
+		echo -en "${coff}${cltwhite}]${coff} "
 		if [[ ${_SWITCH[$_SELECTED_LAMP]} != "true" ]] ; then
 			echo -n "off "
 		else
@@ -662,15 +647,17 @@ printHelpScreen() {
     echo "    t        REDSHIFT      T: color temperature"
     echo "                              based on redshift"
     echo "    o        NOISE         O: noise color sequence"
+    echo -e "    x        TIME          ${cltwhite}=${coff}: toggle brightness"
+    echo "                              based on time"
 	#        [--------------------------------------------------]
 	echo "    Q        QUIT"
 }
 
 lampeQuit() {
-	echo -en "\n    Do you really want to quit 'lampe'? [$(lColor ltwhite)y$(lColor off)/$(lColor ltred)n$(lColor off)] "
+	echo -en "\n    Do you really want to quit 'lampe'? [${cltwhite}y${coff}/${cltred}n${coff}] "
 	read -r doQuit
 	if [[ "$doQuit" == "y" ]] || [[ "$doQuit" == "Y" ]] || [[ "$doQuit" == "" ]] ; then
-		echo " $(lColor ltgreen)!$(lColor off)  bye"
+		echo -e " ${cltgreen}!${coff}  bye"
 
 		# cleanup and quit
 		rm ${cache_dir}lampeSequence* 2> /dev/null
@@ -702,6 +689,15 @@ initializeKeys() {
 	_NN=0
     _T=0
     _O=0
+    _X=0
+}
+
+toggle_time_bri() {
+    if [[ "${sequence_bri}" -eq 1 ]] ; then
+        sequence_bri=0
+    else
+        sequence_bri=1
+    fi
 }
 
 handleKey() {
@@ -759,6 +755,8 @@ handleKey() {
 		toggleSequence "T"
 	elif [[ "$_O" == 1 ]] ; then
 		toggleSequence "O"
+	elif [[ "$_X" == 1 ]] ; then
+		toggle_time_bri
 	elif [[ "$_I" == 1 ]] ; then
 		# receive current light state
         receive_light_states
@@ -798,10 +796,10 @@ lampeMain() {
             receive_light_states
         fi
         printMainScreen
-		echo -e "\n $(lColor ltgreen)!$(lColor off)  bye"
+		echo -e "\n ${cltgreen}!${coff}  bye"
     else
     	# interactive-mode: initial screen
-    	echo -en "   [$(lColor red)=$(lColor yellow)=$(lColor green)=$(lColor cyan)=$(lColor blue)=$(lColor magenta)=$(lColor off)$(lColor ltwhite)---LAMPE-${version}---PRESS-h-FOR-HELP-----------$(lColor off)]"
+    	echo -en "   [${cred}=${cyellow}=${cgreen}=${ccyan}=${cblue}=${cmagenta}=${coff}${cltwhite}---LAMPE-${version}---PRESS-h-FOR-HELP-----------${coff}]"
 
     	lastTime=$(date +%s%3N) # seconds + milliseconds
     	while true; do
@@ -986,7 +984,7 @@ startLampe() {
 }
 
 hbRegisterUser() {
-	echo "    Please press the $(lColor ltblue)Link-button$(lColor off) on your bridge to "
+	echo -e "    Please press the ${cltblue}Link-button${coff} on your bridge to "
 	echo -n "    register a user ... "
 	while true ; do
 		# try user registration every two seconds
@@ -1120,9 +1118,9 @@ print_light_states() {
 		    if [ "$light" -lt 10 ] ; then
 		    	echo -n " "
 		    fi
-		    echo -en "$(getColorOfLight $light)$light $(lColor off) "
+		    echo -en "$(getColorOfLight $light)$light ${coff} "
 		    if [[ "${_REACHABLE[$light]}" == "true" ]] ; then
-		    	echo -en "reachable  $(lColor ltwhite)"
+		    	echo -en "reachable  ${cltwhite}"
 		    else
 		    	echo -en "           "
 		    fi
@@ -1146,7 +1144,7 @@ print_light_states() {
 		    fi
 
             # capabilities: HSTB
-            echo -n "$(lColor gray)"
+            echo -ne "${cgray}"
             if [[ "${_CAP_COLOR[$light]}" -eq 1 ]] ; then
                 echo -n "H"
             else
@@ -1168,7 +1166,7 @@ print_light_states() {
                 echo -n " "
             fi
 
-		    echo "  $(lColor white)${_NAME[$light]}$(lColor off)"
+		    echo -e "  ${cwhite}${_NAME[$light]}${coff}"
         fi
 	done
 }
@@ -1176,7 +1174,7 @@ print_light_states() {
 checkDependency() {
 	which "$1" 2> /dev/null 1> /dev/null
 	if [[ "$?" -gt 0 ]] ; then
-		echo " $(lColor ltred)?$(lColor off)  warning, '$1' is not installed"
+		echo -e " ${cltred}?${coff}  warning, '$1' is not installed"
 	fi
 }
 
@@ -1236,7 +1234,7 @@ loadUserConfig() {
     if [[ -v "mood_sat" ]] ; then
         echo "    mood_sat=$mood_sat"
     else
-        echo " $(lColor ltyellow)?$(lColor off)  mood_sat=[0..254]        default saturation for"
+        echo -e " ${cltyellow}?${coff}  mood_sat=[0..254]        default saturation for"
         echo "                             mood sequence not set."
         echo "                             saturation will not be"
         echo "                             changed during sequence"
@@ -1246,7 +1244,7 @@ loadUserConfig() {
     if [[ -v "redshift_options" ]] ; then
         echo "    redshift_options=\"$redshift_options\""
     else
-        echo " $(lColor ltyellow)?$(lColor off)  redshift_options=\"\"      no options will be"
+        echo -e " ${cltyellow}?${coff}  redshift_options=\"\"      no options will be"
         echo "                             forwarded to redshift"
         not_set=1
     fi
@@ -1254,7 +1252,7 @@ loadUserConfig() {
     if [[ -v "noise_range" ]] ; then
         echo "    noise_range=$noise_range"
     else
-        echo " $(lColor ltyellow)?$(lColor off)  noise_range=[0..65000]   default 15000, a color"
+        echo -e " ${cltyellow}?${coff}  noise_range=[0..65000]   default 15000, a color"
         echo "                             between two colors"
         not_set=1
         noise_range=15000
@@ -1262,14 +1260,14 @@ loadUserConfig() {
     if [[ -v "noise_interval" ]] ; then
         echo "    noise_interval=$noise_interval"
     else
-        echo " $(lColor ltyellow)?$(lColor off)  noise_interval=[1..]     default 3 seconds"
+        echo -e " ${cltyellow}?${coff}  noise_interval=[1..]     default 3 seconds"
         not_set=1
         noise_interval=3
     fi
     if [[ -v "noise_step" ]] ; then
         echo "    noise_step=$noise_step"
     else
-        echo " $(lColor ltyellow)?$(lColor off)  noise_step=[1..65000]    default 5000, could be"
+        echo -e " ${cltyellow}?${coff}  noise_step=[1..65000]    default 5000, could be"
         echo "                             more than just one shade"
         echo "                             of the current color "
         not_set=1
@@ -1278,7 +1276,7 @@ loadUserConfig() {
     if [[ -v "sequence_bri" ]] ; then
         echo "    sequence_bri=${sequence_bri}"
     else
-        echo " $(lColor ltyellow)?$(lColor off)  sequence_bri=[1,0]       default 1, some"
+        echo -e " ${cltyellow}?${coff}  sequence_bri=[1,0]       default 1, some"
         echo "                             sequences dim brightness "
         echo "                             during daytime "
         not_set=1
@@ -1312,14 +1310,14 @@ elif [[ -f ~/.lamperc ]] ; then
 	startLampe "$@"
 else
 	# first start: ask user what to do
-	echo " $(lColor ltyellow)?$(lColor off) [======---$(lColor ltwhite)LAMPE$(lColor off)------------------------------------]"
+	echo -e " ${cltyellow}?${coff} [======---${cltwhite}LAMPE${coff}------------------------------------]"
 	echo "    You are running 'lampe' for the first time. Do you "
-	echo -n "    wish automatic discovery and configuration? [$(lColor ltwhite)y$(lColor off)/$(lColor ltred)n$(lColor off)] "
+	echo -en "    wish automatic discovery and configuration? [${cltwhite}y${coff}/${cltred}n${coff}] "
 	read -r doIt
 	if [[ "$doIt" == "y" ]] || [[ "$doIt" == "Y" ]] || [[ "$doIt" == "" ]] ; then
 		hbDetect 2> /dev/null
 		if [ "$_BRIDGE_FOUND" == false ] ; then
-			echo " $(lColor ltred)?$(lColor off)  warning, unable to find bridge"
+			echo -e " ${cltred}?${coff}  warning, unable to find bridge"
 			hbEnterIP
 		fi
 	else
@@ -1341,7 +1339,7 @@ else
 
 		startLampe "$@"
 	else
-		echo " $(lColor ltred)!$(lColor off)  no bridge found, error 2"
+		echo -e " ${cltred}!${coff}  no bridge found, error 2"
 		exit 2
 	fi
 fi
