@@ -303,7 +303,7 @@ previewRandom() {
 		#echo "do random, '$LAMPE_R'"
 
 		local hue=$(( RANDOM*2 ))
-		local color="\"hue\":$hue,\"bri\":${_BRIGHTNESS[$_SELECTED_LAMP]},\"sat\":${_SAT[$_SELECTED_LAMP]},\"transitiontime\":100"
+		local color="\"hue\":$hue,\"sat\":${_SAT[$_SELECTED_LAMP]},\"transitiontime\":100"
         if [[ "${sequence_bri}" -eq 1 ]] ; then
             mins=$( get_timemins )
             time_bri=$( get_bri_from_time "${mins}" )
@@ -463,10 +463,6 @@ getColorOfLight() {
 	# debug
 	#echo " getColor.hue = '$hue'"
 
-	bold=""
-	if [[ ${_SWITCH[$light]} == "true" ]] ; then
-		bold="${clt}"
-	fi
 	if [[ "$hue" -lt 9001 ]] ; then
 		# red
 		colorEscape="${cred}"
@@ -489,7 +485,8 @@ getColorOfLight() {
 		# red
 		colorEscape="${cred}"
 	fi
-	echo -en "${bold}${colorEscape}"
+
+	echo -en "${colorEscape}"
 }
 
 printMainScreen() {
@@ -525,25 +522,21 @@ printMainScreen() {
 			if [ "$_SELECTED_LAMP" -lt 10 ] ; then
 				echo -n " "
 			fi
-			echo -en "$(getColorOfLight)$_SELECTED_LAMP ${cltwhite}"
+            bold=""
+            # debug
+            #echo "_SWITCH[$light] = ${_SWITCH[$light]}"
+	        if [[ "${_SWITCH[$_SELECTED_LAMP]}" == "true" ]] ; then
+		        bold="${clt}"
+	        fi
+			echo -en "${bold}$(getColorOfLight)$_SELECTED_LAMP ${cltwhite}"
 		fi
 
         x_time_bold=""
         x_time_bold_off=""
-        a_sequence_is_running=0
-        for f in ${cache_dir}lampeSequence*${_SELECTED_LAMP} ; do
-            # debug
-            #echo "$f"
-            if [[ -f "$f" ]] ; then
-                a_sequence_is_running=1
-            fi
-        done
-        if [[ "${sequence_bri}" -eq 1 ]] \
-        && [[ "${a_sequence_is_running}" -eq 1 ]] ; then
+        if [[ "${sequence_bri}" -eq 1 ]] ; then
             x_time_bold="${cltwhite}"
             x_time_bold_off="${coff}"
         fi
-
 
 		echo -en "${coff}${cltwhite}[${coff}"
 		for (( ii=0 ; ii<currentBrightness ; ii=ii+1 )) ; do
@@ -551,6 +544,7 @@ printMainScreen() {
 			echo -en "$(getColorByValue $colorValue)"
 
 			if [ $ii == $colorPosition ] ; then
+                echo -en "${x_time_bold}"
 				if [[ -f "${cache_dir}lampeSequenceR$_SELECTED_LAMP" ]] ; then
 					echo -en "$(getColorOfLight)R${coff}"
 				elif [[ -f "${cache_dir}lampeSequenceB$_SELECTED_LAMP" ]] ; then
@@ -562,13 +556,26 @@ printMainScreen() {
 				elif [[ -f "${cache_dir}lampeSequenceO$_SELECTED_LAMP" ]] ; then
 					echo -en "$(getColorOfLight)O${coff}"
 				else
-					echo -en "$(getColorOfLight)H${coff}"
+                    if [[ "${sequence_bri}" -eq 1 ]] ; then
+					    echo -en "$(getColorOfLight)X${coff}"
+                    else
+					    echo -en "$(getColorOfLight)H${coff}"
+                    fi
 				fi
+                echo -en "${x_time_bold_off}"
 			else
 				if [ $ii -lt $currentSat ] ; then
-					echo -en "${x_time_bold}=${x_time_bold_off}"
+				    if [[ "$ii" -eq "$(( currentSat - 1 ))" ]] ; then
+					    echo -en "${x_time_bold}=${x_time_bold_off}"
+                    else
+					    echo -en "="
+                    fi
 				else
-					echo -en "-"
+				    if [[ "$ii" -eq "$(( currentBrightness - 1 ))" ]] ; then
+					    echo -en "${x_time_bold}-${x_time_bold_off}"
+                    else
+					    echo -en "-"
+                    fi
 				fi
 			fi
 		done
@@ -582,6 +589,14 @@ printMainScreen() {
 			echo -n "    "
 		fi
 	fi
+}
+
+end_all_sequences() {
+	rm "${cache_dir}lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
+    rm "${cache_dir}lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
+    rm "${cache_dir}lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
+    rm "${cache_dir}lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
+    rm "${cache_dir}lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
 }
 
 toggleSequence() {
@@ -647,8 +662,8 @@ printHelpScreen() {
     echo "    t        REDSHIFT      T: color temperature"
     echo "                              based on redshift"
     echo "    o        NOISE         O: noise color sequence"
-    echo -e "    x        TIME          ${cltwhite}=${coff}: toggle brightness"
-    echo "                              based on time"
+    echo -e "    x        TIME          ${cltwhite}X=-${coff}: toggle brightness"
+    echo "                                based on time"
 	#        [--------------------------------------------------]
 	echo "    Q        QUIT"
 }
@@ -702,23 +717,29 @@ toggle_time_bri() {
 
 handleKey() {
 	if [[ "$_UP" == 1 ]] ; then
+        end_all_sequences
 		setBrightness 5
 		hbSendLightBri
 	elif [[ "$_DOWN" == 1 ]] ; then
+        end_all_sequences
 		setBrightness -5
 		hbSendLightBri
 	elif [[ "$_RIGHT" == 1 ]] ; then
+        end_all_sequences
 		setSat 10
 		hbSendLightSat
 	elif [[ "$_LEFT" == 1 ]] ; then
+        end_all_sequences
 		setSat -10
 		hbSendLightSat
 	elif [[ "$_Q" == 1 ]] ; then
 		# hue
+        end_all_sequences
 		setColor -1000
 		hbSendLightColor
 	elif [[ "$_E" == 1 ]] ; then
 		# hue
+        end_all_sequences
 		setColor 1000
 		hbSendLightColor
 	elif [[ "$_Y" == 1 ]] ; then
@@ -743,6 +764,7 @@ handleKey() {
 		saveLightSetting
 		saveAllSettings
 	elif [[ "$_L" == 1 ]] ; then
+        end_all_sequences
 		loadLightSetting
 		hbSendLightsState
 	elif [[ "$_R" == 1 ]] ; then
@@ -1118,7 +1140,11 @@ print_light_states() {
 		    if [ "$light" -lt 10 ] ; then
 		    	echo -n " "
 		    fi
-		    echo -en "$(getColorOfLight $light)$light ${coff} "
+            bold=""
+	        if [[ "${_SWITCH[$light]}" == "true" ]] ; then
+		        bold="${clt}"
+	        fi
+		    echo -en "${bold}$(getColorOfLight $light)$light ${coff} "
 		    if [[ "${_REACHABLE[$light]}" == "true" ]] ; then
 		    	echo -en "reachable  ${cltwhite}"
 		    else
