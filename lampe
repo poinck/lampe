@@ -834,30 +834,43 @@ lampeMain() {
 		echo -e "\n ${cltgreen}!${coff}  bye"
     else
         # ask to resume sequences, if there any
-        for f in ${cache_dir}lampeSequence* ; do
-            if [[ -f "$f" ]] ; then
-	            echo -en "    Do you want to resume sequences? [${cltwhite}y${coff}/${cltred}N${coff}] "
-	            read -r do_resume
-	            if [[ "${do_resume}" == "y" ]] || [[ "${do_resume}" == "Y" ]] ; then
-                    receive_light_states
-	                for (( light=1 ; light<51 ; light=light+1 )) ; do
-                        if [[ ! "${_NAME[$light]}" == "" ]] ; then
-                            _SELECTED_LAMP=${light}
-                            ( moodSequence ) &
-                            ( redshiftSequence ) &
-                            ( noiseSequence ) &
-                            ( previewRandom ) &
-                        fi
-                    done
-                    print_light_states
-                    _SELECTED_LAMP=1
-                else
-		            # cleanup
-		            rm ${cache_dir}lampeSequence* 2> /dev/null
-                fi
-                break
+        lampe_ps=$( ps -e | grep lampe | wc -l )
+        if [[ "${lampe_ps}" -gt 1 ]] ; then
+	        echo -en "    Keep $(( lampe_ps - 2 )) existing sequences running? [${cltwhite}Y${coff}/${cltred}n${coff}] "
+	        read -r do_keep
+	        if [[ "${do_keep}" == "y" ]] || [[ "${do_keep}" == "Y" ]] || [[ "${do_keep}" == "" ]] ; then
+                receive_light_states
+                print_light_states
+            else
+		        # cleanup
+		        rm ${cache_dir}lampeSequence* 2> /dev/null
             fi
-        done
+        else
+            for f in ${cache_dir}lampeSequence* ; do
+                if [[ -f "$f" ]] ; then
+	                echo -en "    Do you want to resume sequences? [${cltwhite}y${coff}/${cltred}N${coff}] "
+	                read -r do_resume
+	                if [[ "${do_resume}" == "y" ]] || [[ "${do_resume}" == "Y" ]] ; then
+                        receive_light_states
+	                    for (( light=1 ; light<51 ; light=light+1 )) ; do
+                            if [[ ! "${_NAME[$light]}" == "" ]] ; then
+                                _SELECTED_LAMP=${light}
+                                ( moodSequence ) &
+                                ( redshiftSequence ) &
+                                ( noiseSequence ) &
+                                ( previewRandom ) &
+                            fi
+                        done
+                        print_light_states
+                        _SELECTED_LAMP=1
+                    else
+		                # cleanup
+		                rm ${cache_dir}lampeSequence* 2> /dev/null
+                    fi
+                    break
+                fi
+            done
+        fi
 
     	# interactive-mode: initial screen
     	echo -en "   [${cred}=${cyellow}=${cgreen}=${ccyan}=${cblue}=${cmagenta}=${coff}${cltwhite}---LAMPE-${version}---PRESS-h-FOR-HELP-----------${coff}]"
