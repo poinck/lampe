@@ -96,6 +96,10 @@ checkKey() {
 			# toggle time-based brightness
 			_X=1
 		;;
+		"C")
+			# quit without stopping sequences
+			_CC=1
+		;;
 	esac
 }
 
@@ -665,20 +669,26 @@ printHelpScreen() {
     echo -e "    x        TIME          ${cltwhite}X=-${coff}: toggle brightness"
     echo "                                based on time"
 	#        [--------------------------------------------------]
+	echo "    C        CU, BRB       quit, but keep sequences"
+    echo "                           running (see you)"
 	echo "    Q        QUIT"
 }
 
 lampeQuit() {
-	echo -en "\n    Do you really want to quit 'lampe'? [${cltwhite}y${coff}/${cltred}n${coff}] "
+	echo -en "\n    Do you really want to quit 'lampe'? [${cltwhite}Y${coff}/${cltred}n${coff}] "
 	read -r doQuit
 	if [[ "$doQuit" == "y" ]] || [[ "$doQuit" == "Y" ]] || [[ "$doQuit" == "" ]] ; then
 		echo -e " ${cltgreen}!${coff}  bye"
 
 		# cleanup and quit
 		rm ${cache_dir}lampeSequence* 2> /dev/null
-		# killall lampe > /dev/null
 		exit 0
 	fi
+}
+
+lampe_cu() {
+	echo -e "\n ${cltgreen}!${coff}  cu"
+	exit 0
 }
 
 initializeKeys() {
@@ -705,6 +715,7 @@ initializeKeys() {
     _T=0
     _O=0
     _X=0
+    _CC=0
 }
 
 toggle_time_bri() {
@@ -760,6 +771,8 @@ handleKey() {
 		selectAlert
 	elif [[ "$_QQ" == 1 ]] ; then
 		lampeQuit
+	elif [[ "$_CC" == 1 ]] ; then
+		lampe_cu
 	elif [[ "$_S" == 1 ]] ; then
 		saveLightSetting
 		saveAllSettings
@@ -820,6 +833,32 @@ lampeMain() {
         printMainScreen
 		echo -e "\n ${cltgreen}!${coff}  bye"
     else
+        # ask to resume sequences, if there any
+        for f in ${cache_dir}lampeSequence* ; do
+            if [[ -f "$f" ]] ; then
+	            echo -en "    Do you want to resume sequences? [${cltwhite}y${coff}/${cltred}N${coff}] "
+	            read -r do_resume
+	            if [[ "${do_resume}" == "y" ]] || [[ "${do_resume}" == "Y" ]] ; then
+                    receive_light_states
+	                for (( light=1 ; light<51 ; light=light+1 )) ; do
+                        if [[ ! "${_NAME[$light]}" == "" ]] ; then
+                            _SELECTED_LAMP=${light}
+                            ( moodSequence ) &
+                            ( redshiftSequence ) &
+                            ( noiseSequence ) &
+                            ( previewRandom ) &
+                        fi
+                    done
+                    print_light_states
+                    _SELECTED_LAMP=1
+                else
+		            # cleanup
+		            rm ${cache_dir}lampeSequence* 2> /dev/null
+                fi
+                break
+            fi
+        done
+
     	# interactive-mode: initial screen
     	echo -en "   [${cred}=${cyellow}=${cgreen}=${ccyan}=${cblue}=${cmagenta}=${coff}${cltwhite}---LAMPE-${version}---PRESS-h-FOR-HELP-----------${coff}]"
 
