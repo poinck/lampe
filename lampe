@@ -835,7 +835,7 @@ lampeMain() {
     else
         # ask to resume sequences, if there any
         lampe_ps=$( ps -e | grep lampe | wc -l )
-        if [[ "${lampe_ps}" -gt 1 ]] ; then
+        if [[ "${lampe_ps}" -gt 2 ]] ; then
 	        echo -en "    Keep $(( lampe_ps - 2 )) existing sequences running? [${cltwhite}Y${coff}/${cltred}n${coff}] "
 	        read -r do_keep
 	        if [[ "${do_keep}" == "y" ]] || [[ "${do_keep}" == "Y" ]] || [[ "${do_keep}" == "" ]] ; then
