@@ -92,6 +92,10 @@ checkKey() {
 			# noise sequence
 			_O=1
 		;;
+		"p")
+			# particulate matter sequence
+			_P=1
+		;;
 		"x")
 			# toggle time-based brightness
 			_X=1
@@ -335,6 +339,24 @@ previewBlink() {
 	done
 }
 
+# particulate matter sequence
+pm25_sequence() {
+	while [[ -f "${cache_dir}lampeSequenceP$_SELECTED_LAMP" ]] ; do
+        feinstaub > /dev/null
+        . /tmp/feinstaublampe
+
+        local hue=48280 # blueish purple
+        local sat=$(( pm25 * 255 / 10 ))
+        if [[ "${sat}" -gt 255 ]] ; then
+            sat=255
+        fi
+
+		curl -s -d "{\"sat\":$sat,\"hue\":$hue}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
+
+		sleep 180
+	done
+}
+
 selectAlert() {
 	curl -s -d "{\"alert\":\"select\"}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 }
@@ -382,7 +404,7 @@ setColor() {
 	fi
 
 	# debug
-	# echo " $hue "
+	#echo " $hue "
 
 	_COLOR[$_SELECTED_LAMP]=$hue
 }
@@ -559,6 +581,8 @@ printMainScreen() {
 					echo -en "$(getColorOfLight)T${coff}"
 				elif [[ -f "${cache_dir}lampeSequenceO$_SELECTED_LAMP" ]] ; then
 					echo -en "$(getColorOfLight)O${coff}"
+				elif [[ -f "${cache_dir}lampeSequenceP$_SELECTED_LAMP" ]] ; then
+					echo -en "$(getColorOfLight)P${coff}"
 				else
                     if [[ "${sequence_bri}" -eq 1 ]] ; then
 					    echo -en "$(getColorOfLight)X${coff}"
@@ -601,6 +625,7 @@ end_all_sequences() {
     rm "${cache_dir}lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
     rm "${cache_dir}lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
     rm "${cache_dir}lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
+	rm "${cache_dir}lampeSequenceP$_SELECTED_LAMP" 2> /dev/null
 }
 
 toggleSequence() {
@@ -614,6 +639,7 @@ toggleSequence() {
 			rm "${cache_dir}lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
 			rm "${cache_dir}lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
 			rm "${cache_dir}lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceP$_SELECTED_LAMP" 2> /dev/null
 			_SWITCH[_SELECTED_LAMP]="true"
 			( previewRandom ) &
 		elif [[ "$sequence" == "B" ]] ; then
@@ -621,6 +647,7 @@ toggleSequence() {
 			rm "${cache_dir}lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
 			rm "${cache_dir}lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
 			rm "${cache_dir}lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceP$_SELECTED_LAMP" 2> /dev/null
 			_SWITCH[_SELECTED_LAMP]="true"
 			( previewBlink "${_BRIGHTNESS[$_SELECTED_LAMP]}" ) &
 		elif [[ "$sequence" == "M" ]] ; then
@@ -628,19 +655,29 @@ toggleSequence() {
 			rm "${cache_dir}lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
 			rm "${cache_dir}lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
 			rm "${cache_dir}lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceP$_SELECTED_LAMP" 2> /dev/null
 			( moodSequence ) &
 		elif [[ "$sequence" == "T" ]] ; then
 			rm "${cache_dir}lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
 			rm "${cache_dir}lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
 			rm "${cache_dir}lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
 			rm "${cache_dir}lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceP$_SELECTED_LAMP" 2> /dev/null
 			( redshiftSequence ) &
 		elif [[ "$sequence" == "O" ]] ; then
 			rm "${cache_dir}lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
 			rm "${cache_dir}lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
 			rm "${cache_dir}lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
 			rm "${cache_dir}lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceP$_SELECTED_LAMP" 2> /dev/null
 			( noiseSequence ) &
+		elif [[ "$sequence" == "P" ]] ; then
+			rm "${cache_dir}lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
+			( pm25_sequence ) &
 		fi
 	else
 		# deactivate $sequence
@@ -666,6 +703,7 @@ printHelpScreen() {
     echo "    t        REDSHIFT      T: color temperature"
     echo "                              based on redshift"
     echo "    o        NOISE         O: noise color sequence"
+    echo "    p        PM2.5         P: particulate matter sequence"
     echo -e "    x        TIME          ${cltwhite}X=-${coff}: toggle brightness"
     echo "                                based on time"
 	#        [--------------------------------------------------]
@@ -714,6 +752,7 @@ initializeKeys() {
 	_NN=0
     _T=0
     _O=0
+    _P=0
     _X=0
     _CC=0
 }
@@ -790,6 +829,8 @@ handleKey() {
 		toggleSequence "T"
 	elif [[ "$_O" == 1 ]] ; then
 		toggleSequence "O"
+	elif [[ "$_P" == 1 ]] ; then
+		toggleSequence "P"
 	elif [[ "$_X" == 1 ]] ; then
 		toggle_time_bri
 	elif [[ "$_I" == 1 ]] ; then
@@ -859,6 +900,7 @@ lampeMain() {
                                 ( redshiftSequence ) &
                                 ( noiseSequence ) &
                                 ( previewRandom ) &
+                                ( pm25_sequence ) &
                             fi
                         done
                         print_light_states
@@ -1212,6 +1254,8 @@ print_light_states() {
 		    	echo -n "T  "
 		    elif [[ -f "${cache_dir}lampeSequenceO$light" ]] ; then
 		    	echo -n "O  "
+		    elif [[ -f "${cache_dir}lampeSequenceP$light" ]] ; then
+		    	echo -n "P  "
 		    else
                 if [[ "${_CAP_COLOR[$light]}" -eq 1 ]] \
                 || [[ "${_CAP_CT[$light]}" -eq 1 ]] ; then
@@ -1261,6 +1305,7 @@ checkDependency "JSON.sh"
 checkDependency "redshift"
 checkDependency "jq"
 checkDependency "bc"
+checkDependency "feinstaub"
 
 loadLightSetting() {
 	if [[ -n "${SAVED_SWITCH[$_SELECTED_LAMP]}" ]] ; then

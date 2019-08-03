@@ -22,6 +22,7 @@ Following cli-tools need to be installed on your system in order to use **lampe 
 - JSON.sh [v0.2.1](https://github.com/poinck/JSON.sh/tree/v0.2.1) forked, tested and branched from [dominictarr/JSON.sh](https://github.com/dominictarr/JSON.sh), later versions may work as well (will be depricated in future versions)
 - redshift
 - bc
+- feinstaub from [feinstaubwolke](https://gitlab.com/poinck/feinstaubwolke) (for particulate matter sequence)
 
 **lampe-gtk** has the following dependencies:
 - libsoup
@@ -75,6 +76,7 @@ rm ~/.lamperc
 
 Use "lampe" like a computer-game without gamepad or arrow-keys - use WASD. *(:*
 See following list for more options:
+
 ```
 1..99 - select light
     w - increase brightness
@@ -86,13 +88,15 @@ See following list for more options:
  n, N - switch (all) lights off
  i, I - info: receive current or all light state(s)
  S, l - save and load user configuration
-    F - find new lights
+    F - find new lights (NOT implemented)
     r - start or stop random color sequence
     b - start or stop blinking sequence
     A - alert
     m - start or stop time based sequence
     t - start or stop redshift sequence
-    o - start or stop noise sequnce
+    o - start or stop noise sequence
+    p - start or stop particulate matter sequence
+    x - toggle brightness based on time for sequences
     Q - quit
 ```
 
