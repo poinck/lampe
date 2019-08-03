@@ -1260,6 +1260,7 @@ checkDependency() {
 checkDependency "JSON.sh"
 checkDependency "redshift"
 checkDependency "jq"
+checkDependency "bc"
 
 loadLightSetting() {
 	if [[ -n "${SAVED_SWITCH[$_SELECTED_LAMP]}" ]] ; then
@@ -1354,11 +1355,11 @@ loadUserConfig() {
     if [[ -v "sequence_bri" ]] ; then
         echo "    sequence_bri=${sequence_bri}"
     else
-        echo -e " ${cltyellow}?${coff}  sequence_bri=[1,0]       default 1, some"
+        echo -e " ${cltyellow}?${coff}  sequence_bri=[1,0]       default 0, some"
         echo "                             sequences dim brightness "
         echo "                             during daytime "
         not_set=1
-        sequence_bri=1
+        sequence_bri=0
     fi
     if [[ "$not_set" -eq 1 ]] ; then
         echo " *  You can set these vars in"
