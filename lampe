@@ -345,7 +345,7 @@ pm25_sequence() {
         feinstaub > /dev/null
         . /tmp/feinstaublampe
 
-        local hue=48280 # blueish purple
+        local hue=49280 # blueish purple 
         local sat=$(( pm25 * 255 / 10 ))
         if [[ "${sat}" -gt 255 ]] ; then
             sat=255
