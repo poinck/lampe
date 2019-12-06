@@ -238,7 +238,7 @@ redshiftSequence() {
         #echo "t/R:kelvin = $kelvin"
         #echo "t/R:mired ?= old_mired => $mired ?= $old_mired"
 
-		local ct="\"ct\":$mired,\"transitiontime\":600"
+		local ct="\"ct\":$mired,\"transitiontime\":400"
         if [[ "${sequence_bri}" -eq 1 ]] ; then
             mins=$( get_timemins )
             time_bri=$( get_bri_from_time "${mins}" )
@@ -345,7 +345,7 @@ pm25_sequence() {
         feinstaub > /dev/null
         . /tmp/feinstaublampe
 
-        local hue=49280 # blueish purple 
+        local hue=49280 # blueish purple
         local sat=$(( pm25 * 255 / 10 ))
         if [[ "${sat}" -gt 255 ]] ; then
             sat=255
