@@ -1,10 +1,12 @@
 #!/bin/bash
-# lampe by André Klausnitzer, CC0
+# lampe by poinck, CC0
 # interactive bash script to control your Philips Hue lights
 
-version="1.1.11"
+version="1.2.0"
 
 declare _SELECTED_LAMP=1
+declare _SELECTED_BRIDGE=""
+declare _BRIDGE_SWITCHED=0
 
 checkKey() {
 	case $1 in
@@ -104,6 +106,10 @@ checkKey() {
 			# quit without stopping sequences
 			_CC=1
 		;;
+		"B")
+			# switch bridge number
+			_BB=1
+		;;
 	esac
 }
 
@@ -118,10 +124,47 @@ readAKey() {
 			_SELECTED_LAMP=$_KEY
 			readLightNumber "$_KEY"
 		;;
+        "B")
+			# select bridge
+			printMainScreen "$_KEY"
+			_SELECTED_BRIDGE=$_KEY
+			readBridgeNumber "$_KEY"
+        ;;
 		*)
 			checkKey "$_KEY"
 		;;
 	esac
+}
+
+readBridgeNumber() {
+	local number=$_KEY
+
+	read -r -s -n 1 _NEXT_KEY
+	case $_NEXT_KEY in
+		[0-9])
+			number=$_NEXT_KEY
+		;;
+    esac
+
+    _SELECTED_BRIDGE=$number
+    if [[ ${_SELECTED_BRIDGE} =~ [0-9] ]] ; then
+        if [[ "${_SELECTED_BRIDGE}" -eq 0 ]] ; then
+            _SELECTED_BRIDGE=""
+        fi
+    else
+        _SELECTED_BRIDGE=""
+    fi
+    debug "bridge = ${_SELECTED_BRIDGE}"
+
+    # re-initialize after bridge switch
+    local bridge_number=0
+    if [[ -n "${_SELECTED_BRIDGE}" ]] ; then
+        bridge_number=${_SELECTED_BRIDGE}
+    fi
+    echo
+    echo -e "    bridge ${cltwhite}${bridge_number}${coff} selected"
+    _BRIDGE_SWITCHED=1
+    initLampe
 }
 
 readLightNumber() {
@@ -195,7 +238,7 @@ get_bri_from_time() {
 }
 
 moodSequence() {
-	while [[ -f "${cache_dir}lampeSequenceM${_SELECTED_LAMP}" ]] ; do
+	while [[ -f "${cache_dir}lampeSequenceM${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" ]] ; do
         local high_color_factor=45 # 16bit-color, 65536 colors devided through 1439 steps
         #local time_value=$(( $( date '+%-M' )+$( date '+%-H' )*60 ))
         local time_value=$( get_timemins )
@@ -222,7 +265,7 @@ moodSequence() {
 }
 
 redshiftSequence() {
-	while [[ -f "${cache_dir}lampeSequenceT$_SELECTED_LAMP" ]] ; do
+	while [[ -f "${cache_dir}lampeSequenceT${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" ]] ; do
         # test fake berlin
         #redshift_options="-l 52.52:13.40"
 
@@ -268,7 +311,7 @@ noiseSequence() {
 
     osat=$isat
     ohue=$ihue
-	while [[ -f "${cache_dir}lampeSequenceO$_SELECTED_LAMP" ]] ; do
+	while [[ -f "${cache_dir}lampeSequenceO${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" ]] ; do
         local hue_step=$(( RANDOM*noise_step*2/32767-noise_step ))
         local nhue=$(( ohue+hue_step ))
         if [[ "$nhue" -gt "$max_hue" ]] ; then
@@ -306,7 +349,7 @@ noiseSequence() {
 # GPN15 preview sequence
 previewRandom() {
 	local on="true"
-	while [[ -f "${cache_dir}lampeSequenceR$_SELECTED_LAMP" ]] ; do
+	while [[ -f "${cache_dir}lampeSequenceR${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" ]] ; do
 		# debug
 		#echo "do random, '$LAMPE_R'"
 
@@ -327,7 +370,7 @@ previewRandom() {
 previewBlink() {
 	local on="true"
 	local bri="$1"
-	while [[ -f "${cache_dir}lampeSequenceB$_SELECTED_LAMP" ]] ; do
+	while [[ -f "${cache_dir}lampeSequenceB${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" ]] ; do
 		curl -s -d "{\"on\":$on,\"transitiontime\":0,\"bri\":$bri}" -X PUT "http://$bridgeip/api/$bridgeuser/lights/$_SELECTED_LAMP/state" -m 1 > /dev/null
 
 		sleep 1
@@ -341,7 +384,7 @@ previewBlink() {
 
 # particulate matter sequence
 pm25_sequence() {
-	while [[ -f "${cache_dir}lampeSequenceP$_SELECTED_LAMP" ]] ; do
+	while [[ -f "${cache_dir}lampeSequenceP${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" ]] ; do
         feinstaub > /dev/null
         . /tmp/feinstaublampe
 
@@ -416,8 +459,8 @@ setSwitch() {
 		_SWITCH[$_SELECTED_LAMP]="false"
 
 		# disable sequences that would turn the light on again
-		rm "${cache_dir}lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
-		rm "${cache_dir}lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
+		rm "${cache_dir}lampeSequenceB${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+		rm "${cache_dir}lampeSequenceR${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
 	fi
 }
 
@@ -515,7 +558,14 @@ getColorOfLight() {
 printMainScreen() {
 	local firstNumer=$1
 
-	if [[ "$L_BLIND" == 0 ]] || [[ "$_I" -eq 1 ]] ; then
+    if [[ "$firstNumer" == "B" ]] ; then
+        local bridge_number=0
+        if [[ -n "${_SELECTED_BRIDGE}" ]] ; then
+            bridge_number=${_SELECTED_BRIDGE}
+        fi
+        echo
+        echo -en "    select ${cltwhite}bridge${coff} [0-9] (default: 0, current: ${bridge_number}) "
+	elif [[ "$L_BLIND" == 0 ]] || [[ "$_I" -eq 1 ]] ; then
         debug "sl = $_SELECTED_LAMP, sb = ${_BRIGHTNESS[$_SELECTED_LAMP]}"
 		currentBrightness=$(( _BRIGHTNESS[$_SELECTED_LAMP]/5 ))
         debug "cb = $currentBrightness"
@@ -568,17 +618,17 @@ printMainScreen() {
 
 			if [ $ii == $colorPosition ] ; then
                 echo -en "${x_time_bold}"
-				if [[ -f "${cache_dir}lampeSequenceR$_SELECTED_LAMP" ]] ; then
+				if [[ -f "${cache_dir}lampeSequenceR${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" ]] ; then
 					echo -en "$(getColorOfLight)R${coff}"
-				elif [[ -f "${cache_dir}lampeSequenceB$_SELECTED_LAMP" ]] ; then
+				elif [[ -f "${cache_dir}lampeSequenceB${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" ]] ; then
 					echo -en "$(getColorOfLight)B${coff}"
-				elif [[ -f "${cache_dir}lampeSequenceM$_SELECTED_LAMP" ]] ; then
+				elif [[ -f "${cache_dir}lampeSequenceM${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" ]] ; then
 					echo -en "$(getColorOfLight)M${coff}"
-				elif [[ -f "${cache_dir}lampeSequenceT$_SELECTED_LAMP" ]] ; then
+				elif [[ -f "${cache_dir}lampeSequenceT${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" ]] ; then
 					echo -en "$(getColorOfLight)T${coff}"
-				elif [[ -f "${cache_dir}lampeSequenceO$_SELECTED_LAMP" ]] ; then
+				elif [[ -f "${cache_dir}lampeSequenceO${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" ]] ; then
 					echo -en "$(getColorOfLight)O${coff}"
-				elif [[ -f "${cache_dir}lampeSequenceP$_SELECTED_LAMP" ]] ; then
+				elif [[ -f "${cache_dir}lampeSequenceP${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" ]] ; then
 					echo -en "$(getColorOfLight)P${coff}"
 				else
                     if [[ "${sequence_bri}" -eq 1 ]] ; then
@@ -617,68 +667,68 @@ printMainScreen() {
 }
 
 end_all_sequences() {
-	rm "${cache_dir}lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
-    rm "${cache_dir}lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
-    rm "${cache_dir}lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
-    rm "${cache_dir}lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
-    rm "${cache_dir}lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
-	rm "${cache_dir}lampeSequenceP$_SELECTED_LAMP" 2> /dev/null
+	rm "${cache_dir}lampeSequenceR${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+    rm "${cache_dir}lampeSequenceB${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+    rm "${cache_dir}lampeSequenceM${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+    rm "${cache_dir}lampeSequenceT${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+    rm "${cache_dir}lampeSequenceO${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+	rm "${cache_dir}lampeSequenceP${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
 }
 
 toggleSequence() {
 	local sequence=$1
 
-	if [[ ! -f "${cache_dir}lampeSequence$sequence$_SELECTED_LAMP" ]] ; then
+	if [[ ! -f "${cache_dir}lampeSequence$sequence${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" ]] ; then
 		# activate $sequence, deactivate others
-		touch "${cache_dir}lampeSequence$sequence$_SELECTED_LAMP" 2> /dev/null
+		touch "${cache_dir}lampeSequence$sequence${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
 		if [[ "$sequence" == "R" ]] ; then
-			rm "${cache_dir}lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceP$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceB${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceM${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceT${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceO${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceP${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
 			_SWITCH[_SELECTED_LAMP]="true"
 			( previewRandom ) &
 		elif [[ "$sequence" == "B" ]] ; then
-			rm "${cache_dir}lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceP$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceR${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceM${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceT${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceO${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceP${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
 			_SWITCH[_SELECTED_LAMP]="true"
 			( previewBlink "${_BRIGHTNESS[$_SELECTED_LAMP]}" ) &
 		elif [[ "$sequence" == "M" ]] ; then
-			rm "${cache_dir}lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceP$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceB${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceR${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceT${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceO${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceP${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
 			( moodSequence ) &
 		elif [[ "$sequence" == "T" ]] ; then
-			rm "${cache_dir}lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceP$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceB${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceR${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceM${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceO${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceP${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
 			( redshiftSequence ) &
 		elif [[ "$sequence" == "O" ]] ; then
-			rm "${cache_dir}lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceP$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceB${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceR${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceM${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceT${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceP${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
 			( noiseSequence ) &
 		elif [[ "$sequence" == "P" ]] ; then
-			rm "${cache_dir}lampeSequenceB$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceR$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceM$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceT$_SELECTED_LAMP" 2> /dev/null
-			rm "${cache_dir}lampeSequenceO$_SELECTED_LAMP" 2> /dev/null
+			rm "${cache_dir}lampeSequenceB${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceR${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceM${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceT${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
+			rm "${cache_dir}lampeSequenceO${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
 			( pm25_sequence ) &
 		fi
 	else
 		# deactivate $sequence
-		rm "${cache_dir}lampeSequence$sequence$_SELECTED_LAMP" 2> /dev/null
+		rm "${cache_dir}lampeSequence$sequence${_SELECTED_LAMP}B${_SELECTED_BRIDGE}" 2> /dev/null
 	fi
 }
 
@@ -752,6 +802,7 @@ initializeKeys() {
     _P=0
     _X=0
     _CC=0
+    _BB=0
 }
 
 toggle_time_bri() {
@@ -848,6 +899,9 @@ lampeMain() {
         # oneshot-mode
         initializeKeys
         _SELECTED_LAMP=1
+        _SELECTED_BRIDGE=0
+            # todo
+            # bridge should be selectable in oneshot-mode
 
         # debug
         #echo "1:=$1 2:=$2 3:=$3"
@@ -871,20 +925,22 @@ lampeMain() {
         printMainScreen
 		echo -e "\n ${cltgreen}!${coff}  bye"
     else
-        # ask to resume sequences, if there any
+        # ask to resume sequences, if there are any
         lampe_ps=$( ps -e | grep lampe | wc -l )
         if [[ "${lampe_ps}" -gt 2 ]] ; then
-	        echo -en "    Keep $(( lampe_ps - 2 )) existing sequences running? [${cltwhite}Y${coff}/${cltred}n${coff}] "
-	        read -r do_keep
-	        if [[ "${do_keep}" == "y" ]] || [[ "${do_keep}" == "Y" ]] || [[ "${do_keep}" == "" ]] ; then
-                receive_light_states
-                print_light_states
-            else
-		        # cleanup
-		        rm ${cache_dir}lampeSequence* 2> /dev/null
+            if [[ "${_BRIDGE_SWITCHED}" -eq 0 ]] ; then
+	            echo -en "    Keep $(( lampe_ps - 2 )) existing sequences running? [${cltwhite}Y${coff}/${cltred}n${coff}] "
+	            read -r do_keep
+	            if [[ "${do_keep}" == "y" ]] || [[ "${do_keep}" == "Y" ]] || [[ "${do_keep}" == "" ]] ; then
+                    receive_light_states
+                    print_light_states
+                else
+		            # cleanup
+		            rm ${cache_dir}lampeSequence* 2> /dev/null
+                fi
             fi
         else
-            for f in ${cache_dir}lampeSequence* ; do
+            for f in ${cache_dir}lampeSequence*B${_SELECTED_BRIDGE} ; do
                 if [[ -f "$f" ]] ; then
 	                echo -en "    Do you want to resume sequences? [${cltwhite}y${coff}/${cltred}N${coff}] "
 	                read -r do_resume
@@ -911,8 +967,13 @@ lampeMain() {
             done
         fi
 
+        local bridge_number="BRIDGE-0"
+        if [[ -n "${_SELECTED_BRIDGE}" ]] ; then
+            bridge_number="BRIDGE-${_SELECTED_BRIDGE}"
+        fi
+
     	# interactive-mode: initial screen
-    	echo -en "   [${cred}=${cyellow}=${cgreen}=${ccyan}=${cblue}=${cmagenta}=${coff}${cltwhite}---LAMPE-${version}---PRESS-h-FOR-HELP-----------${coff}]"
+    	echo -en "   [${cred}=${cyellow}=${cgreen}=${ccyan}=${cblue}=${cmagenta}=${coff}${cltwhite}---LAMPE-${version}---PRESS-h-FOR-HELP---${bridge_number}${coff}]"
 
     	lastTime=$(date +%s%3N) # seconds + milliseconds
     	while true; do
@@ -1013,7 +1074,7 @@ hbSendLightsState() {
 # checks wether there is a hue bridge at given IP
 hbCheck() {
 	hbDescription=$(curl "http://$1/description.xml" -m 3 2> /dev/null)
-	hbModel=$(echo "$hbDescription" | grep "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>")
+	hbModel=$(echo "$hbDescription" | grep "<modelDescription>Philips hue")
 }
 
 # try to detect the first Hue Bridge in the LAN (ipv4 class-C networks only, can detect only one bridge)
@@ -1111,7 +1172,7 @@ hbRegisterUser() {
 
 		if [ -n "$success" ] ; then
             registeredUser=$(echo "$success" | sed -r "s/\"username\":/;/" | cut -f 2 -d";" | cut -f 1 -d"}" )
-            echo "bridgeuser=${registeredUser}" >> ~/.lamperc
+            echo "bridgeuser=${registeredUser}" >> ~/.lamperc${_SELECTED_BRIDGE}
 			echo -e "\n    user registered."
 			break
 		fi
@@ -1126,7 +1187,7 @@ showHelp() {
     echo " -s, --set [LIGHT] OPTION"
     echo "    set option. for available options press h in interactive-mode or"
     echo "    'lampe -s h'; LIGHT is mandatory for all non-global options."
-    echo "    currently cannot be combined with bline-mode (oneshot)"
+    echo "    cannot be combined with blind-mode (oneshot)"
 	echo " -h, --help"
 	echo "    show this help"
 }
@@ -1241,17 +1302,17 @@ print_light_states() {
 		    else
 		    	echo -en "           "
 		    fi
-		    if [[ -f "${cache_dir}lampeSequenceR$light" ]] ; then
+		    if [[ -f "${cache_dir}lampeSequenceR${light}B${_SELECTED_BRIDGE}" ]] ; then
 		    	echo -n "R  "
-		    elif [[ -f "${cache_dir}lampeSequenceB$light" ]] ; then
+		    elif [[ -f "${cache_dir}lampeSequenceB${light}B${_SELECTED_BRIDGE}" ]] ; then
 		    	echo -n "B  "
-		    elif [[ -f "${cache_dir}lampeSequenceM$light" ]] ; then
+		    elif [[ -f "${cache_dir}lampeSequenceM${light}B${_SELECTED_BRIDGE}" ]] ; then
 		    	echo -n "M  "
-		    elif [[ -f "${cache_dir}lampeSequenceT$light" ]] ; then
+		    elif [[ -f "${cache_dir}lampeSequenceT${light}B${_SELECTED_BRIDGE}" ]] ; then
 		    	echo -n "T  "
-		    elif [[ -f "${cache_dir}lampeSequenceO$light" ]] ; then
+		    elif [[ -f "${cache_dir}lampeSequenceO${light}B${_SELECTED_BRIDGE}" ]] ; then
 		    	echo -n "O  "
-		    elif [[ -f "${cache_dir}lampeSequenceP$light" ]] ; then
+		    elif [[ -f "${cache_dir}lampeSequenceP${light}B${_SELECTED_BRIDGE}" ]] ; then
 		    	echo -n "P  "
 		    else
                 if [[ "${_CAP_COLOR[$light]}" -eq 1 ]] \
@@ -1324,7 +1385,7 @@ saveLightSetting() {
 
 saveAllSettings() {
 	mkdir -p ~/.config/lampe 2> /dev/null
-	echo "" > ~/.config/lampe/light-settings
+	echo "" > ~/.config/lampe/light-settings${_SELECTED_BRIDGE}
 	for (( light=1 ; light<51 ; light=light+1 )) ; do
 		if [[ -n "${SAVED_SWITCH[$light]}" ]] ; then
 			# it is assumed that for every light that has a saved switch state
@@ -1336,77 +1397,79 @@ saveAllSettings() {
 			echo "_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" ;
 			echo "SAVED_COLOR[$light]=\"${SAVED_COLOR[$light]}\"" ;
 			echo "_SAT[$light]=\"${SAVED_SAT[$light]}\"" ;
-			echo "SAVED_SAT[$light]=\"${SAVED_SAT[$light]}\"" ; } >> ~/.config/lampe/light-settings
+			echo "SAVED_SAT[$light]=\"${SAVED_SAT[$light]}\"" ; } >> ~/.config/lampe/light-settings${_SELECTED_BRIDGE}
 		fi
 	done
 }
 
 # load user configuration
 loadUserConfig() {
-	if [[ -f ~/.config/lampe/light-settings ]] ; then
-		. ~/.config/lampe/light-settings
+	if [[ -f ~/.config/lampe/light-settings${_SELECTED_BRIDGE} ]] ; then
+		. ~/.config/lampe/light-settings${_SELECTED_BRIDGE}
 	fi
-    if [[ -f ~/.config/lampe/light-defaults ]] ; then
-        . ~/.config/lampe/light-defaults
-    fi
+    if [[ "${_BRIDGE_SWITCHED}" -eq 0 ]] ; then
+        if [[ -f ~/.config/lampe/light-defaults ]] ; then
+            . ~/.config/lampe/light-defaults
+        fi
 
-    # check light defaults
-    not_set=0
-    if [[ -v "mood_sat" ]] ; then
-        echo "    mood_sat=$mood_sat"
-    else
-        echo -e " ${cltyellow}?${coff}  mood_sat=[0..254]        default saturation for"
-        echo "                             mood sequence not set."
-        echo "                             saturation will not be"
-        echo "                             changed during sequence"
-        not_set=1
-    fi
+        # check light defaults
+        not_set=0
+        if [[ -v "mood_sat" ]] ; then
+            echo "    mood_sat=$mood_sat"
+        else
+            echo -e " ${cltyellow}?${coff}  mood_sat=[0..254]        default saturation for"
+            echo "                             mood sequence not set."
+            echo "                             saturation will not be"
+            echo "                             changed during sequence"
+            not_set=1
+        fi
 
-    if [[ -v "redshift_options" ]] ; then
-        echo "    redshift_options=\"$redshift_options\""
-    else
-        echo -e " ${cltyellow}?${coff}  redshift_options=\"\"      no options will be"
-        echo "                             forwarded to redshift"
-        not_set=1
-    fi
+        if [[ -v "redshift_options" ]] ; then
+            echo "    redshift_options=\"$redshift_options\""
+        else
+            echo -e " ${cltyellow}?${coff}  redshift_options=\"\"      no options will be"
+            echo "                             forwarded to redshift"
+            not_set=1
+        fi
 
-    if [[ -v "noise_range" ]] ; then
-        echo "    noise_range=$noise_range"
-    else
-        echo -e " ${cltyellow}?${coff}  noise_range=[0..65000]   default 15000, a color"
-        echo "                             between two colors"
-        not_set=1
-        noise_range=15000
-    fi
-    if [[ -v "noise_interval" ]] ; then
-        echo "    noise_interval=$noise_interval"
-    else
-        echo -e " ${cltyellow}?${coff}  noise_interval=[1..]     default 3 seconds"
-        not_set=1
-        noise_interval=3
-    fi
-    if [[ -v "noise_step" ]] ; then
-        echo "    noise_step=$noise_step"
-    else
-        echo -e " ${cltyellow}?${coff}  noise_step=[1..65000]    default 5000, could be"
-        echo "                             more than just one shade"
-        echo "                             of the current color "
-        not_set=1
-        noise_step=5000
-    fi
-    if [[ -v "sequence_bri" ]] ; then
-        echo "    sequence_bri=${sequence_bri}"
-    else
-        echo -e " ${cltyellow}?${coff}  sequence_bri=[1,0]       default 0, some"
-        echo "                             sequences dim brightness "
-        echo "                             during daytime "
-        not_set=1
-        sequence_bri=0
-    fi
-    if [[ "$not_set" -eq 1 ]] ; then
-        echo " *  You can set these vars in"
-        echo "    ~/.config/lampe/light-defaults"
-        echo ""
+        if [[ -v "noise_range" ]] ; then
+            echo "    noise_range=$noise_range"
+        else
+            echo -e " ${cltyellow}?${coff}  noise_range=[0..65000]   default 15000, a color"
+            echo "                             between two colors"
+            not_set=1
+            noise_range=15000
+        fi
+        if [[ -v "noise_interval" ]] ; then
+            echo "    noise_interval=$noise_interval"
+        else
+            echo -e " ${cltyellow}?${coff}  noise_interval=[1..]     default 3 seconds"
+            not_set=1
+            noise_interval=3
+        fi
+        if [[ -v "noise_step" ]] ; then
+            echo "    noise_step=$noise_step"
+        else
+            echo -e " ${cltyellow}?${coff}  noise_step=[1..65000]    default 5000, could be"
+            echo "                             more than just one shade"
+            echo "                             of the current color "
+            not_set=1
+            noise_step=5000
+        fi
+        if [[ -v "sequence_bri" ]] ; then
+            echo "    sequence_bri=${sequence_bri}"
+        else
+            echo -e " ${cltyellow}?${coff}  sequence_bri=[1,0]       default 0, some"
+            echo "                             sequences dim brightness "
+            echo "                             during daytime "
+            not_set=1
+            sequence_bri=0
+        fi
+        if [[ "$not_set" -eq 1 ]] ; then
+            echo " *  You can set these vars in"
+            echo "    ~/.config/lampe/light-defaults"
+            echo ""
+        fi
     fi
 
     # bug#46 fixed: gather cache_dir and set default or fallback
@@ -1419,49 +1482,54 @@ loadUserConfig() {
 }
 
 
-if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
-	# show help and quit
-	showHelp
-elif [[ -f ~/.lamperc ]] ; then
-	# read configuration
-	. ~/.lamperc
-
-    loadUserConfig
-
-	startLampe "$@"
-else
-	# first start: ask user what to do
-	echo -e " ${cltyellow}?${coff} [======---${cltwhite}LAMPE${coff}------------------------------------]"
-	echo "    You are running 'lampe' for the first time. Do you "
-	echo -en "    wish automatic discovery and configuration? [${cltwhite}y${coff}/${cltred}n${coff}] "
-	read -r doIt
-	if [[ "$doIt" == "y" ]] || [[ "$doIt" == "Y" ]] || [[ "$doIt" == "" ]] ; then
-		hbDetect 2> /dev/null
-		if [ "$_BRIDGE_FOUND" == false ] ; then
-			echo -e " ${cltred}?${coff}  warning, unable to find bridge"
-			hbEnterIP
-		fi
-	else
-		hbEnterIP
-	fi
-
-	if [[ "$_BRIDGE_FOUND" == true ]] ; then
-		# register a user at bridge
-		hbRegisterUser
-
-		# store configuration if bridge was found
-		echo "bridgeip=\"$bridgeip\"" >> ~/.lamperc
-        . ~/.lamperc
+initLampe() {
+    if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] ; then
+    	# show help and quit
+    	showHelp
+    elif [[ -f ~/.lamperc${_SELECTED_BRIDGE} ]] ; then
+    	# read configuration
+    	. ~/.lamperc${_SELECTED_BRIDGE}
 
         loadUserConfig
 
-		# receive light states
-		receive_light_states
+    	startLampe "$@"
+    else
+    	# first start: ask user what to do
+    	echo -e " ${cltyellow}?${coff} [======---${cltwhite}LAMPE${coff}------------------------------------]"
+    	echo "    You are running 'lampe' for the first time or"
+        echo -e "    trying to add a ${cltyellow}new${coff} bridge. Do you wish automatic"
+    	echo -en "    discovery and configuration? [${cltwhite}y${coff}/${cltred}n${coff}] "
+    	read -r doIt
+    	if [[ "$doIt" == "y" ]] || [[ "$doIt" == "Y" ]] || [[ "$doIt" == "" ]] ; then
+    		hbDetect 2> /dev/null
+    		if [ "$_BRIDGE_FOUND" == false ] ; then
+    			echo -e " ${cltred}?${coff}  warning, unable to find bridge"
+    			hbEnterIP
+    		fi
+    	else
+    		hbEnterIP
+    	fi
 
-		startLampe "$@"
-	else
-		echo -e " ${cltred}!${coff}  no bridge found, error 2"
-		exit 2
-	fi
-fi
+    	if [[ "$_BRIDGE_FOUND" == true ]] ; then
+    		# register a user at bridge
+    		hbRegisterUser
+
+    		# store configuration if bridge was found
+    		echo "bridgeip=\"$bridgeip\"" >> ~/.lamperc${_SELECTED_BRIDGE}
+            . ~/.lamperc${_SELECTED_BRIDGE}
+
+            loadUserConfig
+
+    		# receive light states
+    		receive_light_states
+
+    		startLampe "$@"
+    	else
+    		echo -e " ${cltred}!${coff}  no bridge found, error 2"
+    		exit 2
+    	fi
+    fi
+}
+
+initLampe "$@"
 
