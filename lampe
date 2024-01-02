@@ -403,9 +403,6 @@ setColor() {
 		hue=1
 	fi
 
-	# debug
-	#echo " $hue "
-
 	_COLOR[$_SELECTED_LAMP]=$hue
 }
 
